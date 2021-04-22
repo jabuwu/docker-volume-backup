@@ -1,11 +1,11 @@
 import { ObjectType, Field } from 'type-graphql';
 import { Readable } from 'stream';
-import { Storage } from '.';
+import { StorageInterface } from '.';
 import { S3 } from 'aws-sdk';
 import { DBStore } from '../db';
 
 
-export class S3Storage implements Storage {
+export class S3Storage implements StorageInterface {
   constructor(private bucket: S3Bucket) {
   }
   async write(fileName: string, stream: Readable) {

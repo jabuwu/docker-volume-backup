@@ -1,0 +1,6 @@
+query AllStorage {
+  allStorage {
+    type
+    name
+  }
+}

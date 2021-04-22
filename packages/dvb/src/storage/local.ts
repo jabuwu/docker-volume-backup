@@ -1,8 +1,8 @@
-import { Storage } from '.';
+import { StorageInterface } from '.';
 import { createWriteStream } from 'fs-extra';
 import { Readable } from 'stream';
 
-export class LocalStorage implements Storage {
+export class LocalStorage implements StorageInterface {
   async write(fileName: string, stream: Readable)  {
     const writeStream = createWriteStream(fileName);
     await new Promise(resolve => writeStream.on('open', resolve));

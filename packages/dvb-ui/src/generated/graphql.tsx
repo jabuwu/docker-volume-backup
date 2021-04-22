@@ -91,6 +91,7 @@ export type Query = {
   __typename?: 'Query';
   containers: Array<Container>;
   volumes: Array<Volume>;
+  allStorage: Array<Storage>;
   s3Buckets: Array<S3Bucket>;
   s3Bucket?: Maybe<S3Bucket>;
 };
@@ -107,6 +108,13 @@ export type S3Bucket = {
   region: Scalars['String'];
   prefix: Scalars['String'];
   accessKey: Scalars['String'];
+};
+
+export type Storage = {
+  __typename?: 'Storage';
+  type: Scalars['String'];
+  name: Scalars['String'];
+  s3Bucket?: Maybe<S3Bucket>;
 };
 
 export type Subscription = {
@@ -173,6 +181,17 @@ export type RemoveS3BucketMutationVariables = Exact<{
 export type RemoveS3BucketMutation = (
   { __typename?: 'Mutation' }
   & Pick<Mutation, 'removeS3Bucket'>
+);
+
+export type AllStorageQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AllStorageQuery = (
+  { __typename?: 'Query' }
+  & { allStorage: Array<(
+    { __typename?: 'Storage' }
+    & Pick<Storage, 'type' | 'name'>
+  )> }
 );
 
 export type StorageQueryVariables = Exact<{ [key: string]: never; }>;
@@ -307,6 +326,41 @@ export function useRemoveS3BucketMutation(baseOptions?: Apollo.MutationHookOptio
 export type RemoveS3BucketMutationHookResult = ReturnType<typeof useRemoveS3BucketMutation>;
 export type RemoveS3BucketMutationResult = Apollo.MutationResult<RemoveS3BucketMutation>;
 export type RemoveS3BucketMutationOptions = Apollo.BaseMutationOptions<RemoveS3BucketMutation, RemoveS3BucketMutationVariables>;
+export const AllStorageDocument = gql`
+    query AllStorage {
+  allStorage {
+    type
+    name
+  }
+}
+    `;
+
+/**
+ * __useAllStorageQuery__
+ *
+ * To run a query within a React component, call `useAllStorageQuery` and pass it any options that fit your needs.
+ * When your component renders, `useAllStorageQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useAllStorageQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useAllStorageQuery(baseOptions?: Apollo.QueryHookOptions<AllStorageQuery, AllStorageQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<AllStorageQuery, AllStorageQueryVariables>(AllStorageDocument, options);
+      }
+export function useAllStorageLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<AllStorageQuery, AllStorageQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<AllStorageQuery, AllStorageQueryVariables>(AllStorageDocument, options);
+        }
+export type AllStorageQueryHookResult = ReturnType<typeof useAllStorageQuery>;
+export type AllStorageLazyQueryHookResult = ReturnType<typeof useAllStorageLazyQuery>;
+export type AllStorageQueryResult = Apollo.QueryResult<AllStorageQuery, AllStorageQueryVariables>;
 export const StorageDocument = gql`
     query Storage {
   s3Buckets {

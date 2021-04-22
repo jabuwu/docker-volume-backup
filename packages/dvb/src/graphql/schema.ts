@@ -4,7 +4,7 @@ import { Container } from '../docker/container';
 import { Volume } from '../docker/volume';
 import { context } from './context';
 import { fromObservable } from './from-observable';
-import { getStorage } from '../storage';
+import { Storage, getStorage } from '../storage';
 import { s3Buckets } from '../storage/s3';
 
 @Resolver()
@@ -61,6 +61,13 @@ class DvmResolver {
     @Root() volume: Volume
   ): Volume {
     return volume;
+  }
+
+  ////
+  // Storage
+  ///
+  @Query(() => [Storage]) allStorage() {
+    return Storage.all();
   }
 
   ////

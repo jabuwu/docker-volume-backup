@@ -1,10 +1,10 @@
 import { Link, Text } from '@chakra-ui/layout';
 import withApollo from '../apollo';
-import { useVolumesQuery, useExportVolumeMutation } from '../generated/graphql';
+import { useVolumesQuery, useExportVolumeMutation, useAllStorageQuery } from '../generated/graphql';
 import Wrapper from '../components/wrapper';
 import Title from '../components/title';
 import React, { useState, useRef } from 'react';
-import { Alert, AlertIcon, Button, Skeleton, Spinner, Table, Tbody, Td, Th, Thead, Tr, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Stack, InputGroup, InputLeftAddon, Input, ModalFooter } from '@chakra-ui/react';
+import { Alert, AlertIcon, Button, Skeleton, Spinner, Table, Tbody, Td, Th, Thead, Tr, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Stack, InputGroup, InputLeftAddon, Input, ModalFooter, Select } from '@chakra-ui/react';
 import NextLink from 'next/link';
 import LoadingTr  from '../components/loading-tr';
 
@@ -12,7 +12,8 @@ function exportVolumeFn() {
   const [ open, setOpen ] = useState(false);
   const [ volume, setVolume ] = useState('');
   const [ exportVolume ] = useExportVolumeMutation();
-  const storage = useRef<any>();
+  const { data: storageData, loading: storageLoading, error: storageError } = useAllStorageQuery();
+  const [ storage, setStorage ] = useState('');
   const fileName = useRef<any>();
 
   function close() {
@@ -23,7 +24,7 @@ function exportVolumeFn() {
     exportVolume({
       variables: {
         volume,
-        storage: storage.current!.value,
+        storage,
         fileName: fileName.current!.value || null,
       },
     });
@@ -41,10 +42,22 @@ function exportVolumeFn() {
         <ModalCloseButton />
         <ModalBody>
           <Stack spacing={4}>
-            <InputGroup size="sm">
-              <InputLeftAddon children="Storage" />
-              <Input ref={ storage } />
-            </InputGroup>
+            { storageError ? <>
+              <Alert status="error">
+                <AlertIcon />
+                Failed to fetch storage information.
+              </Alert>
+            </> : null }
+            { storageLoading ? <>
+              <Select placeholder="Loading Storage..." disabled={ true }></Select>
+            </> : null }
+            { !!storageData ? <>
+              <Select placeholder="Select Storage" value={ storage } onChange={ e => setStorage(e.target.value) }>
+                { storageData.allStorage.map(storage => (
+                  <option key={ storage.name } value={ storage.name }>{ storage.name }</option>
+                )) }
+              </Select>
+            </> : null }
             <InputGroup size="sm">
               <InputLeftAddon children="File Name" />
               <Input ref={ fileName } />
@@ -52,7 +65,7 @@ function exportVolumeFn() {
           </Stack>
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="blue" mr={ 3 } onClick={ doExport }>
+          <Button colorScheme="blue" mr={ 3 } onClick={ doExport } disabled={ !storageData || !storage }>
             Export
           </Button>
         </ModalFooter>
