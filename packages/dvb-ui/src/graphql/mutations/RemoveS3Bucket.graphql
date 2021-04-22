@@ -1,0 +1,3 @@
+mutation RemoveS3Bucket($name: String!) {
+  removeS3Bucket(name: $name)
+}

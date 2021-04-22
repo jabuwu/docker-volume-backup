@@ -135,6 +135,34 @@ export type VolumeUsageData = {
   refCount: Scalars['Float'];
 };
 
+export type AddS3BucketMutationVariables = Exact<{
+  name: Scalars['String'];
+  bucket: Scalars['String'];
+  region: Scalars['String'];
+  accessKey: Scalars['String'];
+  secretKey: Scalars['String'];
+  prefix: Scalars['String'];
+}>;
+
+
+export type AddS3BucketMutation = (
+  { __typename?: 'Mutation' }
+  & { addS3Bucket?: Maybe<(
+    { __typename?: 'S3Bucket' }
+    & Pick<S3Bucket, 'name'>
+  )> }
+);
+
+export type RemoveS3BucketMutationVariables = Exact<{
+  name: Scalars['String'];
+}>;
+
+
+export type RemoveS3BucketMutation = (
+  { __typename?: 'Mutation' }
+  & Pick<Mutation, 'removeS3Bucket'>
+);
+
 export type StorageQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -142,7 +170,7 @@ export type StorageQuery = (
   { __typename?: 'Query' }
   & { s3Buckets: Array<(
     { __typename?: 'S3Bucket' }
-    & Pick<S3Bucket, 'name' | 'bucket'>
+    & Pick<S3Bucket, 'name' | 'bucket' | 'prefix'>
   )> }
 );
 
@@ -158,11 +186,88 @@ export type VolumesQuery = (
 );
 
 
+export const AddS3BucketDocument = gql`
+    mutation AddS3Bucket($name: String!, $bucket: String!, $region: String!, $accessKey: String!, $secretKey: String!, $prefix: String!) {
+  addS3Bucket(
+    name: $name
+    bucket: $bucket
+    region: $region
+    accessKey: $accessKey
+    secretKey: $secretKey
+    prefix: $prefix
+  ) {
+    name
+  }
+}
+    `;
+export type AddS3BucketMutationFn = Apollo.MutationFunction<AddS3BucketMutation, AddS3BucketMutationVariables>;
+
+/**
+ * __useAddS3BucketMutation__
+ *
+ * To run a mutation, you first call `useAddS3BucketMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddS3BucketMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addS3BucketMutation, { data, loading, error }] = useAddS3BucketMutation({
+ *   variables: {
+ *      name: // value for 'name'
+ *      bucket: // value for 'bucket'
+ *      region: // value for 'region'
+ *      accessKey: // value for 'accessKey'
+ *      secretKey: // value for 'secretKey'
+ *      prefix: // value for 'prefix'
+ *   },
+ * });
+ */
+export function useAddS3BucketMutation(baseOptions?: Apollo.MutationHookOptions<AddS3BucketMutation, AddS3BucketMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddS3BucketMutation, AddS3BucketMutationVariables>(AddS3BucketDocument, options);
+      }
+export type AddS3BucketMutationHookResult = ReturnType<typeof useAddS3BucketMutation>;
+export type AddS3BucketMutationResult = Apollo.MutationResult<AddS3BucketMutation>;
+export type AddS3BucketMutationOptions = Apollo.BaseMutationOptions<AddS3BucketMutation, AddS3BucketMutationVariables>;
+export const RemoveS3BucketDocument = gql`
+    mutation RemoveS3Bucket($name: String!) {
+  removeS3Bucket(name: $name)
+}
+    `;
+export type RemoveS3BucketMutationFn = Apollo.MutationFunction<RemoveS3BucketMutation, RemoveS3BucketMutationVariables>;
+
+/**
+ * __useRemoveS3BucketMutation__
+ *
+ * To run a mutation, you first call `useRemoveS3BucketMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRemoveS3BucketMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [removeS3BucketMutation, { data, loading, error }] = useRemoveS3BucketMutation({
+ *   variables: {
+ *      name: // value for 'name'
+ *   },
+ * });
+ */
+export function useRemoveS3BucketMutation(baseOptions?: Apollo.MutationHookOptions<RemoveS3BucketMutation, RemoveS3BucketMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RemoveS3BucketMutation, RemoveS3BucketMutationVariables>(RemoveS3BucketDocument, options);
+      }
+export type RemoveS3BucketMutationHookResult = ReturnType<typeof useRemoveS3BucketMutation>;
+export type RemoveS3BucketMutationResult = Apollo.MutationResult<RemoveS3BucketMutation>;
+export type RemoveS3BucketMutationOptions = Apollo.BaseMutationOptions<RemoveS3BucketMutation, RemoveS3BucketMutationVariables>;
 export const StorageDocument = gql`
     query Storage {
   s3Buckets {
     name
     bucket
+    prefix
   }
 }
     `;

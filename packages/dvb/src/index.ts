@@ -7,7 +7,7 @@ import express from 'express';
 import cors from 'cors';
 
 const app = express();
-app.use(cors({ origin: 'http://localhost:3000' }));
+app.use(cors({ origin: 'https://3000-moccasin-constrictor-hcfy8ek6.ws-us03.gitpod.io' }));
 apollo.applyMiddleware({ app, cors: false });
 const server = createServer(app);
 apollo.installSubscriptionHandlers(server);

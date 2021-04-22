@@ -6,12 +6,12 @@ import { getMainDefinition } from '@apollo/client/utilities';
 import ws from 'ws';
 
 const httpLink = new HttpLink({
-  uri: 'http://localhost:1998/graphql',
+  uri: 'https://1998-moccasin-constrictor-hcfy8ek6.ws-us03.gitpod.io/graphql',
   credentials: 'same-origin',
 });
 const wsLink = new WebSocketLink({
   webSocketImpl: typeof window == 'undefined' ? ws : undefined,
-  uri: 'ws://localhost:1998/graphql',
+  uri: 'wss://1998-moccasin-constrictor-hcfy8ek6.ws-us03.gitpod.io/graphql',
   options: {
     reconnect: true,
   }

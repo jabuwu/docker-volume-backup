@@ -1,0 +1,5 @@
+mutation AddS3Bucket($name: String!, $bucket: String!, $region: String!, $accessKey: String!, $secretKey: String!, $prefix: String!) {
+  addS3Bucket(name: $name, bucket: $bucket, region: $region, accessKey: $accessKey, secretKey: $secretKey, prefix: $prefix) {
+    name
+  }
+}
