@@ -17,7 +17,7 @@ export class S3Storage implements StorageInterface {
     await s3.upload({
       Body: stream,
       Bucket: this.bucket.name,
-      Key: fileName,
+      Key: `${this.bucket.prefix}${fileName}`,
     }).promise();
   }
 }

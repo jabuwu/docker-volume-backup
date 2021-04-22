@@ -6,7 +6,8 @@ const adapter = new FileSync(DB_FILE);
 export const db = low(adapter);
 db.defaults({
   versions: {},
-  s3Buckets: []
+  s3Buckets: [],
+  schedules: []
 }).write();
 
 function getVersion(name: string) {
@@ -42,6 +43,10 @@ export class DBStore<T> {
 
   findOne(where: Partial<T>): T | null {
     return (<any>db).get(this.name).find(where).value() ?? null;
+  }
+
+  update(where: Partial<T>, data: Partial<T>) {
+    (<any>db).get(this.name).find(where).assign(data).write();
   }
 
   del(where: Partial<T>) {

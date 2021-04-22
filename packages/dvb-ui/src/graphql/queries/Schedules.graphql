@@ -1,0 +1,8 @@
+query Schedules {
+  schedules {
+    id
+    volume
+    storage
+    hours
+  }
+}

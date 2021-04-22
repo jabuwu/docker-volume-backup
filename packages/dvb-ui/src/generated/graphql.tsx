@@ -61,6 +61,8 @@ export type ContainerPort = {
 export type Mutation = {
   __typename?: 'Mutation';
   exportVolume: Scalars['Boolean'];
+  addSchedule?: Maybe<Schedule>;
+  removeSchedule: Scalars['Boolean'];
   addS3Bucket?: Maybe<S3Bucket>;
   removeS3Bucket: Scalars['Boolean'];
 };
@@ -70,6 +72,18 @@ export type MutationExportVolumeArgs = {
   fileName?: Maybe<Scalars['String']>;
   storage: Scalars['String'];
   volume: Scalars['String'];
+};
+
+
+export type MutationAddScheduleArgs = {
+  hours: Scalars['Int'];
+  storage: Scalars['String'];
+  volume: Scalars['String'];
+};
+
+
+export type MutationRemoveScheduleArgs = {
+  id: Scalars['String'];
 };
 
 
@@ -92,8 +106,15 @@ export type Query = {
   containers: Array<Container>;
   volumes: Array<Volume>;
   allStorage: Array<Storage>;
+  schedules: Array<Schedule>;
+  schedule?: Maybe<Schedule>;
   s3Buckets: Array<S3Bucket>;
   s3Bucket?: Maybe<S3Bucket>;
+};
+
+
+export type QueryScheduleArgs = {
+  id: Scalars['String'];
 };
 
 
@@ -108,6 +129,14 @@ export type S3Bucket = {
   region: Scalars['String'];
   prefix: Scalars['String'];
   accessKey: Scalars['String'];
+};
+
+export type Schedule = {
+  __typename?: 'Schedule';
+  id: Scalars['String'];
+  volume: Scalars['String'];
+  storage: Scalars['String'];
+  hours: Scalars['Float'];
 };
 
 export type Storage = {
@@ -161,6 +190,21 @@ export type AddS3BucketMutation = (
   )> }
 );
 
+export type AddScheduleMutationVariables = Exact<{
+  volume: Scalars['String'];
+  storage: Scalars['String'];
+  hours: Scalars['Int'];
+}>;
+
+
+export type AddScheduleMutation = (
+  { __typename?: 'Mutation' }
+  & { addSchedule?: Maybe<(
+    { __typename?: 'Schedule' }
+    & Pick<Schedule, 'id'>
+  )> }
+);
+
 export type ExportVolumeMutationVariables = Exact<{
   volume: Scalars['String'];
   storage: Scalars['String'];
@@ -183,6 +227,16 @@ export type RemoveS3BucketMutation = (
   & Pick<Mutation, 'removeS3Bucket'>
 );
 
+export type RemoveScheduleMutationVariables = Exact<{
+  id: Scalars['String'];
+}>;
+
+
+export type RemoveScheduleMutation = (
+  { __typename?: 'Mutation' }
+  & Pick<Mutation, 'removeSchedule'>
+);
+
 export type AllStorageQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -191,6 +245,17 @@ export type AllStorageQuery = (
   & { allStorage: Array<(
     { __typename?: 'Storage' }
     & Pick<Storage, 'type' | 'name'>
+  )> }
+);
+
+export type SchedulesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type SchedulesQuery = (
+  { __typename?: 'Query' }
+  & { schedules: Array<(
+    { __typename?: 'Schedule' }
+    & Pick<Schedule, 'id' | 'volume' | 'storage' | 'hours'>
   )> }
 );
 
@@ -262,6 +327,41 @@ export function useAddS3BucketMutation(baseOptions?: Apollo.MutationHookOptions<
 export type AddS3BucketMutationHookResult = ReturnType<typeof useAddS3BucketMutation>;
 export type AddS3BucketMutationResult = Apollo.MutationResult<AddS3BucketMutation>;
 export type AddS3BucketMutationOptions = Apollo.BaseMutationOptions<AddS3BucketMutation, AddS3BucketMutationVariables>;
+export const AddScheduleDocument = gql`
+    mutation AddSchedule($volume: String!, $storage: String!, $hours: Int!) {
+  addSchedule(volume: $volume, storage: $storage, hours: $hours) {
+    id
+  }
+}
+    `;
+export type AddScheduleMutationFn = Apollo.MutationFunction<AddScheduleMutation, AddScheduleMutationVariables>;
+
+/**
+ * __useAddScheduleMutation__
+ *
+ * To run a mutation, you first call `useAddScheduleMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddScheduleMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addScheduleMutation, { data, loading, error }] = useAddScheduleMutation({
+ *   variables: {
+ *      volume: // value for 'volume'
+ *      storage: // value for 'storage'
+ *      hours: // value for 'hours'
+ *   },
+ * });
+ */
+export function useAddScheduleMutation(baseOptions?: Apollo.MutationHookOptions<AddScheduleMutation, AddScheduleMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddScheduleMutation, AddScheduleMutationVariables>(AddScheduleDocument, options);
+      }
+export type AddScheduleMutationHookResult = ReturnType<typeof useAddScheduleMutation>;
+export type AddScheduleMutationResult = Apollo.MutationResult<AddScheduleMutation>;
+export type AddScheduleMutationOptions = Apollo.BaseMutationOptions<AddScheduleMutation, AddScheduleMutationVariables>;
 export const ExportVolumeDocument = gql`
     mutation ExportVolume($volume: String!, $storage: String!, $fileName: String) {
   exportVolume(volume: $volume, storage: $storage, fileName: $fileName)
@@ -326,6 +426,37 @@ export function useRemoveS3BucketMutation(baseOptions?: Apollo.MutationHookOptio
 export type RemoveS3BucketMutationHookResult = ReturnType<typeof useRemoveS3BucketMutation>;
 export type RemoveS3BucketMutationResult = Apollo.MutationResult<RemoveS3BucketMutation>;
 export type RemoveS3BucketMutationOptions = Apollo.BaseMutationOptions<RemoveS3BucketMutation, RemoveS3BucketMutationVariables>;
+export const RemoveScheduleDocument = gql`
+    mutation RemoveSchedule($id: String!) {
+  removeSchedule(id: $id)
+}
+    `;
+export type RemoveScheduleMutationFn = Apollo.MutationFunction<RemoveScheduleMutation, RemoveScheduleMutationVariables>;
+
+/**
+ * __useRemoveScheduleMutation__
+ *
+ * To run a mutation, you first call `useRemoveScheduleMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRemoveScheduleMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [removeScheduleMutation, { data, loading, error }] = useRemoveScheduleMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useRemoveScheduleMutation(baseOptions?: Apollo.MutationHookOptions<RemoveScheduleMutation, RemoveScheduleMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RemoveScheduleMutation, RemoveScheduleMutationVariables>(RemoveScheduleDocument, options);
+      }
+export type RemoveScheduleMutationHookResult = ReturnType<typeof useRemoveScheduleMutation>;
+export type RemoveScheduleMutationResult = Apollo.MutationResult<RemoveScheduleMutation>;
+export type RemoveScheduleMutationOptions = Apollo.BaseMutationOptions<RemoveScheduleMutation, RemoveScheduleMutationVariables>;
 export const AllStorageDocument = gql`
     query AllStorage {
   allStorage {
@@ -361,6 +492,43 @@ export function useAllStorageLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions
 export type AllStorageQueryHookResult = ReturnType<typeof useAllStorageQuery>;
 export type AllStorageLazyQueryHookResult = ReturnType<typeof useAllStorageLazyQuery>;
 export type AllStorageQueryResult = Apollo.QueryResult<AllStorageQuery, AllStorageQueryVariables>;
+export const SchedulesDocument = gql`
+    query Schedules {
+  schedules {
+    id
+    volume
+    storage
+    hours
+  }
+}
+    `;
+
+/**
+ * __useSchedulesQuery__
+ *
+ * To run a query within a React component, call `useSchedulesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSchedulesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSchedulesQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useSchedulesQuery(baseOptions?: Apollo.QueryHookOptions<SchedulesQuery, SchedulesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<SchedulesQuery, SchedulesQueryVariables>(SchedulesDocument, options);
+      }
+export function useSchedulesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<SchedulesQuery, SchedulesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<SchedulesQuery, SchedulesQueryVariables>(SchedulesDocument, options);
+        }
+export type SchedulesQueryHookResult = ReturnType<typeof useSchedulesQuery>;
+export type SchedulesLazyQueryHookResult = ReturnType<typeof useSchedulesLazyQuery>;
+export type SchedulesQueryResult = Apollo.QueryResult<SchedulesQuery, SchedulesQueryVariables>;
 export const StorageDocument = gql`
     query Storage {
   s3Buckets {

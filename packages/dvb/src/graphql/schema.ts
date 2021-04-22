@@ -1,11 +1,13 @@
 import { S3Bucket } from '../storage/s3';
-import { Arg, buildSchemaSync, Mutation, Query, Resolver, Root, Subscription } from 'type-graphql';
+import { Arg, buildSchemaSync, Mutation, Query, Resolver, Root, Subscription, Int } from 'type-graphql';
 import { Container } from '../docker/container';
 import { Volume } from '../docker/volume';
 import { context } from './context';
 import { fromObservable } from './from-observable';
 import { Storage, getStorage } from '../storage';
 import { s3Buckets } from '../storage/s3';
+import { Schedule, schedules } from '../schedule';
+import { generate } from 'short-uuid';
 
 @Resolver()
 class DvmResolver {
@@ -68,6 +70,36 @@ class DvmResolver {
   ///
   @Query(() => [Storage]) allStorage() {
     return Storage.all();
+  }
+
+  ///
+  // Schedules
+  ///
+  @Query(() => [Schedule]) async schedules() {
+    return schedules.all();
+  }
+  @Query(() => Schedule, { nullable: true }) async schedule(
+    @Arg('id', () => String) id: string
+  ) {
+    return schedules.findOne({ id });
+  }
+  @Mutation(() => Schedule, { nullable: true }) addSchedule(
+    @Arg('volume', () => String) volume: string,
+    @Arg('storage', () => String) storage: string,
+    @Arg('hours', () => Int) hours: number,
+  ): Schedule | null {
+    return schedules.create({
+      id: generate(),
+      volume,
+      storage,
+      hours,
+      lastUpdate: new Date().getTime()
+    });
+  }
+  @Mutation(() => Boolean) removeSchedule(
+    @Arg('id', () => String) id: string
+  ): boolean {
+    return schedules.del({ id });
   }
 
   ////

@@ -14,6 +14,9 @@ export default function App({ Component, pageProps }) {
             <NextLink href="/storage">
               <Link ml={ 4 } my="auto">Storage</Link>
             </NextLink>
+            <NextLink href="/schedules">
+              <Link ml={ 4 } my="auto">Schedules</Link>
+            </NextLink>
           </Flex>
         </Box>
       </Box>

@@ -25,6 +25,7 @@
     "lowdb": "^1.0.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^6.6.7",
+    "short-uuid": "^4.1.0",
     "subscriptions-transport-ws": "^0.9.18",
     "type-graphql": "^1.1.1"
   },

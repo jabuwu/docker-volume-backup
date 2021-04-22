@@ -1,0 +1,5 @@
+mutation AddSchedule($volume: String!, $storage: String!, $hours: Int!) {
+  addSchedule(volume: $volume, storage: $storage, hours: $hours) {
+    id
+  }
+}
