@@ -1,0 +1,6 @@
+query Storage {
+  s3Buckets {
+    name
+    bucket
+  }
+}

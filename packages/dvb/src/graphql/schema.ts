@@ -70,26 +70,26 @@ class DvmResolver {
     return s3Buckets.all();
   }
   @Query(() => S3Bucket, { nullable: true }) async s3Bucket(
-    @Arg('alias', () => String) alias: string
+    @Arg('name', () => String) name: string
   ) {
-    return s3Buckets.findOne({ alias });
+    return s3Buckets.findOne({ name });
   }
   @Mutation(() => S3Bucket, { nullable: true }) addS3Bucket(
-    @Arg('alias', () => String) alias: string,
     @Arg('name', () => String) name: string,
+    @Arg('bucket', () => String) bucket: string,
     @Arg('region', () => String) region: string,
     @Arg('accessKey', () => String) accessKey: string,
     @Arg('secretKey', () => String) secretKey: string,
     @Arg('prefix', () => String, { nullable: true }) prefix: string | undefined,
   ): S3Bucket | null {
-    const storage = getStorage(alias);
+    const storage = getStorage(name);
     if (storage) {
       // TODO: return an error
       return null;
     }
     return s3Buckets.create({
-      alias,
       name,
+      bucket,
       region,
       accessKey,
       secretKey,
@@ -97,9 +97,9 @@ class DvmResolver {
     });
   }
   @Mutation(() => Boolean) removeS3Bucket(
-    @Arg('alias', () => String) alias: string
+    @Arg('name', () => String) name: string
   ): boolean {
-    return s3Buckets.del({ alias });
+    return s3Buckets.del({ name });
   }
 }
 

@@ -25,10 +25,10 @@ export class S3Storage implements Storage {
 @ObjectType()
 export class S3Bucket {
   @Field()
-  alias: string;
+  name: string;
 
   @Field()
-  name: string;
+  bucket: string;
 
   @Field()
   region: string;
