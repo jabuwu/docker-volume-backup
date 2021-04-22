@@ -153,6 +153,18 @@ export type AddS3BucketMutation = (
   )> }
 );
 
+export type ExportVolumeMutationVariables = Exact<{
+  volume: Scalars['String'];
+  storage: Scalars['String'];
+  fileName?: Maybe<Scalars['String']>;
+}>;
+
+
+export type ExportVolumeMutation = (
+  { __typename?: 'Mutation' }
+  & Pick<Mutation, 'exportVolume'>
+);
+
 export type RemoveS3BucketMutationVariables = Exact<{
   name: Scalars['String'];
 }>;
@@ -231,6 +243,39 @@ export function useAddS3BucketMutation(baseOptions?: Apollo.MutationHookOptions<
 export type AddS3BucketMutationHookResult = ReturnType<typeof useAddS3BucketMutation>;
 export type AddS3BucketMutationResult = Apollo.MutationResult<AddS3BucketMutation>;
 export type AddS3BucketMutationOptions = Apollo.BaseMutationOptions<AddS3BucketMutation, AddS3BucketMutationVariables>;
+export const ExportVolumeDocument = gql`
+    mutation ExportVolume($volume: String!, $storage: String!, $fileName: String) {
+  exportVolume(volume: $volume, storage: $storage, fileName: $fileName)
+}
+    `;
+export type ExportVolumeMutationFn = Apollo.MutationFunction<ExportVolumeMutation, ExportVolumeMutationVariables>;
+
+/**
+ * __useExportVolumeMutation__
+ *
+ * To run a mutation, you first call `useExportVolumeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useExportVolumeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [exportVolumeMutation, { data, loading, error }] = useExportVolumeMutation({
+ *   variables: {
+ *      volume: // value for 'volume'
+ *      storage: // value for 'storage'
+ *      fileName: // value for 'fileName'
+ *   },
+ * });
+ */
+export function useExportVolumeMutation(baseOptions?: Apollo.MutationHookOptions<ExportVolumeMutation, ExportVolumeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ExportVolumeMutation, ExportVolumeMutationVariables>(ExportVolumeDocument, options);
+      }
+export type ExportVolumeMutationHookResult = ReturnType<typeof useExportVolumeMutation>;
+export type ExportVolumeMutationResult = Apollo.MutationResult<ExportVolumeMutation>;
+export type ExportVolumeMutationOptions = Apollo.BaseMutationOptions<ExportVolumeMutation, ExportVolumeMutationVariables>;
 export const RemoveS3BucketDocument = gql`
     mutation RemoveS3Bucket($name: String!) {
   removeS3Bucket(name: $name)

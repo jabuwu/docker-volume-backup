@@ -1,17 +1,71 @@
 import { Link, Text } from '@chakra-ui/layout';
 import withApollo from '../apollo';
-import { useVolumesQuery } from '../generated/graphql';
+import { useVolumesQuery, useExportVolumeMutation } from '../generated/graphql';
 import Wrapper from '../components/wrapper';
 import Title from '../components/title';
-import React from 'react';
-import { Alert, AlertIcon, Button, Skeleton, Spinner, Table, Tbody, Td, Th, Thead, Tr } from '@chakra-ui/react';
+import React, { useState, useRef } from 'react';
+import { Alert, AlertIcon, Button, Skeleton, Spinner, Table, Tbody, Td, Th, Thead, Tr, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Stack, InputGroup, InputLeftAddon, Input, ModalFooter } from '@chakra-ui/react';
 import NextLink from 'next/link';
 import LoadingTr  from '../components/loading-tr';
+
+function exportVolumeFn() {
+  const [ open, setOpen ] = useState(false);
+  const [ volume, setVolume ] = useState('');
+  const [ exportVolume ] = useExportVolumeMutation();
+  const storage = useRef<any>();
+  const fileName = useRef<any>();
+
+  function close() {
+    setOpen(false);
+  }
+
+  function doExport() {
+    exportVolume({
+      variables: {
+        volume,
+        storage: storage.current!.value,
+        fileName: fileName.current!.value || null,
+      },
+    });
+  }
+
+  return {
+    open: (volume: string) => {
+      setOpen(true);
+      setVolume(volume);
+    },
+    jsx: <Modal size="xl" isOpen={ open } onClose={ close }>
+      <ModalOverlay />
+      <ModalContent>
+        <ModalHeader>Export { volume }</ModalHeader>
+        <ModalCloseButton />
+        <ModalBody>
+          <Stack spacing={4}>
+            <InputGroup size="sm">
+              <InputLeftAddon children="Storage" />
+              <Input ref={ storage } />
+            </InputGroup>
+            <InputGroup size="sm">
+              <InputLeftAddon children="File Name" />
+              <Input ref={ fileName } />
+            </InputGroup>
+          </Stack>
+        </ModalBody>
+        <ModalFooter>
+          <Button colorScheme="blue" mr={ 3 } onClick={ doExport }>
+            Export
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
+  }
+}
 
 export default withApollo({ ssr: true })(function(): any {
   const { data, loading, error } = useVolumesQuery();
   let message: JSX.Element | null = null;
   let table: JSX.Element | null = null;
+  const exportVolume = exportVolumeFn();
   if (loading) {
     table = <LoadingTr colSpan={ 3 } />
   } else if (error) {
@@ -37,7 +91,7 @@ export default withApollo({ ssr: true })(function(): any {
           <Text>local</Text>
         </Td>
         <Td>
-          <Button colorScheme="blue">Export</Button>
+          <Button colorScheme="blue" onClick={ () => exportVolume.open(volume.name) }>Export</Button>
         </Td>
       </Tr>
     ))}</>;
@@ -59,6 +113,7 @@ export default withApollo({ ssr: true })(function(): any {
           { table }
         </Tbody>
       </Table>) : null }
+      { exportVolume.jsx }
     </Wrapper>
   )
 });

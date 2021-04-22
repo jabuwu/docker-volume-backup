@@ -10,7 +10,7 @@ export function getStorage(name: string): Storage | null {
   if (name === 'local') {
     return new LocalStorage();
   }
-  const s3Bucket = s3Buckets.findOne({ alias: name });
+  const s3Bucket = s3Buckets.findOne({ name });
   if (s3Bucket) {
     return new S3Storage(s3Bucket);
   }
