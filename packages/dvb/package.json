@@ -1,17 +1,15 @@
 {
-  "name": "dvb",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "docker-volume-backup",
+  "version": "0.0.1",
+  "author": "jabu",
+  "description": "Web based docker volume backup utility for backing up volume data.",
+  "license": "Unlicense",
   "scripts": {
     "start": "node dist/index.js",
     "dev": "ts-node-dev --poll --transpile-only src/index.ts",
     "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "apollo-server-express": "^2.23.0",
     "aws-sdk": "^2.890.0",
