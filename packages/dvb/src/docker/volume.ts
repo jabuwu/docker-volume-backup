@@ -1,5 +1,6 @@
 import { Field, ObjectType } from 'type-graphql';
 import { GraphQLJSON } from '../graphql/scalars/json';
+import { DBList } from '../db';
 
 @ObjectType()
 export class VolumeUsageData {
@@ -25,4 +26,8 @@ export class Volume {
   options: { [key: string]: string } | null;
   @Field(() => VolumeUsageData, { nullable: true })
   usageData?: VolumeUsageData;
+  @Field()
+  pinned: boolean;
 }
+
+export const pinnedVolumes = new DBList<string>('pinnedVolumes');

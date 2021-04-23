@@ -1,0 +1,3 @@
+mutation PinVolume($volume: String!, $pinned: Boolean!)  {
+  pinVolume(volume: $volume, pinned: $pinned)
+}

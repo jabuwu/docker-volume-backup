@@ -1,5 +1,5 @@
 import { Container } from './container';
-import { Volume } from './volume';
+import { Volume, pinnedVolumes } from './volume';
 import { camelCaseObj } from '../utility/camel-case-obj';
 import { find } from 'lodash';
 import { from, interval, Observable } from 'rxjs';
@@ -167,7 +167,12 @@ export class Docker {
 
   async getVolumes(): Promise<Volume[]> {
     const arr: Volume[] = (await dockerode.listVolumes()).Volumes.map(camelCaseObj);
-    arr.sort((a, b) => a.name > b.name ? 1 : -1);
+    arr.forEach(volume => volume.pinned = pinnedVolumes.has(volume.name));
+    arr.sort((a, b) => {
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+      return a.name > b.name ? 1 : -1;
+    });
     return arr;
   }
 }

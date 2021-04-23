@@ -2,5 +2,6 @@ query Volumes {
   volumes {
     name
     driver
+    pinned
   }
 }

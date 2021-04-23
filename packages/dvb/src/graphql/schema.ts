@@ -1,7 +1,7 @@
 import { S3Bucket } from '../storage/s3';
 import { Arg, buildSchemaSync, Mutation, Query, Resolver, Root, Subscription, Int } from 'type-graphql';
 import { Container } from '../docker/container';
-import { Volume } from '../docker/volume';
+import { Volume, pinnedVolumes } from '../docker/volume';
 import { context } from './context';
 import { fromObservable } from './from-observable';
 import { Storage, getStorage } from '../storage';
@@ -72,6 +72,17 @@ class DvmResolver {
       }
     }
     return false;
+  }
+  @Mutation(() => Boolean) pinVolume(
+    @Arg('volume', () => String) volume: string,
+    @Arg('pinned', () => Boolean) pinned: boolean,
+  ): boolean {
+    if (pinned) {
+      pinnedVolumes.add(volume);
+    } else {
+      return pinnedVolumes.remove(volume);
+    }
+    return true;
   }
   @Subscription(() => Volume, { subscribe: fromObservable(context.docker.volumeAdded$) }) volumeAdded(
     @Root() volume: Volume

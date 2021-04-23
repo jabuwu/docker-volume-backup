@@ -62,6 +62,7 @@ export type Mutation = {
   __typename?: 'Mutation';
   exportVolume: Scalars['Boolean'];
   importVolume: Scalars['Boolean'];
+  pinVolume: Scalars['Boolean'];
   addSchedule?: Maybe<Schedule>;
   removeSchedule: Scalars['Boolean'];
   addS3Bucket?: Maybe<S3Bucket>;
@@ -79,6 +80,12 @@ export type MutationExportVolumeArgs = {
 export type MutationImportVolumeArgs = {
   fileName: Scalars['String'];
   storage: Scalars['String'];
+  volume: Scalars['String'];
+};
+
+
+export type MutationPinVolumeArgs = {
+  pinned: Scalars['Boolean'];
   volume: Scalars['String'];
 };
 
@@ -184,6 +191,7 @@ export type Volume = {
   scope: Scalars['String'];
   options?: Maybe<Scalars['JSON']>;
   usageData?: Maybe<VolumeUsageData>;
+  pinned: Scalars['Boolean'];
 };
 
 export type VolumeUsageData = {
@@ -247,6 +255,17 @@ export type ImportVolumeMutationVariables = Exact<{
 export type ImportVolumeMutation = (
   { __typename?: 'Mutation' }
   & Pick<Mutation, 'importVolume'>
+);
+
+export type PinVolumeMutationVariables = Exact<{
+  volume: Scalars['String'];
+  pinned: Scalars['Boolean'];
+}>;
+
+
+export type PinVolumeMutation = (
+  { __typename?: 'Mutation' }
+  & Pick<Mutation, 'pinVolume'>
 );
 
 export type RemoveS3BucketMutationVariables = Exact<{
@@ -326,7 +345,7 @@ export type VolumesQuery = (
   { __typename?: 'Query' }
   & { volumes: Array<(
     { __typename?: 'Volume' }
-    & Pick<Volume, 'name' | 'driver'>
+    & Pick<Volume, 'name' | 'driver' | 'pinned'>
   )> }
 );
 
@@ -477,6 +496,38 @@ export function useImportVolumeMutation(baseOptions?: Apollo.MutationHookOptions
 export type ImportVolumeMutationHookResult = ReturnType<typeof useImportVolumeMutation>;
 export type ImportVolumeMutationResult = Apollo.MutationResult<ImportVolumeMutation>;
 export type ImportVolumeMutationOptions = Apollo.BaseMutationOptions<ImportVolumeMutation, ImportVolumeMutationVariables>;
+export const PinVolumeDocument = gql`
+    mutation PinVolume($volume: String!, $pinned: Boolean!) {
+  pinVolume(volume: $volume, pinned: $pinned)
+}
+    `;
+export type PinVolumeMutationFn = Apollo.MutationFunction<PinVolumeMutation, PinVolumeMutationVariables>;
+
+/**
+ * __usePinVolumeMutation__
+ *
+ * To run a mutation, you first call `usePinVolumeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `usePinVolumeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [pinVolumeMutation, { data, loading, error }] = usePinVolumeMutation({
+ *   variables: {
+ *      volume: // value for 'volume'
+ *      pinned: // value for 'pinned'
+ *   },
+ * });
+ */
+export function usePinVolumeMutation(baseOptions?: Apollo.MutationHookOptions<PinVolumeMutation, PinVolumeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<PinVolumeMutation, PinVolumeMutationVariables>(PinVolumeDocument, options);
+      }
+export type PinVolumeMutationHookResult = ReturnType<typeof usePinVolumeMutation>;
+export type PinVolumeMutationResult = Apollo.MutationResult<PinVolumeMutation>;
+export type PinVolumeMutationOptions = Apollo.BaseMutationOptions<PinVolumeMutation, PinVolumeMutationVariables>;
 export const RemoveS3BucketDocument = gql`
     mutation RemoveS3Bucket($name: String!) {
   removeS3Bucket(name: $name)
@@ -690,6 +741,7 @@ export const VolumesDocument = gql`
   volumes {
     name
     driver
+    pinned
   }
 }
     `;
