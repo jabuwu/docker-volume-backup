@@ -1,0 +1,8 @@
+query StorageBackups($name: String!) {
+  storage(name: $name) {
+    name
+    backups {
+      fileName
+    }
+  }
+}

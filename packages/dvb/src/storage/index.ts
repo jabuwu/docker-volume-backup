@@ -1,8 +1,8 @@
-import { Readable } from 'stream';
+import { Readable, Writable } from 'stream';
 import { LocalStorage } from './local';
 import { S3Bucket, s3Buckets, S3Storage } from './s3';
 import { ObjectType, Field } from 'type-graphql';
-import { assign } from 'lodash';
+import { assign, find } from 'lodash';
 
 @ObjectType()
 export class StorageBackup {
@@ -12,6 +12,7 @@ export class StorageBackup {
 
 export interface StorageInterface {
   write(fileName: string, stream: Readable): Promise<void>;
+  read(fileName: string, stream: Writable): Promise<void>;
   list(): Promise<StorageBackup[]>;
 }
 
@@ -44,6 +45,11 @@ export class Storage {
       }));
     }
     return storages;
+  }
+
+  static get(name: string): Storage | null {
+    const list = Storage.all();
+    return find(list, { name }) || null;
   }
 
   constructor(data: Partial<Storage>) {

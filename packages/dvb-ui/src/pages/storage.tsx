@@ -96,7 +96,7 @@ function addS3BucketModalFn(refetch: () => void) {
           </Stack>
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="green" mr={ 3 } onClick={ add }>
+          <Button colorScheme="green" onClick={ add }>
             Add
           </Button>
         </ModalFooter>

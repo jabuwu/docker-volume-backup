@@ -54,6 +54,25 @@ class DvmResolver {
     }
     return false;
   }
+  @Mutation(() => Boolean) async importVolume(
+    @Arg('volume', () => String) volume: string,
+    @Arg('storage', () => String) storage: string,
+    @Arg('fileName', () => String) fileName: string
+  ) {
+    const storageInstance = getStorage(storage);
+    if (storageInstance) {
+      try {
+        await context.docker.importVolume(volume, async (stream) => {
+          await storageInstance.read(fileName!, stream);
+        });
+        return true;
+      } catch (err) {
+        console.error(err);
+        return false;
+      }
+    }
+    return false;
+  }
   @Subscription(() => Volume, { subscribe: fromObservable(context.docker.volumeAdded$) }) volumeAdded(
     @Root() volume: Volume
   ): Volume {
@@ -70,6 +89,11 @@ class DvmResolver {
   ///
   @Query(() => [Storage]) allStorage() {
     return Storage.all();
+  }
+  @Query(() => Storage, { nullable: true }) storage(
+    @Arg('name', () => String) name: string,
+  ) {
+    return Storage.get(name);
   }
 
   ///

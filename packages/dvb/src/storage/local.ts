@@ -1,6 +1,6 @@
 import { StorageInterface, StorageBackup } from '.';
-import { createWriteStream } from 'fs-extra';
-import { Readable } from 'stream';
+import { createReadStream, createWriteStream } from 'fs-extra';
+import { Readable, Writable } from 'stream';
 import { ensureDirSync, ensureDir } from 'fs-extra';
 import { BACKUPS_DIR } from '../env';
 import klaw from 'klaw';
@@ -21,6 +21,12 @@ export class LocalStorage implements StorageInterface {
         writeStream.end(resolve);
       });
     });
+  }
+  async read(fileName: string, stream: Writable) {
+    const inFile = path.join(workingDir, fileName);
+    const readStream = createReadStream(inFile);
+    await new Promise(resolve => readStream.on('open', resolve));
+    readStream.pipe(stream);
   }
   list(): Promise<StorageBackup[]> {
     return new Promise<StorageBackup[]>((resolve, reject) => {

@@ -5,7 +5,7 @@ import { find } from 'lodash';
 import { from, interval, Observable } from 'rxjs';
 import Dockerode from 'dockerode';
 import { concatMap, switchMap, share, map } from 'rxjs/operators';
-import { PassThrough, Readable } from 'stream';
+import { PassThrough, Readable, Writable } from 'stream';
 
 const dockerode = new Dockerode({ socketPath: '/var/run/docker.sock' });
 
@@ -111,6 +111,49 @@ export class Docker {
       intermediate.end();
       if (exportPromise) {
         await exportPromise;
+      }
+      resolve();
+    });
+  }
+
+  importVolume(name: string, importFn: (stream: Writable) => Promise<any>) {
+    return new Promise<void>(async (resolve, reject) => {
+      await this.pullAlpine();
+      await dockerode.run('alpine', [ 'rm', '-rf', '/volume' ], [], {
+        HostConfig: {
+          AutoRemove: true,
+          Binds: [ `${name}:/volume` ]
+        }
+      });
+      let container = await dockerode.createContainer({
+        Image: 'alpine',
+        Tty: false,
+        Cmd: [ 'tar', '-xzf', '-' ],
+        OpenStdin: true,
+        StdinOnce: true,
+        HostConfig: {
+          AutoRemove: true,
+          Binds: [ `${name}:/volume` ]
+        }
+      });
+      const intermediate = new PassThrough();
+      let importPromise: Promise<void> | undefined;
+      container.attach({ stream: true, hijack: true, stdin: true, stdout: false, stderr: false }, async function (err, stream) {
+        if (err) {
+          reject(err);
+        } else {
+          importPromise = importFn(intermediate);
+          intermediate.pipe(stream!);
+        }
+      });
+      await container.start();
+      let result = await container.wait();
+      if (result.StatusCode !== 0) {
+        throw new Error('Status code: ' + result.StatusCode);
+      }
+      intermediate.end();
+      if (importPromise) {
+        await importPromise;
       }
       resolve();
     });

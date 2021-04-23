@@ -1,5 +1,5 @@
 import { ObjectType, Field } from 'type-graphql';
-import { Readable } from 'stream';
+import { Readable, Writable } from 'stream';
 import { StorageInterface, StorageBackup } from '.';
 import { S3 } from 'aws-sdk';
 import { DBStore } from '../db';
@@ -21,6 +21,18 @@ export class S3Storage implements StorageInterface {
       Bucket: this.bucket.name,
       Key: `${this.bucket.prefix}${fileName}`,
     }).promise();
+  }
+  read(fileName: string, stream: Writable) {
+    return new Promise<void>((resolve, reject) => {
+      const s3 = this.s3();
+      const readStream = s3.getObject({
+        Bucket: this.bucket.name,
+        Key: `${this.bucket.prefix}${fileName}`,
+      }).createReadStream()
+      readStream.pipe(stream);
+      readStream.on('end', resolve);
+      readStream.on('error', reject);
+    });
   }
   async list(): Promise<StorageBackup[]> {
     const s3 = this.s3();

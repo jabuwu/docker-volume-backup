@@ -61,6 +61,7 @@ export type ContainerPort = {
 export type Mutation = {
   __typename?: 'Mutation';
   exportVolume: Scalars['Boolean'];
+  importVolume: Scalars['Boolean'];
   addSchedule?: Maybe<Schedule>;
   removeSchedule: Scalars['Boolean'];
   addS3Bucket?: Maybe<S3Bucket>;
@@ -70,6 +71,13 @@ export type Mutation = {
 
 export type MutationExportVolumeArgs = {
   fileName?: Maybe<Scalars['String']>;
+  storage: Scalars['String'];
+  volume: Scalars['String'];
+};
+
+
+export type MutationImportVolumeArgs = {
+  fileName: Scalars['String'];
   storage: Scalars['String'];
   volume: Scalars['String'];
 };
@@ -106,10 +114,16 @@ export type Query = {
   containers: Array<Container>;
   volumes: Array<Volume>;
   allStorage: Array<Storage>;
+  storage?: Maybe<Storage>;
   schedules: Array<Schedule>;
   schedule?: Maybe<Schedule>;
   s3Buckets: Array<S3Bucket>;
   s3Bucket?: Maybe<S3Bucket>;
+};
+
+
+export type QueryStorageArgs = {
+  name: Scalars['String'];
 };
 
 
@@ -144,6 +158,12 @@ export type Storage = {
   type: Scalars['String'];
   name: Scalars['String'];
   s3Bucket?: Maybe<S3Bucket>;
+  backups: Array<StorageBackup>;
+};
+
+export type StorageBackup = {
+  __typename?: 'StorageBackup';
+  fileName: Scalars['String'];
 };
 
 export type Subscription = {
@@ -217,6 +237,18 @@ export type ExportVolumeMutation = (
   & Pick<Mutation, 'exportVolume'>
 );
 
+export type ImportVolumeMutationVariables = Exact<{
+  volume: Scalars['String'];
+  storage: Scalars['String'];
+  fileName: Scalars['String'];
+}>;
+
+
+export type ImportVolumeMutation = (
+  { __typename?: 'Mutation' }
+  & Pick<Mutation, 'importVolume'>
+);
+
 export type RemoveS3BucketMutationVariables = Exact<{
   name: Scalars['String'];
 }>;
@@ -267,6 +299,23 @@ export type StorageQuery = (
   & { s3Buckets: Array<(
     { __typename?: 'S3Bucket' }
     & Pick<S3Bucket, 'name' | 'bucket' | 'prefix'>
+  )> }
+);
+
+export type StorageBackupsQueryVariables = Exact<{
+  name: Scalars['String'];
+}>;
+
+
+export type StorageBackupsQuery = (
+  { __typename?: 'Query' }
+  & { storage?: Maybe<(
+    { __typename?: 'Storage' }
+    & Pick<Storage, 'name'>
+    & { backups: Array<(
+      { __typename?: 'StorageBackup' }
+      & Pick<StorageBackup, 'fileName'>
+    )> }
   )> }
 );
 
@@ -395,6 +444,39 @@ export function useExportVolumeMutation(baseOptions?: Apollo.MutationHookOptions
 export type ExportVolumeMutationHookResult = ReturnType<typeof useExportVolumeMutation>;
 export type ExportVolumeMutationResult = Apollo.MutationResult<ExportVolumeMutation>;
 export type ExportVolumeMutationOptions = Apollo.BaseMutationOptions<ExportVolumeMutation, ExportVolumeMutationVariables>;
+export const ImportVolumeDocument = gql`
+    mutation ImportVolume($volume: String!, $storage: String!, $fileName: String!) {
+  importVolume(volume: $volume, storage: $storage, fileName: $fileName)
+}
+    `;
+export type ImportVolumeMutationFn = Apollo.MutationFunction<ImportVolumeMutation, ImportVolumeMutationVariables>;
+
+/**
+ * __useImportVolumeMutation__
+ *
+ * To run a mutation, you first call `useImportVolumeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useImportVolumeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [importVolumeMutation, { data, loading, error }] = useImportVolumeMutation({
+ *   variables: {
+ *      volume: // value for 'volume'
+ *      storage: // value for 'storage'
+ *      fileName: // value for 'fileName'
+ *   },
+ * });
+ */
+export function useImportVolumeMutation(baseOptions?: Apollo.MutationHookOptions<ImportVolumeMutation, ImportVolumeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ImportVolumeMutation, ImportVolumeMutationVariables>(ImportVolumeDocument, options);
+      }
+export type ImportVolumeMutationHookResult = ReturnType<typeof useImportVolumeMutation>;
+export type ImportVolumeMutationResult = Apollo.MutationResult<ImportVolumeMutation>;
+export type ImportVolumeMutationOptions = Apollo.BaseMutationOptions<ImportVolumeMutation, ImportVolumeMutationVariables>;
 export const RemoveS3BucketDocument = gql`
     mutation RemoveS3Bucket($name: String!) {
   removeS3Bucket(name: $name)
@@ -565,6 +647,44 @@ export function useStorageLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<St
 export type StorageQueryHookResult = ReturnType<typeof useStorageQuery>;
 export type StorageLazyQueryHookResult = ReturnType<typeof useStorageLazyQuery>;
 export type StorageQueryResult = Apollo.QueryResult<StorageQuery, StorageQueryVariables>;
+export const StorageBackupsDocument = gql`
+    query StorageBackups($name: String!) {
+  storage(name: $name) {
+    name
+    backups {
+      fileName
+    }
+  }
+}
+    `;
+
+/**
+ * __useStorageBackupsQuery__
+ *
+ * To run a query within a React component, call `useStorageBackupsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useStorageBackupsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useStorageBackupsQuery({
+ *   variables: {
+ *      name: // value for 'name'
+ *   },
+ * });
+ */
+export function useStorageBackupsQuery(baseOptions: Apollo.QueryHookOptions<StorageBackupsQuery, StorageBackupsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<StorageBackupsQuery, StorageBackupsQueryVariables>(StorageBackupsDocument, options);
+      }
+export function useStorageBackupsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<StorageBackupsQuery, StorageBackupsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<StorageBackupsQuery, StorageBackupsQueryVariables>(StorageBackupsDocument, options);
+        }
+export type StorageBackupsQueryHookResult = ReturnType<typeof useStorageBackupsQuery>;
+export type StorageBackupsLazyQueryHookResult = ReturnType<typeof useStorageBackupsLazyQuery>;
+export type StorageBackupsQueryResult = Apollo.QueryResult<StorageBackupsQuery, StorageBackupsQueryVariables>;
 export const VolumesDocument = gql`
     query Volumes {
   volumes {

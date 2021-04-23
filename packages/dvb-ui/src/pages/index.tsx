@@ -1,10 +1,10 @@
 import { Link, Text } from '@chakra-ui/layout';
 import withApollo from '../apollo';
-import { useVolumesQuery, useExportVolumeMutation, useAllStorageQuery } from '../generated/graphql';
+import { useVolumesQuery, useExportVolumeMutation, useImportVolumeMutation, useAllStorageQuery, useStorageBackupsLazyQuery } from '../generated/graphql';
 import Wrapper from '../components/wrapper';
 import Title from '../components/title';
-import React, { useState, useRef, useMemo } from 'react';
-import { Alert, AlertIcon, Button, Box, Skeleton, Spinner, Table, Tbody, Td, Th, Thead, Tr, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Stack, InputGroup, InputLeftAddon, Input, ModalFooter, Select, Flex } from '@chakra-ui/react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
+import { Alert, AlertIcon, Button, Box, Skeleton, Spinner, Table, Tbody, Td, Th, Thead, Tr, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Stack, InputGroup, InputLeftAddon, Input, ModalFooter, Select, Flex, RadioGroup, Radio } from '@chakra-ui/react';
 import NextLink from 'next/link';
 import LoadingTr  from '../components/loading-tr';
 
@@ -70,8 +70,112 @@ function exportVolumeFn() {
           </Stack>
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="blue" mr={ 3 } onClick={ backup } disabled={ !storageData || !storage } isLoading={ working }>
+          <Button colorScheme="blue" onClick={ backup } disabled={ !storageData || !storage } isLoading={ working }>
             Backup
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
+  }
+}
+
+function importVolumeFn() {
+  const [ open, setOpen ] = useState(false);
+  const [ working, setWorking ] = useState(false);
+  const [ volume, setVolume ] = useState('');
+  const [ importVolume ] = useImportVolumeMutation();
+  const [ getStorageBackups, { data: backupsData, loading: backupsLoading, error: backupsError } ] = useStorageBackupsLazyQuery({ fetchPolicy: 'network-only' });
+  const { data: storageData, loading: storageLoading, error: storageError } = useAllStorageQuery({ fetchPolicy: 'network-only' });
+  const [ storage, setStorage ] = useState('');
+  const [ filter, setFilter ] = useState('');
+  const [ fileName, setFileName ] = useState('');
+
+  useEffect(() => {
+    if (storage) {
+      setFileName('');
+      getStorageBackups({ variables: { name: storage } });
+    }
+  }, [ storage ]);
+  useEffect(() => {
+    setFileName('');
+  }, [ filter ]);
+
+  function close() {
+    setOpen(false);
+  }
+
+  async function backup() {
+    setWorking(true);
+    await importVolume({
+      variables: {
+        volume,
+        fileName,
+        storage
+      },
+    });
+    setWorking(false);
+    setOpen(false);
+  }
+
+  return {
+    open: (volume: string) => {
+      setStorage('');
+      setFileName('');
+      setFilter(`${volume}-`);
+      setOpen(true);
+      setVolume(volume);
+    },
+    jsx: <Modal size="xl" isOpen={ open } onClose={ close }>
+      <ModalOverlay />
+      <ModalContent>
+        <ModalHeader>Restore { volume }</ModalHeader>
+        <ModalCloseButton />
+        <ModalBody>
+          <Stack spacing={4}>
+            { storageError ? <>
+              <Alert status="error">
+                <AlertIcon />
+                Failed to fetch storage information.
+              </Alert>
+            </> : null }
+            { storageLoading ? <>
+              <Select placeholder="Loading Storage..." disabled={ true }></Select>
+            </> : null }
+            { !!storageData ? <>
+              <Select placeholder="Select Storage" value={ storage } onChange={ e => setStorage(e.target.value) }>
+                { storageData.allStorage.map(storage => (
+                  <option key={ storage.name } value={ storage.name }>{ storage.name }</option>
+                )) }
+              </Select>
+            </> : null }
+            { storage && !!backupsData && !!backupsData.storage ?
+              <>
+                <InputGroup size="sm">
+                  <InputLeftAddon children="Filter" />
+                  <Input value={ filter } onChange={ e => setFilter(e.target.value) } />
+                </InputGroup>
+                <RadioGroup defaultValue="1" value={ fileName } onChange={ value => setFileName(value) }>
+                  <Stack>
+                    { backupsData.storage!.backups.filter(backup => backup.fileName.startsWith(filter)).map(backup => (
+                      <Radio key={ backup.fileName } value={ backup.fileName }>{ backup.fileName}</Radio>
+                    )) }
+                    { backupsData.storage!.backups.filter(backup => backup.fileName.startsWith(filter)).length === 0 ?
+                      <Text>{ !!filter ? 'No files found matching the filter.' : 'No files found.' }</Text>
+                    : null }
+                  </Stack>
+                </RadioGroup>
+              </>
+            : null }
+            { storage && !backupsData ?
+              <Box textAlign="center" mt={ 4 }>
+                <Spinner size="xl" />
+              </Box>
+            : null }
+          </Stack>
+        </ModalBody>
+        <ModalFooter>
+          <Button colorScheme="orange" onClick={ backup } disabled={ !storageData || !storage || !fileName } isLoading={ working }>
+            Restore
           </Button>
         </ModalFooter>
       </ModalContent>
@@ -84,6 +188,7 @@ export default withApollo({ ssr: true })(function(): any {
   let message: JSX.Element | null = null;
   let table: JSX.Element | null = null;
   const exportVolume = exportVolumeFn();
+  const importVolume = importVolumeFn();
   if (loading) {
     table = <LoadingTr colSpan={ 3 } />
   } else if (error) {
@@ -108,6 +213,7 @@ export default withApollo({ ssr: true })(function(): any {
         </Td>
         <Td textAlign="right">
           <Button colorScheme="blue" onClick={ () => exportVolume.open(volume.name) }>Backup</Button>
+          <Button colorScheme="orange" ml={ 2 } onClick={ () => importVolume.open(volume.name) }>Restore</Button>
         </Td>
       </Tr>
     ))}</>;
@@ -135,6 +241,7 @@ export default withApollo({ ssr: true })(function(): any {
         </Tbody>
       </Table>) : null }
       { exportVolume.jsx }
+      { importVolume.jsx }
     </Wrapper>
   )
 });

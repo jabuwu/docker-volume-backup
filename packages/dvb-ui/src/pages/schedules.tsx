@@ -84,7 +84,7 @@ function addScheduleModalFn(refetch: () => void) {
           </Stack>
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="green" mr={ 3 } onClick={ add } disabled={ !volume || !storage }>
+          <Button colorScheme="green" onClick={ add } disabled={ !volume || !storage }>
             Add
           </Button>
         </ModalFooter>
