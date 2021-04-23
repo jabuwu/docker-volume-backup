@@ -3,6 +3,9 @@ services:
   docker-volume-backup:
     build: .
     restart: always
+    environment:
+      - AUTH_USERNAME=user
+      - AUTH_PASSWORD=pass
     ports:
       - "1999:1999"
     volumes:

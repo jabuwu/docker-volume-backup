@@ -1,5 +1,6 @@
 server {
         listen 1999;
+        #auth
         location / {
                 proxy_pass http://localhost:3000;
                 server_name_in_redirect off;
