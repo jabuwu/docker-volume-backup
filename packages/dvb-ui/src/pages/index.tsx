@@ -3,7 +3,7 @@ import withApollo from '../apollo';
 import { useVolumesQuery, useExportVolumeMutation, useAllStorageQuery } from '../generated/graphql';
 import Wrapper from '../components/wrapper';
 import Title from '../components/title';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { Alert, AlertIcon, Button, Box, Skeleton, Spinner, Table, Tbody, Td, Th, Thead, Tr, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Stack, InputGroup, InputLeftAddon, Input, ModalFooter, Select, Flex } from '@chakra-ui/react';
 import NextLink from 'next/link';
 import LoadingTr  from '../components/loading-tr';
@@ -15,19 +15,19 @@ function exportVolumeFn() {
   const [ exportVolume ] = useExportVolumeMutation();
   const { data: storageData, loading: storageLoading, error: storageError } = useAllStorageQuery({ fetchPolicy: 'network-only' });
   const [ storage, setStorage ] = useState('');
-  const fileName = useRef<any>();
+  const [ fileName, setFileName ] = useState('');
 
   function close() {
     setOpen(false);
   }
 
-  async function doExport() {
+  async function backup() {
     setWorking(true);
     await exportVolume({
       variables: {
         volume,
         storage,
-        fileName: fileName.current!.value || null,
+        fileName,
       },
     });
     setWorking(false);
@@ -36,13 +36,14 @@ function exportVolumeFn() {
 
   return {
     open: (volume: string) => {
+      setFileName(`${volume}-${Date.now()}.tgz`);
       setOpen(true);
       setVolume(volume);
     },
     jsx: <Modal size="xl" isOpen={ open } onClose={ close }>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Export { volume }</ModalHeader>
+        <ModalHeader>Backup { volume }</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           <Stack spacing={4}>
@@ -64,13 +65,13 @@ function exportVolumeFn() {
             </> : null }
             <InputGroup size="sm">
               <InputLeftAddon children="File Name" />
-              <Input ref={ fileName } />
+              <Input value={ fileName } onChange={ e => setFileName(e.target.value) } />
             </InputGroup>
           </Stack>
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="blue" mr={ 3 } onClick={ doExport } disabled={ !storageData || !storage } isLoading={ working }>
-            Export
+          <Button colorScheme="blue" mr={ 3 } onClick={ backup } disabled={ !storageData || !storage } isLoading={ working }>
+            Backup
           </Button>
         </ModalFooter>
       </ModalContent>
@@ -106,7 +107,7 @@ export default withApollo({ ssr: true })(function(): any {
           <Text>{ volume.driver }</Text>
         </Td>
         <Td textAlign="right">
-          <Button colorScheme="blue" onClick={ () => exportVolume.open(volume.name) }>Export</Button>
+          <Button colorScheme="blue" onClick={ () => exportVolume.open(volume.name) }>Backup</Button>
         </Td>
       </Tr>
     ))}</>;
