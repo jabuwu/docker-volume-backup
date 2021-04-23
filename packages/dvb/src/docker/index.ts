@@ -117,10 +117,14 @@ export class Docker {
   }
 
   async getContainers(): Promise<Container[]> {
-    return (await dockerode.listContainers()).map(camelCaseObj);
+    const arr: Container[] = (await dockerode.listContainers()).map(camelCaseObj);
+    arr.sort((a, b) => a.id > b.id ? 1 : -1);
+    return arr;
   }
 
   async getVolumes(): Promise<Volume[]> {
-    return (await dockerode.listVolumes()).Volumes.map(camelCaseObj);
+    const arr: Volume[] = (await dockerode.listVolumes()).Volumes.map(camelCaseObj);
+    arr.sort((a, b) => a.name > b.name ? 1 : -1);
+    return arr;
   }
 }
