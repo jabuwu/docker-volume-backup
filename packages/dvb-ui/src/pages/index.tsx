@@ -4,7 +4,7 @@ import { useVolumesQuery, useExportVolumeMutation, useAllStorageQuery } from '..
 import Wrapper from '../components/wrapper';
 import Title from '../components/title';
 import React, { useState, useRef } from 'react';
-import { Alert, AlertIcon, Button, Skeleton, Spinner, Table, Tbody, Td, Th, Thead, Tr, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Stack, InputGroup, InputLeftAddon, Input, ModalFooter, Select } from '@chakra-ui/react';
+import { Alert, AlertIcon, Button, Box, Skeleton, Spinner, Table, Tbody, Td, Th, Thead, Tr, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Stack, InputGroup, InputLeftAddon, Input, ModalFooter, Select, Flex } from '@chakra-ui/react';
 import NextLink from 'next/link';
 import LoadingTr  from '../components/loading-tr';
 
@@ -12,7 +12,7 @@ function exportVolumeFn() {
   const [ open, setOpen ] = useState(false);
   const [ volume, setVolume ] = useState('');
   const [ exportVolume ] = useExportVolumeMutation();
-  const { data: storageData, loading: storageLoading, error: storageError } = useAllStorageQuery();
+  const { data: storageData, loading: storageLoading, error: storageError } = useAllStorageQuery({ fetchPolicy: 'network-only' });
   const [ storage, setStorage ] = useState('');
   const fileName = useRef<any>();
 
@@ -75,7 +75,7 @@ function exportVolumeFn() {
 }
 
 export default withApollo({ ssr: true })(function(): any {
-  const { data, loading, error } = useVolumesQuery();
+  const { data, loading, error, refetch } = useVolumesQuery({ fetchPolicy: 'network-only', notifyOnNetworkStatusChange: true });
   let message: JSX.Element | null = null;
   let table: JSX.Element | null = null;
   const exportVolume = exportVolumeFn();
@@ -85,7 +85,7 @@ export default withApollo({ ssr: true })(function(): any {
     message = (
       <Alert status="error" mt={ 2 }>
         <AlertIcon />
-        Failed to fetch volumes.
+        Failed to fetch volumes. { error.message }
       </Alert>
     );
   } else if (data.volumes.length === 0) {
@@ -103,7 +103,7 @@ export default withApollo({ ssr: true })(function(): any {
         <Td>
           <Text>local</Text>
         </Td>
-        <Td>
+        <Td textAlign="right">
           <Button colorScheme="blue" onClick={ () => exportVolume.open(volume.name) }>Export</Button>
         </Td>
       </Tr>
@@ -112,14 +112,19 @@ export default withApollo({ ssr: true })(function(): any {
   return (
     <Wrapper>
       <Title>Volumes</Title>
-      <Text as="h1" fontSize="4xl">Volumes { loading ? <Spinner size="md" /> : null }</Text>
+      <Flex mt={ 4 }>
+        <Text as="h1" fontSize="4xl">Volumes { loading ? <Spinner size="md" /> : null }</Text>
+        <Box ml="auto" mt="auto">
+          <Button size="sm" ml={ 2 } colorScheme="green" onClick={ () => refetch() } isLoading={ loading }>Refresh</Button>
+        </Box>
+      </Flex>
       { message }
       { table ? (<Table variant="striped">
         <Thead>
           <Tr>
             <Th>Name</Th>
             <Th>Driver</Th>
-            <Th>Operations</Th>
+            <Th></Th>
           </Tr>
         </Thead>
         <Tbody>

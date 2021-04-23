@@ -8,6 +8,7 @@ import { useState, useRef } from 'react';
 import {
   Alert,
   AlertIcon,
+  Box,
   Spinner,
   Table,
   Tbody,
@@ -30,7 +31,7 @@ import {
   InputRightAddon
 } from '@chakra-ui/react';
 
-function addS3BucketModalFn() {
+function addS3BucketModalFn(refetch: () => void) {
   const [ open, setOpen ] = useState(false);
   const [ addS3Bucket ] = useAddS3BucketMutation();
   const name = useRef<any>();
@@ -44,8 +45,8 @@ function addS3BucketModalFn() {
     setOpen(false);
   }
 
-  function add() {
-    addS3Bucket({
+  async function add() {
+    await addS3Bucket({
       variables: {
         name: name.current!.value,
         bucket: bucket.current!.value,
@@ -55,6 +56,8 @@ function addS3BucketModalFn() {
         prefix: prefix.current!.value,
       }
     });
+    setOpen(false);
+    refetch();
   }
 
   return {
@@ -103,11 +106,11 @@ function addS3BucketModalFn() {
 }
 
 export default withApollo({ ssr: true })(function(): any {
-  const { data, loading, error } = useStorageQuery();
+  const { data, loading, error, refetch } = useStorageQuery({ fetchPolicy: 'network-only', errorPolicy: 'none', notifyOnNetworkStatusChange: true });
   let message: JSX.Element | null = null;
   let s3Table: JSX.Element | null = null;
   let s3Message: JSX.Element | null = null;
-  const addS3BucketModal = addS3BucketModalFn();
+  const addS3BucketModal = addS3BucketModalFn(refetch);
   const [ removeS3Bucket ] = useRemoveS3BucketMutation();
   if (loading) {
     s3Table = <LoadingTr colSpan={ 4 } />
@@ -115,7 +118,7 @@ export default withApollo({ ssr: true })(function(): any {
     message = (
       <Alert status="error" mt={ 2 }>
         <AlertIcon />
-        Failed to fetch storage information.
+        Failed to fetch storage information. { error.message }
       </Alert>
     );
     s3Message = <Text mt={ 2 }>Nothing to see here.</Text>;
@@ -133,8 +136,8 @@ export default withApollo({ ssr: true })(function(): any {
         <Td>
           <Text>{ s3Bucket.prefix}</Text>
         </Td>
-        <Td>
-          <Button colorScheme="red" onClick={ () => removeS3Bucket({ variables: { name: s3Bucket.name } }) }>Remove</Button>
+        <Td textAlign="right">
+          <Button colorScheme="red" onClick={ async () => { await removeS3Bucket({ variables: { name: s3Bucket.name } }); refetch() } }>Remove</Button>
         </Td>
       </Tr>
     ))}</>;
@@ -146,7 +149,10 @@ export default withApollo({ ssr: true })(function(): any {
       { message }
       <Flex mt={ 4 }>
         <Text fontSize="xl">S3 Buckets</Text>
-        { (!loading && !error) ? <Button size="sm" ml="auto" colorScheme="green" onClick={ addS3BucketModal.open }>Add S3 Bucket</Button> : null }
+        <Box ml="auto" mt="auto">
+          <Button size="sm" colorScheme="blue" onClick={ addS3BucketModal.open } isLoading={ loading } disable={ error }>Add S3 Bucket</Button>
+          <Button size="sm" ml={ 2 } colorScheme="green" onClick={ () => refetch() } isLoading={ loading }>Refresh</Button>
+        </Box>
       </Flex>
       { s3Message }
       { s3Table ? (<Table variant="striped">
@@ -155,7 +161,7 @@ export default withApollo({ ssr: true })(function(): any {
             <Th>Name</Th>
             <Th>Bucket</Th>
             <Th>Prefix</Th>
-            <Th>Operations</Th>
+            <Th></Th>
           </Tr>
         </Thead>
         <Tbody>

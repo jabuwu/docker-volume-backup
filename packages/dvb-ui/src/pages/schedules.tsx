@@ -4,15 +4,15 @@ import { useSchedulesQuery, useAllStorageQuery, useAddScheduleMutation, useVolum
 import Wrapper from '../components/wrapper';
 import Title from '../components/title';
 import React, { useState, useRef } from 'react';
-import { Alert, AlertIcon, Button, Skeleton, Spinner, Table, Tbody, Td, Th, Thead, Tr, Flex, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Stack, InputGroup, InputLeftAddon, Input, ModalFooter, Select, NumberInput, NumberInputField, NumberInputStepper, NumberIncrementStepper, NumberDecrementStepper } from '@chakra-ui/react';
+import { Alert, AlertIcon, Box, Button, Skeleton, Spinner, Table, Tbody, Td, Th, Thead, Tr, Flex, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Stack, InputGroup, InputLeftAddon, Input, ModalFooter, Select, NumberInput, NumberInputField, NumberInputStepper, NumberIncrementStepper, NumberDecrementStepper } from '@chakra-ui/react';
 import NextLink from 'next/link';
 import LoadingTr  from '../components/loading-tr';
 
-function addScheduleModalFn() {
+function addScheduleModalFn(refetch: () => void) {
   const [ open, setOpen ] = useState(false);
   const [ addSchedule ] = useAddScheduleMutation();
-  const { data: volumeData, loading: volumeLoading, error: volumeError } = useVolumesQuery();
-  const { data: storageData, loading: storageLoading, error: storageError } = useAllStorageQuery();
+  const { data: volumeData, loading: volumeLoading, error: volumeError } = useVolumesQuery({ fetchPolicy: 'network-only' });
+  const { data: storageData, loading: storageLoading, error: storageError } = useAllStorageQuery({ fetchPolicy: 'network-only' });
   const [ storage, setStorage ] = useState('');
   const [ volume, setVolume ] = useState('');
   const hours = useRef<any>();
@@ -21,14 +21,16 @@ function addScheduleModalFn() {
     setOpen(false);
   }
 
-  function add() {
-    addSchedule({
+  async function add() {
+    await addSchedule({
       variables: {
         storage,
         volume,
         hours: Number(hours.current!.value),
       }
     });
+    setOpen(false);
+    refetch();
   }
 
   return {
@@ -43,7 +45,7 @@ function addScheduleModalFn() {
             { storageError ? <>
               <Alert status="error">
                 <AlertIcon />
-                Failed to fetch storage information.
+                Failed to fetch storage information. { storageError.message }
               </Alert>
             </> : null }
             { storageLoading ? <>
@@ -59,7 +61,7 @@ function addScheduleModalFn() {
             { volumeError ? <>
               <Alert status="error">
                 <AlertIcon />
-                Failed to fetch volume information.
+                Failed to fetch volume information. { volumeError.message }
               </Alert>
             </> : null }
             { volumeLoading ? <>
@@ -92,10 +94,10 @@ function addScheduleModalFn() {
 }
 
 export default withApollo({ ssr: true })(function(): any {
-  const { data, loading, error } = useSchedulesQuery();
+  const { data, loading, error, refetch } = useSchedulesQuery({ fetchPolicy: 'network-only', notifyOnNetworkStatusChange: true });
   let message: JSX.Element | null = null;
   let table: JSX.Element | null = null;
-  const addScheduleModal = addScheduleModalFn();
+  const addScheduleModal = addScheduleModalFn(refetch);
   const [ removeSchedule ] = useRemoveScheduleMutation();
   if (loading) {
     table = <LoadingTr colSpan={ 4 } />
@@ -103,7 +105,7 @@ export default withApollo({ ssr: true })(function(): any {
     message = (
       <Alert status="error" mt={ 2 }>
         <AlertIcon />
-        Failed to fetch schedules.
+        Failed to fetch schedules. { error.message }
       </Alert>
     );
   } else if (data.schedules.length === 0) {
@@ -122,8 +124,8 @@ export default withApollo({ ssr: true })(function(): any {
         <Td>
           <Text>{ schedule.hours }</Text>
         </Td>
-        <Td>
-          <Button colorScheme="red" onClick={ () => removeSchedule({ variables: { id: schedule.id } }) }>Remove</Button>
+        <Td textAlign="right">
+          <Button colorScheme="red" onClick={ async () => { await removeSchedule({ variables: { id: schedule.id } }); refetch() } }>Remove</Button>
         </Td>
       </Tr>
     ))}</>;
@@ -133,7 +135,10 @@ export default withApollo({ ssr: true })(function(): any {
       <Title>Schedules</Title>
       <Flex mt={ 4 }>
         <Text as="h1" fontSize="4xl">Schedules { loading ? <Spinner size="md" /> : null }</Text>
-        { (!loading && !error) ? <Button size="sm" ml="auto" mt="auto" colorScheme="green" onClick={ addScheduleModal.open }>Add Schedule</Button> : null }
+        <Box ml="auto" mt="auto">
+          <Button size="sm" colorScheme="blue" onClick={ addScheduleModal.open } isLoading={ loading } disable={ error }>Add Schedule</Button>
+          <Button size="sm" ml={ 2 } colorScheme="green" onClick={ () => refetch() } isLoading={ loading }>Refresh</Button>
+        </Box>
       </Flex>
       { message }
       { table ? (<Table variant="striped">
@@ -142,7 +147,7 @@ export default withApollo({ ssr: true })(function(): any {
             <Th>Volume</Th>
             <Th>Storage</Th>
             <Th>Hours</Th>
-            <Th>Operations</Th>
+            <Th></Th>
           </Tr>
         </Thead>
         <Tbody>

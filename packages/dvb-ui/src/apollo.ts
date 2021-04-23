@@ -29,7 +29,20 @@ const splitLink = split(
 );
 const apolloClient = new ApolloClient({
   link: splitLink,
-  cache: new InMemoryCache()
+  cache: new InMemoryCache({
+    typePolicies: {
+      Volume: {
+        keyFields: [ 'name' ]
+      },
+      Storage: {
+        keyFields: [ 'name' ]
+      },
+      S3Bucket: {
+        keyFields: [ 'name' ]
+      },
+    },
+  }),
+  connectToDevTools: true,
 });
  
 export default withApollo(apolloClient);
