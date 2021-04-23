@@ -3,9 +3,10 @@ import { Box, ChakraProvider, Flex, Link, Text } from '@chakra-ui/react';
 import NextLink from 'next/link';
 import { useRouter } from 'next/router';
 export function useScroll() {
-  const [ state, setState ] = useState(() => ({ x: window.pageXOffset, y: window.pageYOffset }));
+  const currentState = () => (typeof window === 'undefined' ? { x: 0, y: 0 } : { x: window.pageXOffset, y: window.pageYOffset });
+  const [ state, setState ] = useState(currentState);
   const handleScroll = useMemo(() => function(event: any) {
-    setState({ x: window.pageXOffset, y: window.pageYOffset });
+    setState(currentState());
   }, []);
   useEffect(() => {
     window.addEventListener('scroll', handleScroll);
