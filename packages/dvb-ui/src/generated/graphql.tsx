@@ -277,7 +277,7 @@ export type VolumesQuery = (
   { __typename?: 'Query' }
   & { volumes: Array<(
     { __typename?: 'Volume' }
-    & Pick<Volume, 'name'>
+    & Pick<Volume, 'name' | 'driver'>
   )> }
 );
 
@@ -569,6 +569,7 @@ export const VolumesDocument = gql`
     query Volumes {
   volumes {
     name
+    driver
   }
 }
     `;

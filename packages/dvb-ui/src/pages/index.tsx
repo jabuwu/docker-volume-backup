@@ -103,7 +103,7 @@ export default withApollo({ ssr: true })(function(): any {
           <Text fontWeight="bold">{ volume.name }</Text>
         </Td>
         <Td>
-          <Text>local</Text>
+          <Text>{ volume.driver }</Text>
         </Td>
         <Td textAlign="right">
           <Button colorScheme="blue" onClick={ () => exportVolume.open(volume.name) }>Export</Button>
