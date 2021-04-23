@@ -1,5 +1,5 @@
 tasks:
-  - init: lerna bootstrap
+  - init: npx lerna bootstrap
     command: ./start-gitpod.sh
 ports:
   - port: 1998
