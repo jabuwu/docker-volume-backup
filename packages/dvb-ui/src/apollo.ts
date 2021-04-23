@@ -3,20 +3,25 @@ import { ApolloClient, InMemoryCache } from '@apollo/client';
 import { WebSocketLink } from '@apollo/client/link/ws';
 import { split, HttpLink } from '@apollo/client';
 import { getMainDefinition } from '@apollo/client/utilities';
-import ws from 'ws';
+
+const isServer = typeof window === 'undefined';
+
+let wsUri = process.env.NEXT_PUBLIC_GRAPHQL_WS || 'ws://localhost:1998/graphql';
+if (!isServer && !wsUri.startsWith('wss://')  && !wsUri.startsWith('ws://')) {
+  wsUri = ((window.location.protocol === 'https:') ? 'wss://' : 'ws://') + window.location.host + wsUri;
+}
 
 const httpLink = new HttpLink({
-  uri: 'https://1998-moccasin-constrictor-hcfy8ek6.ws-us03.gitpod.io/graphql',
+  uri: process.env.NEXT_PUBLIC_GRAPHQL || 'http://localhost:1998/graphql',
   credentials: 'same-origin',
 });
-const wsLink = new WebSocketLink({
-  webSocketImpl: typeof window == 'undefined' ? ws : undefined,
-  uri: 'wss://1998-moccasin-constrictor-hcfy8ek6.ws-us03.gitpod.io/graphql',
+const wsLink = !isServer ? new WebSocketLink({
+  uri: wsUri,
   options: {
     reconnect: true,
   }
-});
-const splitLink = split(
+}) : null;
+const splitLink = isServer ? httpLink : split(
   ({ query }) => {
     const definition = getMainDefinition(query);
     return (

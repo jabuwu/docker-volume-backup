@@ -1,0 +1,8 @@
+node_modules/
+
+packages/dvb/node_modules/
+packages/dvb/dist/
+packages/dvb/dvb.db
+
+packages/dvb-ui/node_modules/
+packages/dvb-ui/.next/

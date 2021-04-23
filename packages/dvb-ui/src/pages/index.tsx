@@ -96,9 +96,7 @@ export default withApollo({ ssr: true })(function(): any {
     table = <>{ data.volumes.map(volume => (
       <Tr key={ volume.name }>
         <Td>
-          <NextLink href={ `/volumes/${volume.name}` }>
-            <Link fontWeight="bold">{ volume.name }</Link>
-          </NextLink>
+          <Text fontWeight="bold">{ volume.name }</Text>
         </Td>
         <Td>
           <Text>local</Text>

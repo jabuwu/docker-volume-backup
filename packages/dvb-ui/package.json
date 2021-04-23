@@ -19,8 +19,7 @@
     "next-apollo": "^5.0.4",
     "react": "17.0.2",
     "react-dom": "17.0.2",
-    "subscriptions-transport-ws": "^0.9.18",
-    "ws": "^7.4.5"
+    "subscriptions-transport-ws": "^0.9.18"
   },
   "devDependencies": {
     "@graphql-codegen/cli": "^1.21.4",
@@ -28,7 +27,6 @@
     "@graphql-codegen/typescript-operations": "^1.17.16",
     "@graphql-codegen/typescript-react-apollo": "^2.2.4",
     "@types/react": "^17.0.3",
-    "@types/ws": "^7.4.1",
     "typescript": "^4.2.4"
   }
 }

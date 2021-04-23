@@ -1,0 +1,12 @@
+version: '3'
+services:
+  docker-volume-backup:
+    build: .
+    restart: always
+    ports:
+      - "1999:1999"
+    volumes:
+      - data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+volumes:
+  data:

@@ -1,0 +1,10 @@
+tasks:
+  - init: lerna bootstrap
+    command: ./start-gitpod.sh
+ports:
+  - port: 1998
+    onOpen: ignore
+    visibility: public
+  - port: 3000
+    onOpen: notify
+    visibility: private

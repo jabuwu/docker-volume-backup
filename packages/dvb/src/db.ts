@@ -1,7 +1,10 @@
 import low from 'lowdb';
 import FileSync from 'lowdb/adapters/FileSync';
 import { DB_FILE } from './env';
+import { ensureDirSync } from 'fs-extra';
+import path from 'path';
 
+ensureDirSync(path.dirname(DB_FILE));
 const adapter = new FileSync(DB_FILE);
 export const db = low(adapter);
 db.defaults({
