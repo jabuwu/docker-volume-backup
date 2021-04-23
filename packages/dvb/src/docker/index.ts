@@ -5,6 +5,7 @@ import { Observable, Subject } from 'rxjs';
 import Dockerode from 'dockerode';
 import { concatMap, map, filter } from 'rxjs/operators';
 import { PassThrough, Readable, Writable } from 'stream';
+import { findIndex } from 'lodash';
 
 const dockerode = new Dockerode({ socketPath: '/var/run/docker.sock' });
 
@@ -29,10 +30,17 @@ dockerode.getEvents().then(stream => {
 });
 
 export class Docker {
+  private _volumes: Volume[] = [];
+
   public volumeCreate$: Observable<Volume>;
   public volumeDestroy$: Observable<string>;
 
   constructor() {
+    this.getVolumes().then((volumes) => {
+      this._volumes = volumes;
+    }).catch((err) => {
+      console.error(err);
+    });
     this.volumeCreate$ = event$.pipe(
       filter((event: DockerEvent) => event.Type === 'volume' && event.Action === 'create'),
       map(event => dockerode.getVolume(event.Actor.ID)),
@@ -42,10 +50,26 @@ export class Docker {
         volume.pinned = pinnedVolumes.has(volume.name);
         return volume;
       }),
+      filter((volume) => {
+        const index = findIndex(this._volumes, { name: volume.name });
+        if (index === -1) {
+          this._volumes.push(volume);
+          return true;
+        }
+        return false;
+      })
     );
     this.volumeDestroy$ = event$.pipe(
       filter((event: DockerEvent) => event.Type === 'volume' && event.Action === 'destroy'),
       map(event => event.Actor.ID),
+      filter((name) => {
+        const index = findIndex(this._volumes, { name });
+        if (index !== -1) {
+          this._volumes.splice(index, 1);
+          return true;
+        }
+        return false;
+      })
     );
   }
 
