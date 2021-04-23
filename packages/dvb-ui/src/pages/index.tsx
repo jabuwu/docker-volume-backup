@@ -1,5 +1,4 @@
 import { Link, Text } from '@chakra-ui/layout';
-import withApollo from '../apollo';
 import { useVolumesQuery, useExportVolumeMutation, useImportVolumeMutation, useAllStorageQuery, useStorageBackupsLazyQuery, usePinVolumeMutation } from '../generated/graphql';
 import Wrapper from '../components/wrapper';
 import Title from '../components/title';
@@ -184,7 +183,7 @@ function importVolumeFn() {
   }
 }
 
-export default withApollo({ ssr: true })(function(): any {
+export default function Index(): any {
   const { data, loading, error, refetch } = useVolumesQuery({ fetchPolicy: 'network-only', notifyOnNetworkStatusChange: true });
   const [ pinVolume ] = usePinVolumeMutation();
   let message: JSX.Element | null = null;
@@ -251,4 +250,4 @@ export default withApollo({ ssr: true })(function(): any {
       { importVolume.jsx }
     </Wrapper>
   )
-});
+}

@@ -32,7 +32,7 @@ const splitLink = isServer ? httpLink : split(
   wsLink,
   httpLink,
 );
-const apolloClient = new ApolloClient({
+export const apolloClient = new ApolloClient({
   link: splitLink,
   cache: new InMemoryCache({
     typePolicies: {
@@ -49,5 +49,3 @@ const apolloClient = new ApolloClient({
   }),
   connectToDevTools: true,
 });
- 
-export default withApollo(apolloClient);

@@ -17,16 +17,6 @@ class DvmResolver {
   @Query(() => [Container]) async containers() {
     return await context.docker.getContainers();
   }
-  @Subscription(() => Container, { subscribe: fromObservable(context.docker.containerAdded$) }) containerAdded(
-    @Root() container: Container
-  ): Container {
-    return container;
-  }
-  @Subscription(() => Container, { subscribe: fromObservable(context.docker.containerRemoved$) }) containerRemoved(
-    @Root() container: Container
-  ): Container {
-    return container;
-  }
 
   ////
   // Volumes
@@ -84,14 +74,14 @@ class DvmResolver {
     }
     return true;
   }
-  @Subscription(() => Volume, { subscribe: fromObservable(context.docker.volumeAdded$) }) volumeAdded(
+  @Subscription(() => Volume, { subscribe: fromObservable(context.docker.volumeCreate$) }) volumeCreated(
     @Root() volume: Volume
   ): Volume {
     return volume;
   }
-  @Subscription(() => Volume, { subscribe: fromObservable(context.docker.volumeRemoved$) }) volumeRemoved(
-    @Root() volume: Volume
-  ): Volume {
+  @Subscription(() => String, { subscribe: fromObservable(context.docker.volumeDestroy$) }) volumeDestroyed(
+    @Root() volume: string
+  ): string {
     return volume;
   }
 

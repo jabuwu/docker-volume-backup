@@ -1,5 +1,4 @@
 import { Link, Text } from '@chakra-ui/layout';
-import withApollo from '../apollo';
 import { useSchedulesQuery, useAllStorageQuery, useAddScheduleMutation, useVolumesQuery, useRemoveScheduleMutation } from '../generated/graphql';
 import Wrapper from '../components/wrapper';
 import Title from '../components/title';
@@ -93,7 +92,7 @@ function addScheduleModalFn(refetch: () => void) {
   }
 }
 
-export default withApollo({ ssr: true })(function(): any {
+export default function Schedules(): any {
   const { data, loading, error, refetch } = useSchedulesQuery({ fetchPolicy: 'network-only', notifyOnNetworkStatusChange: true });
   let message: JSX.Element | null = null;
   let table: JSX.Element | null = null;
@@ -157,4 +156,4 @@ export default withApollo({ ssr: true })(function(): any {
       { addScheduleModal.jsx }
     </Wrapper>
   )
-});
+}

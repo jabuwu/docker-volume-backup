@@ -1,83 +1,52 @@
 import { Container } from './container';
 import { Volume, pinnedVolumes } from './volume';
 import { camelCaseObj } from '../utility/camel-case-obj';
-import { find } from 'lodash';
-import { from, interval, Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import Dockerode from 'dockerode';
-import { concatMap, switchMap, share, map } from 'rxjs/operators';
+import { concatMap, map, filter } from 'rxjs/operators';
 import { PassThrough, Readable, Writable } from 'stream';
 
 const dockerode = new Dockerode({ socketPath: '/var/run/docker.sock' });
 
-function diffObservable<T extends { [ key: string ]: any[] }>(poll$: Observable<{ before: T, after: T }>, typeName: keyof T, key: keyof T[keyof T][0]) {
-  const diff$ = poll$.pipe(
-    map(({ before, after }) => {
-      const added: T[] = [];
-      const removed: T[] = [];
-      for (const item of after[typeName]) {
-        if (!find(before[typeName], { [ key ]: item[key] })) {
-          added.push(item);
-        }
-      }
-      for (const item of before[typeName]) {
-        if (!find(after[typeName], { [ key ]: item[key] })) {
-          removed.push(item);
-        }
-      }
-      return { added, removed };
-    }),
-    share()
-  );
-  const added$: Observable<T[keyof T][0]> = diff$.pipe(
-    concatMap(({ added }) => {
-      return from(added);
-    }),
-    share()
-  );
-  const removed$: Observable<T[keyof T][0]> = diff$.pipe(
-    concatMap(({ removed }) => {
-      return from(removed);
-    }),
-    share()
-  );
-  return { added$, removed$ };
-}
+type DockerEvent = {
+  Type: string;
+  Action: string;
+  Actor: { ID: string };
+};
+
+// TODO: can the events stream die if disconnected from docker?
+const event$ = new Subject<DockerEvent>();
+dockerode.getEvents().then(stream => {
+  let overflow = '';
+  stream.on('data', (data) => {
+    const events = (overflow + data).toString().split('\n');
+    for (let i = 0; i < events.length - 1; ++i) {
+      event$.next(JSON.parse(events[i]));
+      overflow = '';
+    }
+    overflow += events[events.length - 1];
+  });
+});
 
 export class Docker {
-  public volumeAdded$: Observable<Volume>;
-  public volumeRemoved$: Observable<Volume>;
-
-  public containerAdded$: Observable<Container>;
-  public containerRemoved$: Observable<Container>;
-
-  private _containers: Container[] = [];
-  private _volumes: Volume[] = [];
+  public volumeCreate$: Observable<Volume>;
+  public volumeDestroy$: Observable<string>;
 
   constructor() {
-    const poll$ = interval(1000).pipe(
-      switchMap(async () => {
-        const before = {
-          containers: this._containers,
-          volumes: this._volumes,
-        };
-        this._containers = await this.getContainers();
-        this._volumes = await this.getVolumes();
-        const after = {
-          containers: this._containers,
-          volumes: this._volumes,
-        };
-        return { before, after };
+    this.volumeCreate$ = event$.pipe(
+      filter((event: DockerEvent) => event.Type === 'volume' && event.Action === 'create'),
+      map(event => dockerode.getVolume(event.Actor.ID)),
+      concatMap(volume => volume.inspect()),
+      map(info => {
+        const volume: Volume = camelCaseObj(info)
+        volume.pinned = pinnedVolumes.has(volume.name);
+        return volume;
       }),
-      share()
     );
-
-    const containerDiff = diffObservable<{ containers: Container[] }>(poll$, 'containers', 'id');
-    this.containerAdded$ = containerDiff.added$;
-    this.containerRemoved$ = containerDiff.removed$;
-
-    const volumeDiff = diffObservable<{ volumes: Volume[] }>(poll$, 'volumes', 'name');
-    this.volumeAdded$ = volumeDiff.added$;
-    this.volumeRemoved$ = volumeDiff.removed$;
+    this.volumeDestroy$ = event$.pipe(
+      filter((event: DockerEvent) => event.Type === 'volume' && event.Action === 'destroy'),
+      map(event => event.Actor.ID),
+    );
   }
 
   async pullAlpine() {

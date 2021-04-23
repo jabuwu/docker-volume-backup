@@ -175,10 +175,8 @@ export type StorageBackup = {
 
 export type Subscription = {
   __typename?: 'Subscription';
-  containerAdded: Container;
-  containerRemoved: Container;
-  volumeAdded: Volume;
-  volumeRemoved: Volume;
+  volumeCreated: Volume;
+  volumeDestroyed: Scalars['String'];
 };
 
 export type Volume = {
@@ -347,6 +345,25 @@ export type VolumesQuery = (
     { __typename?: 'Volume' }
     & Pick<Volume, 'name' | 'driver' | 'pinned'>
   )> }
+);
+
+export type VolumeCreatedSubscriptionVariables = Exact<{ [key: string]: never; }>;
+
+
+export type VolumeCreatedSubscription = (
+  { __typename?: 'Subscription' }
+  & { volumeCreated: (
+    { __typename?: 'Volume' }
+    & Pick<Volume, 'name'>
+  ) }
+);
+
+export type VolumeDestroyedSubscriptionVariables = Exact<{ [key: string]: never; }>;
+
+
+export type VolumeDestroyedSubscription = (
+  { __typename?: 'Subscription' }
+  & Pick<Subscription, 'volumeDestroyed'>
 );
 
 
@@ -772,3 +789,59 @@ export function useVolumesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Vo
 export type VolumesQueryHookResult = ReturnType<typeof useVolumesQuery>;
 export type VolumesLazyQueryHookResult = ReturnType<typeof useVolumesLazyQuery>;
 export type VolumesQueryResult = Apollo.QueryResult<VolumesQuery, VolumesQueryVariables>;
+export const VolumeCreatedDocument = gql`
+    subscription VolumeCreated {
+  volumeCreated {
+    name
+  }
+}
+    `;
+
+/**
+ * __useVolumeCreatedSubscription__
+ *
+ * To run a query within a React component, call `useVolumeCreatedSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useVolumeCreatedSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useVolumeCreatedSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useVolumeCreatedSubscription(baseOptions?: Apollo.SubscriptionHookOptions<VolumeCreatedSubscription, VolumeCreatedSubscriptionVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<VolumeCreatedSubscription, VolumeCreatedSubscriptionVariables>(VolumeCreatedDocument, options);
+      }
+export type VolumeCreatedSubscriptionHookResult = ReturnType<typeof useVolumeCreatedSubscription>;
+export type VolumeCreatedSubscriptionResult = Apollo.SubscriptionResult<VolumeCreatedSubscription>;
+export const VolumeDestroyedDocument = gql`
+    subscription VolumeDestroyed {
+  volumeDestroyed
+}
+    `;
+
+/**
+ * __useVolumeDestroyedSubscription__
+ *
+ * To run a query within a React component, call `useVolumeDestroyedSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useVolumeDestroyedSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useVolumeDestroyedSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useVolumeDestroyedSubscription(baseOptions?: Apollo.SubscriptionHookOptions<VolumeDestroyedSubscription, VolumeDestroyedSubscriptionVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<VolumeDestroyedSubscription, VolumeDestroyedSubscriptionVariables>(VolumeDestroyedDocument, options);
+      }
+export type VolumeDestroyedSubscriptionHookResult = ReturnType<typeof useVolumeDestroyedSubscription>;
+export type VolumeDestroyedSubscriptionResult = Apollo.SubscriptionResult<VolumeDestroyedSubscription>;

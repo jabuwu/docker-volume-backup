@@ -1,4 +1,3 @@
-import withApollo from '../apollo';
 import Wrapper from '../components/wrapper';
 import Title from '../components/title';
 import { Text } from '@chakra-ui/layout';
@@ -105,7 +104,7 @@ function addS3BucketModalFn(refetch: () => void) {
   }
 }
 
-export default withApollo({ ssr: true })(function(): any {
+export default function Storage(): any {
   const { data, loading, error, refetch } = useStorageQuery({ fetchPolicy: 'network-only', errorPolicy: 'none', notifyOnNetworkStatusChange: true });
   let message: JSX.Element | null = null;
   let s3Table: JSX.Element | null = null;
@@ -171,4 +170,4 @@ export default withApollo({ ssr: true })(function(): any {
       { addS3BucketModal.jsx }
     </Wrapper>
   )
-});
+}
