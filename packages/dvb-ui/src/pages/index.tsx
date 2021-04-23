@@ -10,6 +10,7 @@ import LoadingTr  from '../components/loading-tr';
 
 function exportVolumeFn() {
   const [ open, setOpen ] = useState(false);
+  const [ working, setWorking ] = useState(false);
   const [ volume, setVolume ] = useState('');
   const [ exportVolume ] = useExportVolumeMutation();
   const { data: storageData, loading: storageLoading, error: storageError } = useAllStorageQuery({ fetchPolicy: 'network-only' });
@@ -20,14 +21,17 @@ function exportVolumeFn() {
     setOpen(false);
   }
 
-  function doExport() {
-    exportVolume({
+  async function doExport() {
+    setWorking(true);
+    await exportVolume({
       variables: {
         volume,
         storage,
         fileName: fileName.current!.value || null,
       },
     });
+    setWorking(false);
+    setOpen(false);
   }
 
   return {
@@ -65,7 +69,7 @@ function exportVolumeFn() {
           </Stack>
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="blue" mr={ 3 } onClick={ doExport } disabled={ !storageData || !storage }>
+          <Button colorScheme="blue" mr={ 3 } onClick={ doExport } disabled={ !storageData || !storage } isLoading={ working }>
             Export
           </Button>
         </ModalFooter>

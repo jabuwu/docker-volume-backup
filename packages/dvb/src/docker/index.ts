@@ -80,8 +80,13 @@ export class Docker {
     this.volumeRemoved$ = volumeDiff.removed$;
   }
 
+  async pullAlpine() {
+    await dockerode.pull('alpine');
+  }
+
   exportVolume(name: string, exportFn: (stream: Readable) => Promise<any>): Promise<void> {
     return new Promise<void>(async (resolve, reject) => {
+      await this.pullAlpine();
       const container = await dockerode.createContainer({
         Image: 'alpine',
         Tty: false,
