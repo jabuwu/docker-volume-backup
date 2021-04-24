@@ -14,7 +14,6 @@ export default function Schedules(): any {
   let message: JSX.Element | null = null;
   let table: JSX.Element | null = null;
   const [ removeSchedule ] = useRemoveScheduleMutation();
-  const [ addScheduleModal, setAddScheduleModal ] = useState(false);
   if (loading) {
     table = <LoadingTr colSpan={ 4 } />
   } else if (error) {
@@ -60,19 +59,16 @@ export default function Schedules(): any {
       <Flex mt={ 4 }>
         <Text as="h1" fontSize="4xl">Schedules</Text>
         <Box ml={ 2 } mt="auto">
-          <Button size="lg" p={ 0 } variant="ghost" colorScheme="blue" onClick={ () => setAddScheduleModal(true) } isLoading={ loading }><AddIcon /></Button>
+          <AddScheduleModal>
+            { (open) => (
+              <Button size="lg" p={ 0 } variant="ghost" colorScheme="blue" onClick={ open } isLoading={ loading }><AddIcon /></Button>
+            ) }
+          </AddScheduleModal>
         </Box>
         <Box ml="auto" mt="auto">
           <Button size="lg" p={ 0 } variant="ghost" colorScheme="green" onClick={ () => refetch() } isLoading={ loading }><RepeatIcon /></Button>
         </Box>
       </Flex>
-      {/* <Flex mt={ 4 }>
-        <Text as="h1" fontSize="4xl">Schedules { loading ? <Spinner size="md" /> : null }</Text>
-        <Box ml="auto" mt="auto">
-          <Button size="sm" colorScheme="blue" onClick={ () => setAddScheduleModal(true) } isLoading={ loading } disable={ error }>Add Schedule</Button>
-          <Button size="sm" ml={ 2 } colorScheme="green" onClick={ () => refetch() } isLoading={ loading }>Refresh</Button>
-        </Box>
-      </Flex> */}
       { message }
       { table ? (<Table variant="striped">
         <Thead>
@@ -87,7 +83,6 @@ export default function Schedules(): any {
           { table }
         </Tbody>
       </Table>) : null }
-      <AddScheduleModal isOpen={ addScheduleModal } onClose={ () => setAddScheduleModal(false) } />
     </Wrapper>
   )
 }

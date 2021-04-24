@@ -2,7 +2,8 @@ import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, Modal
 import React, { useRef, useCallback } from 'react';
 import { AllStorageDocument, AllStorageQuery, useAddS3BucketMutation } from '../generated/graphql';
 
-export default function AddS3BucketModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
+export default function AddS3BucketModal({ children }: { children: (open: () => void) => JSX.Element }) {
+  const [ isOpen, setIsOpen ] = React.useState(false)
   const [ addS3Bucket ] = useAddS3BucketMutation();
   const name = useRef<any>();
   const bucket = useRef<any>();
@@ -10,6 +11,14 @@ export default function AddS3BucketModal({ isOpen, onClose }: { isOpen: boolean,
   const accessKey = useRef<any>();
   const secretKey = useRef<any>();
   const prefix = useRef<any>();
+
+  const open = useCallback(() => {
+    setIsOpen(true);
+  }, []);
+
+  const close = useCallback(() => {
+    setIsOpen(false);
+  }, []);
 
   const add = useCallback(async () => {
     await addS3Bucket({
@@ -31,49 +40,52 @@ export default function AddS3BucketModal({ isOpen, onClose }: { isOpen: boolean,
         }
       }
     });
-    onClose();
+    close();
   }, [ name, bucket, region, accessKey, secretKey, prefix ]);
 
   return (
-    <Modal size="xl" isOpen={ isOpen } onClose={ onClose }>
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>Add S3 Bucket</ModalHeader>
-        <ModalCloseButton />
-        <ModalBody>
-          <Stack spacing={4}>
-            <InputGroup size="sm">
-              <InputLeftAddon children="Name" />
-              <Input ref={ name } />
-            </InputGroup>
-            <InputGroup size="sm">
-              <InputLeftAddon children="Bucket" />
-              <Input ref={ bucket } />
-            </InputGroup>
-            <InputGroup size="sm">
-              <InputLeftAddon children="Region" />
-              <Input ref={ region } />
-            </InputGroup>
-            <InputGroup size="sm">
-              <InputLeftAddon children="Access Key" />
-              <Input ref={ accessKey } />
-            </InputGroup>
-            <InputGroup size="sm">
-              <InputLeftAddon children="Secret Key" />
-              <Input ref={ secretKey } />
-            </InputGroup>
-            <InputGroup size="sm">
-              <InputLeftAddon children="Prefix" />
-              <Input ref={ prefix } />
-            </InputGroup>
-          </Stack>
-        </ModalBody>
-        <ModalFooter>
-          <Button colorScheme="green" onClick={ add }>
-            Add
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+    <>
+      { children(open) }
+      <Modal size="xl" isOpen={ isOpen } onClose={ close }>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Add S3 Bucket</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Stack spacing={4}>
+              <InputGroup size="sm">
+                <InputLeftAddon children="Name" />
+                <Input ref={ name } />
+              </InputGroup>
+              <InputGroup size="sm">
+                <InputLeftAddon children="Bucket" />
+                <Input ref={ bucket } />
+              </InputGroup>
+              <InputGroup size="sm">
+                <InputLeftAddon children="Region" />
+                <Input ref={ region } />
+              </InputGroup>
+              <InputGroup size="sm">
+                <InputLeftAddon children="Access Key" />
+                <Input ref={ accessKey } />
+              </InputGroup>
+              <InputGroup size="sm">
+                <InputLeftAddon children="Secret Key" />
+                <Input ref={ secretKey } />
+              </InputGroup>
+              <InputGroup size="sm">
+                <InputLeftAddon children="Prefix" />
+                <Input ref={ prefix } />
+              </InputGroup>
+            </Stack>
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme="green" onClick={ add }>
+              Add
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    </>
   );
 }

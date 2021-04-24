@@ -2,13 +2,22 @@ import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, Modal
 import React, { useState, useRef, useCallback } from 'react';
 import { useAddScheduleMutation, useVolumesQuery, useStorageListQuery, SchedulesQuery, SchedulesDocument } from '../generated/graphql';
 
-export default function AddScheduleModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
+export default function AddScheduleModal({ children }: { children: (open: () => void) => JSX.Element }) {
+  const [ isOpen, setIsOpen ] = React.useState(false)
   const [ addSchedule ] = useAddScheduleMutation();
   const { data: volumeData, loading: volumeLoading, error: volumeError } = useVolumesQuery({ fetchPolicy: 'network-only' });
   const { data: storageData, loading: storageLoading, error: storageError } = useStorageListQuery({ fetchPolicy: 'network-only' });
   const [ storage, setStorage ] = useState('');
   const [ volume, setVolume ] = useState('');
   const hours = useRef<any>();
+
+  const open = useCallback(() => {
+    setIsOpen(true);
+  }, []);
+
+  const close = useCallback(() => {
+    setIsOpen(false);
+  }, []);
 
   const add = useCallback(async () => {
     await addSchedule({
@@ -27,64 +36,67 @@ export default function AddScheduleModal({ isOpen, onClose }: { isOpen: boolean,
         }
       }
     });
-    onClose();
+    close();
   }, [ storage, volume, hours ]);
 
   return (
-    <Modal size="xl" isOpen={ isOpen } onClose={ onClose }>
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>Add Schedule</ModalHeader>
-        <ModalCloseButton />
-        <ModalBody>
-          <Stack spacing={4}>
-            { storageError ? <>
-              <Alert status="error">
-                <AlertIcon />
-                Failed to fetch storage information. { storageError.message }
-              </Alert>
-            </> : null }
-            { storageLoading ? <>
-              <Select placeholder="Loading Storage..." disabled={ true }></Select>
-            </> : null }
-            { !!storageData ? <>
-              <Select placeholder="Select Storage" value={ storage } onChange={ e => setStorage(e.target.value) }>
-                { storageData.allStorage.map(storage => (
-                  <option key={ storage.name } value={ storage.name }>{ storage.name }</option>
-                )) }
-              </Select>
-            </> : null }
-            { volumeError ? <>
-              <Alert status="error">
-                <AlertIcon />
-                Failed to fetch volume information. { volumeError.message }
-              </Alert>
-            </> : null }
-            { volumeLoading ? <>
-              <Select placeholder="Loading Volumes..." disabled={ true }></Select>
-            </> : null }
-            { !!volumeData ? <>
-              <Select placeholder="Select Volume" value={ volume } onChange={ e => setVolume(e.target.value) }>
-                { volumeData.volumes.map(volume => (
-                  <option key={ volume.name } value={ volume.name }>{ volume.name }</option>
-                )) }
-              </Select>
-            </> : null }
-            <NumberInput defaultValue={ 1 } min={ 1 }>
-              <NumberInputField ref={ hours } />
-              <NumberInputStepper>
-                <NumberIncrementStepper />
-                <NumberDecrementStepper />
-              </NumberInputStepper>
-            </NumberInput>
-          </Stack>
-        </ModalBody>
-        <ModalFooter>
-          <Button colorScheme="green" onClick={ add } disabled={ !volume || !storage }>
-            Add
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+    <>
+      { children(open) }
+      <Modal size="xl" isOpen={ isOpen } onClose={ close }>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Add Schedule</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Stack spacing={4}>
+              { storageError ? <>
+                <Alert status="error">
+                  <AlertIcon />
+                  Failed to fetch storage information. { storageError.message }
+                </Alert>
+              </> : null }
+              { storageLoading ? <>
+                <Select placeholder="Loading Storage..." disabled={ true }></Select>
+              </> : null }
+              { !!storageData ? <>
+                <Select placeholder="Select Storage" value={ storage } onChange={ e => setStorage(e.target.value) }>
+                  { storageData.allStorage.map(storage => (
+                    <option key={ storage.name } value={ storage.name }>{ storage.name }</option>
+                  )) }
+                </Select>
+              </> : null }
+              { volumeError ? <>
+                <Alert status="error">
+                  <AlertIcon />
+                  Failed to fetch volume information. { volumeError.message }
+                </Alert>
+              </> : null }
+              { volumeLoading ? <>
+                <Select placeholder="Loading Volumes..." disabled={ true }></Select>
+              </> : null }
+              { !!volumeData ? <>
+                <Select placeholder="Select Volume" value={ volume } onChange={ e => setVolume(e.target.value) }>
+                  { volumeData.volumes.map(volume => (
+                    <option key={ volume.name } value={ volume.name }>{ volume.name }</option>
+                  )) }
+                </Select>
+              </> : null }
+              <NumberInput defaultValue={ 1 } min={ 1 }>
+                <NumberInputField ref={ hours } />
+                <NumberInputStepper>
+                  <NumberIncrementStepper />
+                  <NumberDecrementStepper />
+                </NumberInputStepper>
+              </NumberInput>
+            </Stack>
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme="green" onClick={ add } disabled={ !volume || !storage }>
+              Add
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    </>
   );
 }

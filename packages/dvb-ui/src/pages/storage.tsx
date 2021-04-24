@@ -29,7 +29,6 @@ export default function Storage(): any {
   let message: JSX.Element | null = null;
   let s3Table: JSX.Element | null = null;
   let s3Message: JSX.Element | null = null;
-  const [ addS3BucketModal, setAddS3BucketModal ] = useState(false);
   const [ removeStorage ] = useRemoveStorageMutation();
   const s3Buckets = data?.allStorage.filter(storage => storage.type === 's3Bucket') || [];
   if (loading) {
@@ -102,7 +101,11 @@ export default function Storage(): any {
       <Flex mt={ 8 }>
         <Text fontSize="xl">S3 Buckets</Text>
         <Box my="auto" ml={ 2 }>
-          <Button size="sm" variant="ghost" colorScheme="blue" onClick={ () => setAddS3BucketModal(true) } isLoading={ loading } disable={ error }><AddIcon /></Button>
+          <AddS3BucketModal>
+            { (open) => (
+              <Button size="sm" variant="ghost" colorScheme="blue" onClick={ open } isLoading={ loading } disable={ error }><AddIcon /></Button>
+            ) }
+          </AddS3BucketModal>
         </Box>
       </Flex>
       { s3Message }
@@ -119,7 +122,6 @@ export default function Storage(): any {
           { s3Table }
         </Tbody>
       </Table>) : null }
-      <AddS3BucketModal isOpen={ addS3BucketModal } onClose={ () => setAddS3BucketModal(false) } />
     </Wrapper>
   )
 }
