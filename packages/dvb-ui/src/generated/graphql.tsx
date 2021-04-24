@@ -178,6 +178,13 @@ export type Storage = {
 export type StorageBackup = {
   __typename?: 'StorageBackup';
   fileName: Scalars['String'];
+  stat: StorageBackupStat;
+};
+
+export type StorageBackupStat = {
+  __typename?: 'StorageBackupStat';
+  size: Scalars['Float'];
+  modified: Scalars['Float'];
 };
 
 export type Subscription = {
@@ -342,6 +349,10 @@ export type StorageQuery = (
     )>, backups: Array<(
       { __typename?: 'StorageBackup' }
       & Pick<StorageBackup, 'fileName'>
+      & { stat: (
+        { __typename?: 'StorageBackupStat' }
+        & Pick<StorageBackupStat, 'size' | 'modified'>
+      ) }
     )> }
   )> }
 );
@@ -760,6 +771,10 @@ export const StorageDocument = gql`
     }
     backups {
       fileName
+      stat {
+        size
+        modified
+      }
     }
   }
 }

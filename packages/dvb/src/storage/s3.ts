@@ -1,6 +1,6 @@
 import { ObjectType, Field } from 'type-graphql';
 import { Readable, Writable } from 'stream';
-import { StorageInterface, StorageBackup } from '.';
+import { StorageInterface, StorageBackup, StorageBackupStat } from '.';
 import { S3 } from 'aws-sdk';
 import { DBStore } from '../db';
 
@@ -55,7 +55,9 @@ export class S3Storage implements StorageInterface {
       for (let content of objects.Contents || []) {
         const fileName = content.Key?.substr(this.bucket.prefix.length);
         if (fileName) {
-          arr.push({ fileName });
+          arr.push(new StorageBackup(this, {
+            fileName,
+          }));
         }
       }
       if (!objects.ContinuationToken) {
@@ -63,6 +65,14 @@ export class S3Storage implements StorageInterface {
       }
     }
     return arr;
+  }
+  async stat(fileName: string): Promise<StorageBackupStat> {
+    const s3 = this.s3();
+    const info = await s3.headObject({
+      Bucket: this.bucket.name,
+      Key: `${this.bucket.prefix}${fileName}`,
+    }).promise();
+    return { size: info.ContentLength ?? 0, modified: info.LastModified?.getTime() ?? 0 };
   }
 }
 

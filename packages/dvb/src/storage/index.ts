@@ -5,9 +5,27 @@ import { ObjectType, Field } from 'type-graphql';
 import { assign, find } from 'lodash';
 
 @ObjectType()
+export class StorageBackupStat {
+  @Field()
+  size: number;
+
+  @Field()
+  modified: number;
+}
+
+@ObjectType()
 export class StorageBackup {
+  constructor(private inter: StorageInterface, data: Partial<StorageBackup>) {
+    assign(this, data);
+  }
+
   @Field()
   fileName: string;
+
+  @Field(() => StorageBackupStat)
+  async stat(): Promise<StorageBackupStat> {
+    return this.inter.stat(this.fileName);
+  }
 }
 
 export interface StorageInterface {
@@ -15,6 +33,7 @@ export interface StorageInterface {
   read(fileName: string, stream: Writable): Promise<void>;
   del(fileName: string): Promise<void>;
   list(): Promise<StorageBackup[]>;
+  stat(fileName: string): Promise<StorageBackupStat>;
 }
 
 export function getStorage(name: string): StorageInterface | null {

@@ -1,7 +1,7 @@
-import { StorageInterface, StorageBackup } from '.';
+import { StorageInterface, StorageBackup, StorageBackupStat } from '.';
 import { createReadStream, createWriteStream, unlink } from 'fs-extra';
 import { Readable, Writable } from 'stream';
-import { ensureDirSync, ensureDir } from 'fs-extra';
+import { ensureDirSync, ensureDir, stat } from 'fs-extra';
 import { BACKUPS_DIR } from '../env';
 import klaw from 'klaw';
 import path from 'path';
@@ -36,7 +36,9 @@ export class LocalStorage implements StorageInterface {
       const arr: StorageBackup[] = [];
       klaw(workingDir).on('data', item => {
         if (!item.stats.isDirectory()) {
-          arr.push({ fileName: item.path.substr(workingDir.length + 1) });
+          arr.push(new StorageBackup(this, {
+            fileName: item.path.substr(workingDir.length + 1),
+          }));
         }
       }).on('error', (err) => {
         reject(err);
@@ -44,5 +46,9 @@ export class LocalStorage implements StorageInterface {
         resolve(arr);
       })
     });
+  }
+  async stat(fileName: string): Promise<StorageBackupStat> {
+    const info = await stat(path.join(workingDir, fileName));
+    return { size: info.size, modified: info.mtime.getTime() };
   }
 }
