@@ -6,7 +6,7 @@ export default function RestoreVolumeModal({ volume, onClose }: { volume: string
   const [ working, setWorking ] = useState(false);
   const [ importVolume ] = useImportVolumeMutation();
   const [ getStorageBackups, { data: backupsData, loading: backupsLoading, error: backupsError } ] = useStorageBackupsLazyQuery({ fetchPolicy: 'network-only' });
-  const { data: storageData, loading: storageLoading, error: storageError } = useStorageListQuery({ fetchPolicy: 'network-only' });
+  const { data: storageData, loading: storageLoading, error: storageError } = useStorageListQuery();
   const [ storage, setStorage ] = useState('');
   const [ filter, setFilter ] = useState('');
   const [ fileName, setFileName ] = useState('');

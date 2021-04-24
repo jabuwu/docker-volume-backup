@@ -1,4 +1,3 @@
-import { S3Bucket } from '../storage/s3';
 import { Arg, buildSchemaSync, Mutation, Query, Resolver, Root, Subscription, Int } from 'type-graphql';
 import { Container } from '../docker/container';
 import { Volume, pinnedVolumes } from '../docker/volume';
@@ -112,6 +111,11 @@ class DvmResolver {
   ) {
     return Storage.get(name);
   }
+  @Mutation(() => Boolean) async removeStorage(
+    @Arg('name', () => String) name: string,
+  ): Promise<boolean> {
+    return s3Buckets.del({ name });
+  }
   @Mutation(() => Boolean) async deleteBackup(
     @Arg('storage', () => String) storageName: string,
     @Arg('fileName', () => String) fileName: string,
@@ -158,28 +162,20 @@ class DvmResolver {
   ////
   // S3 Buckets
   ///
-  @Query(() => [S3Bucket]) async s3Buckets() {
-    return s3Buckets.all();
-  }
-  @Query(() => S3Bucket, { nullable: true }) async s3Bucket(
-    @Arg('name', () => String) name: string
-  ) {
-    return s3Buckets.findOne({ name });
-  }
-  @Mutation(() => S3Bucket, { nullable: true }) addS3Bucket(
+  @Mutation(() => Storage, { nullable: true }) addS3Bucket(
     @Arg('name', () => String) name: string,
     @Arg('bucket', () => String) bucket: string,
     @Arg('region', () => String) region: string,
     @Arg('accessKey', () => String) accessKey: string,
     @Arg('secretKey', () => String) secretKey: string,
     @Arg('prefix', () => String, { nullable: true }) prefix: string | undefined,
-  ): S3Bucket | null {
+  ): Storage | null {
     const storage = getStorage(name);
     if (storage) {
       // TODO: return an error
       return null;
     }
-    return s3Buckets.create({
+    const bucketInfo = s3Buckets.create({
       name,
       bucket,
       region,
@@ -187,11 +183,7 @@ class DvmResolver {
       secretKey,
       prefix: prefix ?? '',
     });
-  }
-  @Mutation(() => Boolean) removeS3Bucket(
-    @Arg('name', () => String) name: string
-  ): boolean {
-    return s3Buckets.del({ name });
+    return Storage.get(bucketInfo.name);
   }
 }
 

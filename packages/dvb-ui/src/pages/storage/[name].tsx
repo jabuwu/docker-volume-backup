@@ -5,6 +5,7 @@ import { Text, Spinner, Skeleton, AlertIcon, Alert, Table, Tbody, Th, Thead, Tr,
 import Title from '../../components/title';
 import React from 'react';
 import LoadingTr from '../../components/loading-tr';
+import { RepeatIcon } from '@chakra-ui/icons';
 
 const KB = 1024;
 const MB = KB * 1024;
@@ -36,15 +37,14 @@ export default function Storage(): any {
       name,
     },
     fetchPolicy: 'network-only',
-    errorPolicy: 'none',
     notifyOnNetworkStatusChange: true
   });
   return <Wrapper>
     <Title>{ name }</Title>
-    <Flex>
-      <Text as="h1" fontSize="4xl">{ name } { loading ? <Spinner size="md" /> : null }</Text>
+    <Flex mt={ 4 }>
+      <Text as="h1" fontSize="4xl">{ name }</Text>
       <Box ml="auto" mt="auto">
-        <Button size="sm" ml={ 2 } colorScheme="green" onClick={ () => refetch() } isLoading={ loading }>Refresh</Button>
+        <Button size="lg" p={ 0 } variant="ghost" colorScheme="green" onClick={ () => refetch() } isLoading={ loading }><RepeatIcon /></Button>
       </Box>
     </Flex>
     { loading ? 

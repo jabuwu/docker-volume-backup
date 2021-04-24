@@ -1,0 +1,3 @@
+mutation RemoveStorage($name: String!) {
+  removeStorage(name: $name)
+}

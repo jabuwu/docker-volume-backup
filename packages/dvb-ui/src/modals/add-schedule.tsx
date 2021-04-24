@@ -1,8 +1,8 @@
 import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Stack, Alert, AlertIcon, Select, ModalFooter, Button, NumberDecrementStepper, NumberIncrementStepper, NumberInput, NumberInputField, NumberInputStepper } from '@chakra-ui/react';
 import React, { useState, useRef, useCallback } from 'react';
-import { useAddScheduleMutation, useVolumesQuery, useStorageListQuery } from '../generated/graphql';
+import { useAddScheduleMutation, useVolumesQuery, useStorageListQuery, SchedulesQuery, SchedulesDocument } from '../generated/graphql';
 
-export default function AddScheduleModal({ isOpen, onClose, onAdd }: { isOpen: boolean, onClose: () => void, onAdd: () => void }) {
+export default function AddScheduleModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
   const [ addSchedule ] = useAddScheduleMutation();
   const { data: volumeData, loading: volumeLoading, error: volumeError } = useVolumesQuery({ fetchPolicy: 'network-only' });
   const { data: storageData, loading: storageLoading, error: storageError } = useStorageListQuery({ fetchPolicy: 'network-only' });
@@ -16,9 +16,17 @@ export default function AddScheduleModal({ isOpen, onClose, onAdd }: { isOpen: b
         storage,
         volume,
         hours: Number(hours.current!.value),
+      },
+      update: (cache, { data }) => {
+        if (data.addSchedule) {
+          const queryData = Object.assign({}, cache.readQuery<SchedulesQuery>({ query: SchedulesDocument }));
+          if (!queryData.schedules.find(item => item.id === data.addSchedule!.id)) {
+            queryData.schedules = [...queryData.schedules, data.addSchedule];
+          }
+          cache.writeQuery({ query: SchedulesDocument, data: queryData });
+        }
       }
     });
-    onAdd();
     onClose();
   }, [ storage, volume, hours ]);
 

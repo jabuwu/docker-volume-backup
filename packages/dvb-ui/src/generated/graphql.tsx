@@ -63,11 +63,11 @@ export type Mutation = {
   exportVolume: Scalars['Boolean'];
   importVolume: Scalars['Boolean'];
   pinVolume: Scalars['Boolean'];
+  removeStorage: Scalars['Boolean'];
   deleteBackup: Scalars['Boolean'];
   addSchedule?: Maybe<Schedule>;
   removeSchedule: Scalars['Boolean'];
-  addS3Bucket?: Maybe<S3Bucket>;
-  removeS3Bucket: Scalars['Boolean'];
+  addS3Bucket?: Maybe<Storage>;
 };
 
 
@@ -88,6 +88,11 @@ export type MutationImportVolumeArgs = {
 export type MutationPinVolumeArgs = {
   pinned: Scalars['Boolean'];
   volume: Scalars['String'];
+};
+
+
+export type MutationRemoveStorageArgs = {
+  name: Scalars['String'];
 };
 
 
@@ -118,11 +123,6 @@ export type MutationAddS3BucketArgs = {
   name: Scalars['String'];
 };
 
-
-export type MutationRemoveS3BucketArgs = {
-  name: Scalars['String'];
-};
-
 export type Query = {
   __typename?: 'Query';
   containers: Array<Container>;
@@ -131,8 +131,6 @@ export type Query = {
   storage?: Maybe<Storage>;
   schedules: Array<Schedule>;
   schedule?: Maybe<Schedule>;
-  s3Buckets: Array<S3Bucket>;
-  s3Bucket?: Maybe<S3Bucket>;
 };
 
 
@@ -143,11 +141,6 @@ export type QueryStorageArgs = {
 
 export type QueryScheduleArgs = {
   id: Scalars['String'];
-};
-
-
-export type QueryS3BucketArgs = {
-  name: Scalars['String'];
 };
 
 export type S3Bucket = {
@@ -225,8 +218,12 @@ export type AddS3BucketMutationVariables = Exact<{
 export type AddS3BucketMutation = (
   { __typename?: 'Mutation' }
   & { addS3Bucket?: Maybe<(
-    { __typename?: 'S3Bucket' }
-    & Pick<S3Bucket, 'name'>
+    { __typename?: 'Storage' }
+    & Pick<Storage, 'name' | 'type'>
+    & { s3Bucket?: Maybe<(
+      { __typename?: 'S3Bucket' }
+      & Pick<S3Bucket, 'name' | 'bucket' | 'prefix'>
+    )> }
   )> }
 );
 
@@ -241,7 +238,7 @@ export type AddScheduleMutation = (
   { __typename?: 'Mutation' }
   & { addSchedule?: Maybe<(
     { __typename?: 'Schedule' }
-    & Pick<Schedule, 'id'>
+    & Pick<Schedule, 'id' | 'volume' | 'storage' | 'hours'>
   )> }
 );
 
@@ -291,16 +288,6 @@ export type PinVolumeMutation = (
   & Pick<Mutation, 'pinVolume'>
 );
 
-export type RemoveS3BucketMutationVariables = Exact<{
-  name: Scalars['String'];
-}>;
-
-
-export type RemoveS3BucketMutation = (
-  { __typename?: 'Mutation' }
-  & Pick<Mutation, 'removeS3Bucket'>
-);
-
 export type RemoveScheduleMutationVariables = Exact<{
   id: Scalars['String'];
 }>;
@@ -311,14 +298,28 @@ export type RemoveScheduleMutation = (
   & Pick<Mutation, 'removeSchedule'>
 );
 
+export type RemoveStorageMutationVariables = Exact<{
+  name: Scalars['String'];
+}>;
+
+
+export type RemoveStorageMutation = (
+  { __typename?: 'Mutation' }
+  & Pick<Mutation, 'removeStorage'>
+);
+
 export type AllStorageQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type AllStorageQuery = (
   { __typename?: 'Query' }
-  & { s3Buckets: Array<(
-    { __typename?: 'S3Bucket' }
-    & Pick<S3Bucket, 'name' | 'bucket' | 'prefix'>
+  & { allStorage: Array<(
+    { __typename?: 'Storage' }
+    & Pick<Storage, 'name' | 'type'>
+    & { s3Bucket?: Maybe<(
+      { __typename?: 'S3Bucket' }
+      & Pick<S3Bucket, 'name' | 'bucket' | 'prefix'>
+    )> }
   )> }
 );
 
@@ -427,6 +428,12 @@ export const AddS3BucketDocument = gql`
     prefix: $prefix
   ) {
     name
+    type
+    s3Bucket {
+      name
+      bucket
+      prefix
+    }
   }
 }
     `;
@@ -465,6 +472,9 @@ export const AddScheduleDocument = gql`
     mutation AddSchedule($volume: String!, $storage: String!, $hours: Int!) {
   addSchedule(volume: $volume, storage: $storage, hours: $hours) {
     id
+    volume
+    storage
+    hours
   }
 }
     `;
@@ -626,37 +636,6 @@ export function usePinVolumeMutation(baseOptions?: Apollo.MutationHookOptions<Pi
 export type PinVolumeMutationHookResult = ReturnType<typeof usePinVolumeMutation>;
 export type PinVolumeMutationResult = Apollo.MutationResult<PinVolumeMutation>;
 export type PinVolumeMutationOptions = Apollo.BaseMutationOptions<PinVolumeMutation, PinVolumeMutationVariables>;
-export const RemoveS3BucketDocument = gql`
-    mutation RemoveS3Bucket($name: String!) {
-  removeS3Bucket(name: $name)
-}
-    `;
-export type RemoveS3BucketMutationFn = Apollo.MutationFunction<RemoveS3BucketMutation, RemoveS3BucketMutationVariables>;
-
-/**
- * __useRemoveS3BucketMutation__
- *
- * To run a mutation, you first call `useRemoveS3BucketMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useRemoveS3BucketMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [removeS3BucketMutation, { data, loading, error }] = useRemoveS3BucketMutation({
- *   variables: {
- *      name: // value for 'name'
- *   },
- * });
- */
-export function useRemoveS3BucketMutation(baseOptions?: Apollo.MutationHookOptions<RemoveS3BucketMutation, RemoveS3BucketMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<RemoveS3BucketMutation, RemoveS3BucketMutationVariables>(RemoveS3BucketDocument, options);
-      }
-export type RemoveS3BucketMutationHookResult = ReturnType<typeof useRemoveS3BucketMutation>;
-export type RemoveS3BucketMutationResult = Apollo.MutationResult<RemoveS3BucketMutation>;
-export type RemoveS3BucketMutationOptions = Apollo.BaseMutationOptions<RemoveS3BucketMutation, RemoveS3BucketMutationVariables>;
 export const RemoveScheduleDocument = gql`
     mutation RemoveSchedule($id: String!) {
   removeSchedule(id: $id)
@@ -688,12 +667,47 @@ export function useRemoveScheduleMutation(baseOptions?: Apollo.MutationHookOptio
 export type RemoveScheduleMutationHookResult = ReturnType<typeof useRemoveScheduleMutation>;
 export type RemoveScheduleMutationResult = Apollo.MutationResult<RemoveScheduleMutation>;
 export type RemoveScheduleMutationOptions = Apollo.BaseMutationOptions<RemoveScheduleMutation, RemoveScheduleMutationVariables>;
+export const RemoveStorageDocument = gql`
+    mutation RemoveStorage($name: String!) {
+  removeStorage(name: $name)
+}
+    `;
+export type RemoveStorageMutationFn = Apollo.MutationFunction<RemoveStorageMutation, RemoveStorageMutationVariables>;
+
+/**
+ * __useRemoveStorageMutation__
+ *
+ * To run a mutation, you first call `useRemoveStorageMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRemoveStorageMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [removeStorageMutation, { data, loading, error }] = useRemoveStorageMutation({
+ *   variables: {
+ *      name: // value for 'name'
+ *   },
+ * });
+ */
+export function useRemoveStorageMutation(baseOptions?: Apollo.MutationHookOptions<RemoveStorageMutation, RemoveStorageMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RemoveStorageMutation, RemoveStorageMutationVariables>(RemoveStorageDocument, options);
+      }
+export type RemoveStorageMutationHookResult = ReturnType<typeof useRemoveStorageMutation>;
+export type RemoveStorageMutationResult = Apollo.MutationResult<RemoveStorageMutation>;
+export type RemoveStorageMutationOptions = Apollo.BaseMutationOptions<RemoveStorageMutation, RemoveStorageMutationVariables>;
 export const AllStorageDocument = gql`
     query AllStorage {
-  s3Buckets {
+  allStorage {
     name
-    bucket
-    prefix
+    type
+    s3Bucket {
+      name
+      bucket
+      prefix
+    }
   }
 }
     `;

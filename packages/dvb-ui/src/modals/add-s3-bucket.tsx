@@ -1,8 +1,8 @@
 import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Stack, InputGroup, InputLeftAddon, Input, ModalFooter, Button } from '@chakra-ui/react';
 import React, { useRef, useCallback } from 'react';
-import { useAddS3BucketMutation } from '../generated/graphql';
+import { AllStorageDocument, AllStorageQuery, useAddS3BucketMutation } from '../generated/graphql';
 
-export default function AddS3BucketModal({ isOpen, onClose, onAdd }: { isOpen: boolean, onClose: () => void, onAdd: () => void }) {
+export default function AddS3BucketModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
   const [ addS3Bucket ] = useAddS3BucketMutation();
   const name = useRef<any>();
   const bucket = useRef<any>();
@@ -20,9 +20,17 @@ export default function AddS3BucketModal({ isOpen, onClose, onAdd }: { isOpen: b
         accessKey: accessKey.current!.value,
         secretKey: secretKey.current!.value,
         prefix: prefix.current!.value,
+      },
+      update: (cache, { data }) => {
+        if (data.addS3Bucket) {
+          const queryData = Object.assign({}, cache.readQuery<AllStorageQuery>({ query: AllStorageDocument }));
+          if (!queryData.allStorage.find(item => item.name === data.addS3Bucket!.name)) {
+            queryData.allStorage = [...queryData.allStorage, data.addS3Bucket];
+          }
+          cache.writeQuery({ query: AllStorageDocument, data: queryData });
+        }
       }
     });
-    onAdd();
     onClose();
   }, [ name, bucket, region, accessKey, secretKey, prefix ]);
 

@@ -1,7 +1,11 @@
 query AllStorage {
-  s3Buckets {
+  allStorage {
     name
-    bucket
-    prefix
+    type
+    s3Bucket {
+      name
+      bucket
+      prefix
+    }
   }
 }

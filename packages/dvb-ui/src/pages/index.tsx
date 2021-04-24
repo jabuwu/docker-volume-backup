@@ -3,13 +3,13 @@ import Wrapper from '../components/wrapper';
 import Title from '../components/title';
 import React, { useState } from 'react';
 import { Alert, AlertIcon, Button, Box, Spinner, Table, Tbody, Td, Th, Thead, Tr, Flex, Text } from '@chakra-ui/react';
-import { StarIcon } from '@chakra-ui/icons';
+import { RepeatIcon, StarIcon } from '@chakra-ui/icons';
 import LoadingTr  from '../components/loading-tr';
 import BackupVolumeModal from '../modals/backup-volume';
 import RestoreVolumeModal from '../modals/restore-volume';
 
 export default function Index(): any {
-  const { data, loading, error, refetch } = useVolumesQuery({ fetchPolicy: 'network-only', notifyOnNetworkStatusChange: true });
+  const { data, loading, error, refetch } = useVolumesQuery({ notifyOnNetworkStatusChange: true });
   const [ pinVolume ] = usePinVolumeMutation();
   const [ backupVolume, setBackupVolume ] = useState(null as string | null);
   const [ restoreVolume, setRestoreVolume ] = useState(null as string | null);
@@ -33,7 +33,14 @@ export default function Index(): any {
       <Tr key={ volume.name }>
         <Td>
           <Flex>
-            <Button size="sm" variant="ghost" colorScheme={ volume.pinned ? 'yellow' : 'blue' } onClick={ async () => { await pinVolume({ variables: { volume: volume.name, pinned: !volume.pinned } }); refetch() } }>
+            <Button size="sm" variant="ghost" colorScheme={ volume.pinned ? 'yellow' : 'blue' } onClick={ () => pinVolume({ variables: { volume: volume.name, pinned: !volume.pinned }, update: (cache) => {
+              cache.modify({
+                id: cache.identify(volume),
+                fields: {
+                  pinned: (value) => !value,
+                },
+              });
+            } }) }>
               <StarIcon />
             </Button>
             <Text ml={ 2 } my="auto" fontWeight="bold">{ volume.name }</Text>
@@ -53,9 +60,9 @@ export default function Index(): any {
     <Wrapper>
       <Title>Volumes</Title>
       <Flex mt={ 4 }>
-        <Text as="h1" fontSize="4xl">Volumes { loading ? <Spinner size="md" /> : null }</Text>
+        <Text as="h1" fontSize="4xl">Volumes</Text>
         <Box ml="auto" mt="auto">
-          <Button size="sm" ml={ 2 } colorScheme="green" onClick={ () => refetch() } isLoading={ loading }>Refresh</Button>
+          <Button size="lg" p={ 0 } variant="ghost" colorScheme="green" onClick={ () => refetch() } isLoading={ loading }><RepeatIcon /></Button>
         </Box>
       </Flex>
       { message }

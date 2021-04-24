@@ -5,7 +5,7 @@ import { useExportVolumeMutation, useStorageListQuery } from '../generated/graph
 export default function BackupVolumeModal({ volume, onClose }: { volume: string | null, onClose: () => void }) {
   const [ working, setWorking ] = useState(false);
   const [ exportVolume ] = useExportVolumeMutation();
-  const { data: storageData, loading: storageLoading, error: storageError } = useStorageListQuery({ fetchPolicy: 'network-only' });
+  const { data: storageData, loading: storageLoading, error: storageError } = useStorageListQuery();
   const [ storage, setStorage ] = useState('');
   const [ fileName, setFileName ] = useState('');
 

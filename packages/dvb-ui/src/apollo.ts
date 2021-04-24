@@ -3,6 +3,7 @@ import { ApolloClient, InMemoryCache } from '@apollo/client';
 import { WebSocketLink } from '@apollo/client/link/ws';
 import { split, HttpLink } from '@apollo/client';
 import { getMainDefinition } from '@apollo/client/utilities';
+import { VolumesQuery } from './generated/graphql';
 
 const isServer = typeof window === 'undefined';
 
@@ -36,8 +37,22 @@ export const apolloClient = new ApolloClient({
   link: splitLink,
   cache: new InMemoryCache({
     typePolicies: {
+      Query: {
+        fields: {
+          volumes(existing: VolumesQuery['volumes'], { canRead, readField }) {
+            if (!existing) return existing;
+            existing = Object.assign([], existing);
+            existing.sort((a, b) => {
+              if (readField('pinned', a) && !readField('pinned', b)) return -1;
+              if (!readField('pinned', a) && readField('pinned', b)) return 1;
+              return readField('name', a) > readField('name', b) ? 1 : -1;
+            });
+            return existing;
+          },
+        },
+      },
       Volume: {
-        keyFields: [ 'name' ]
+        keyFields: [ 'name' ],
       },
       Storage: {
         keyFields: [ 'name' ]
