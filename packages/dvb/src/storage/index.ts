@@ -13,6 +13,7 @@ export class StorageBackup {
 export interface StorageInterface {
   write(fileName: string, stream: Readable): Promise<void>;
   read(fileName: string, stream: Writable): Promise<void>;
+  del(fileName: string): Promise<void>;
   list(): Promise<StorageBackup[]>;
 }
 

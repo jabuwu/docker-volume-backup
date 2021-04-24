@@ -11,7 +11,7 @@ import { ApolloProvider } from '@apollo/client';
 export default function App({ Component, pageProps }) {
   const [ , scrollY ] = useScroll();
   const router = useRouter();
-  const activeStyle = (path: string) => router.pathname === path ? { fontWeight: 'bold' as const, color: 'white' } : {};
+  const activeStyle = (path: string) => ((router.pathname === '/' && path === '/') || (path !== '/' && router.pathname.startsWith(path))) ? { fontWeight: 'bold' as const, color: 'white' } : {};
   const RouterLink = ({ children, to }: { children: string, to: string }) => (
     <NextLink href={ to }>
       <Link ml={ 4 } my="auto" color="#ddd" style={{ textDecoration: 'none', ...activeStyle(to) }} _hover={{ color: 'white' }}>{ children }</Link>

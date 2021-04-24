@@ -1,5 +1,5 @@
 import { Link, Text } from '@chakra-ui/layout';
-import { useSchedulesQuery, useAllStorageQuery, useAddScheduleMutation, useVolumesQuery, useRemoveScheduleMutation } from '../generated/graphql';
+import { useSchedulesQuery, useStorageListQuery, useAddScheduleMutation, useVolumesQuery, useRemoveScheduleMutation } from '../generated/graphql';
 import Wrapper from '../components/wrapper';
 import Title from '../components/title';
 import React, { useState, useRef } from 'react';
@@ -11,7 +11,7 @@ function addScheduleModalFn(refetch: () => void) {
   const [ open, setOpen ] = useState(false);
   const [ addSchedule ] = useAddScheduleMutation();
   const { data: volumeData, loading: volumeLoading, error: volumeError } = useVolumesQuery({ fetchPolicy: 'network-only' });
-  const { data: storageData, loading: storageLoading, error: storageError } = useAllStorageQuery({ fetchPolicy: 'network-only' });
+  const { data: storageData, loading: storageLoading, error: storageError } = useStorageListQuery({ fetchPolicy: 'network-only' });
   const [ storage, setStorage ] = useState('');
   const [ volume, setVolume ] = useState('');
   const hours = useRef<any>();

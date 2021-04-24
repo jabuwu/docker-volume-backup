@@ -1,5 +1,5 @@
 import { StorageInterface, StorageBackup } from '.';
-import { createReadStream, createWriteStream } from 'fs-extra';
+import { createReadStream, createWriteStream, unlink } from 'fs-extra';
 import { Readable, Writable } from 'stream';
 import { ensureDirSync, ensureDir } from 'fs-extra';
 import { BACKUPS_DIR } from '../env';
@@ -27,6 +27,9 @@ export class LocalStorage implements StorageInterface {
     const readStream = createReadStream(inFile);
     await new Promise(resolve => readStream.on('open', resolve));
     readStream.pipe(stream);
+  }
+  async del(fileName: string) {
+    await unlink(path.join(workingDir, fileName));
   }
   list(): Promise<StorageBackup[]> {
     return new Promise<StorageBackup[]>((resolve, reject) => {

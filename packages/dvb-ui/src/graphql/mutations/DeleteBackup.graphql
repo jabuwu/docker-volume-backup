@@ -1,0 +1,3 @@
+mutation DeleteBackup($storage: String!, $fileName: String!) {
+  deleteBackup(storage: $storage, fileName: $fileName)
+}

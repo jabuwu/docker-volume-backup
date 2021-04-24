@@ -1,5 +1,5 @@
 import { Link, Text } from '@chakra-ui/layout';
-import { useVolumesQuery, useExportVolumeMutation, useImportVolumeMutation, useAllStorageQuery, useStorageBackupsLazyQuery, usePinVolumeMutation } from '../generated/graphql';
+import { useVolumesQuery, useExportVolumeMutation, useImportVolumeMutation, useStorageListQuery, useStorageBackupsLazyQuery, usePinVolumeMutation } from '../generated/graphql';
 import Wrapper from '../components/wrapper';
 import Title from '../components/title';
 import React, { useState, useRef, useMemo, useEffect } from 'react';
@@ -13,7 +13,7 @@ function exportVolumeFn() {
   const [ working, setWorking ] = useState(false);
   const [ volume, setVolume ] = useState('');
   const [ exportVolume ] = useExportVolumeMutation();
-  const { data: storageData, loading: storageLoading, error: storageError } = useAllStorageQuery({ fetchPolicy: 'network-only' });
+  const { data: storageData, loading: storageLoading, error: storageError } = useStorageListQuery({ fetchPolicy: 'network-only' });
   const [ storage, setStorage ] = useState('');
   const [ fileName, setFileName ] = useState('');
 
@@ -85,7 +85,7 @@ function importVolumeFn() {
   const [ volume, setVolume ] = useState('');
   const [ importVolume ] = useImportVolumeMutation();
   const [ getStorageBackups, { data: backupsData, loading: backupsLoading, error: backupsError } ] = useStorageBackupsLazyQuery({ fetchPolicy: 'network-only' });
-  const { data: storageData, loading: storageLoading, error: storageError } = useAllStorageQuery({ fetchPolicy: 'network-only' });
+  const { data: storageData, loading: storageLoading, error: storageError } = useStorageListQuery({ fetchPolicy: 'network-only' });
   const [ storage, setStorage ] = useState('');
   const [ filter, setFilter ] = useState('');
   const [ fileName, setFileName ] = useState('');

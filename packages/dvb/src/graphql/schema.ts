@@ -8,6 +8,20 @@ import { Storage, getStorage } from '../storage';
 import { s3Buckets } from '../storage/s3';
 import { Schedule, schedules } from '../schedule';
 import { generate } from 'short-uuid';
+import path from 'path';
+
+function validateFileName(fileName: string) {
+  if (path.isAbsolute(fileName)) {
+    throw new Error('Invalid storage file name.');
+  }
+  fileName = fileName.split('\\').join('/');
+  const dirs = fileName.split('/');
+  for (const dir of dirs) {
+    if (dir === '..') {
+      throw new Error('Invalid storage file name.');
+    }
+  }
+}
 
 @Resolver()
 class DvmResolver {
@@ -30,6 +44,7 @@ class DvmResolver {
     @Arg('fileName', () => String, { nullable: true }) fileName: string | undefined,
   ) {
     fileName = fileName || `${volume}.tgz`;
+    validateFileName(fileName);
     const storageInstance = getStorage(storage);
     if (storageInstance) {
       try {
@@ -49,6 +64,7 @@ class DvmResolver {
     @Arg('storage', () => String) storage: string,
     @Arg('fileName', () => String) fileName: string
   ) {
+    validateFileName(fileName);
     const storageInstance = getStorage(storage);
     if (storageInstance) {
       try {
@@ -95,6 +111,18 @@ class DvmResolver {
     @Arg('name', () => String) name: string,
   ) {
     return Storage.get(name);
+  }
+  @Mutation(() => Boolean) async deleteBackup(
+    @Arg('storage', () => String) storageName: string,
+    @Arg('fileName', () => String) fileName: string,
+  ): Promise<boolean> {
+    validateFileName(fileName);
+    const storage = getStorage(storageName);
+    if (storage) {
+      await storage.del(fileName);
+      return true;
+    }
+    return true;
   }
 
   ///

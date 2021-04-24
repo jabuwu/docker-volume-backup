@@ -34,6 +34,13 @@ export class S3Storage implements StorageInterface {
       readStream.on('error', reject);
     });
   }
+  async del(fileName: string) {
+    const s3 = this.s3();
+    await s3.deleteObject({
+      Bucket: this.bucket.name,
+      Key: `${this.bucket.prefix}${fileName}`,
+    }).promise();
+  }
   async list(): Promise<StorageBackup[]> {
     const s3 = this.s3();
     const arr: StorageBackup[] = [];

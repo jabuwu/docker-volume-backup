@@ -1,7 +1,12 @@
-query Storage {
-  s3Buckets {
+query Storage($name: String!) {
+  storage(name: $name) {
     name
-    bucket
-    prefix
+    type
+    s3Bucket {
+      name
+    }
+    backups {
+      fileName
+    }
   }
 }

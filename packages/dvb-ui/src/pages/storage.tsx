@@ -1,7 +1,7 @@
 import Wrapper from '../components/wrapper';
 import Title from '../components/title';
 import { Text } from '@chakra-ui/layout';
-import { useStorageQuery, useAddS3BucketMutation, useRemoveS3BucketMutation } from '../generated/graphql';
+import { useAllStorageQuery, useAddS3BucketMutation, useRemoveS3BucketMutation } from '../generated/graphql';
 import LoadingTr from '../components/loading-tr';
 import { useState, useRef } from 'react';
 import {
@@ -27,8 +27,10 @@ import {
   InputGroup,
   InputLeftAddon,
   Input,
-  InputRightAddon
+  InputRightAddon,
+  Link
 } from '@chakra-ui/react';
+import NextLink from 'next/link';
 
 function addS3BucketModalFn(refetch: () => void) {
   const [ open, setOpen ] = useState(false);
@@ -105,7 +107,7 @@ function addS3BucketModalFn(refetch: () => void) {
 }
 
 export default function Storage(): any {
-  const { data, loading, error, refetch } = useStorageQuery({ fetchPolicy: 'network-only', errorPolicy: 'none', notifyOnNetworkStatusChange: true });
+  const { data, loading, error, refetch } = useAllStorageQuery({ fetchPolicy: 'network-only', errorPolicy: 'none', notifyOnNetworkStatusChange: true });
   let message: JSX.Element | null = null;
   let s3Table: JSX.Element | null = null;
   let s3Message: JSX.Element | null = null;
@@ -127,7 +129,9 @@ export default function Storage(): any {
     s3Table = <>{ data.s3Buckets.map(s3Bucket => (
       <Tr key={ s3Bucket.name }>
         <Td>
-          <Text fontWeight="bold">{ s3Bucket.name }</Text>
+          <NextLink href={ `/storage/${s3Bucket.name}` }>
+            <Link fontWeight="bold">{ s3Bucket.name }</Link>
+          </NextLink>
         </Td>
         <Td>
           <Text>{ `s3://${s3Bucket.bucket}` }</Text>
@@ -146,7 +150,24 @@ export default function Storage(): any {
       <Title>Storage</Title>
       <Text as="h1" fontSize="4xl">Storage { loading ? <Spinner size="md" /> : null }</Text>
       { message }
-      <Flex mt={ 4 }>
+      <Text mt={ 4 }fontSize="xl">Local</Text>
+      <Table variant="striped">
+        <Thead>
+          <Tr>
+            <Th>Name</Th>
+          </Tr>
+        </Thead>
+        <Tbody>
+          <Tr>
+            <Td>
+              <NextLink href={ `/storage/local` }>
+                <Link fontWeight="bold">local</Link>
+              </NextLink>
+            </Td>
+          </Tr>
+        </Tbody>
+      </Table>
+      <Flex mt={ 8 }>
         <Text fontSize="xl">S3 Buckets</Text>
         <Box ml="auto" mt="auto">
           <Button size="sm" colorScheme="blue" onClick={ addS3BucketModal.open } isLoading={ loading } disable={ error }>Add S3 Bucket</Button>

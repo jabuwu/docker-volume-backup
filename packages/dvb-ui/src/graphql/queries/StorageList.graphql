@@ -1,0 +1,6 @@
+query StorageList {
+  allStorage {
+    type
+    name
+  }
+}
