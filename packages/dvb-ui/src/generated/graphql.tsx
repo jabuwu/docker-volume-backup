@@ -404,7 +404,7 @@ export type VolumeCreatedSubscription = (
   { __typename?: 'Subscription' }
   & { volumeCreated: (
     { __typename?: 'Volume' }
-    & Pick<Volume, 'name'>
+    & Pick<Volume, 'name' | 'driver' | 'pinned'>
   ) }
 );
 
@@ -934,6 +934,8 @@ export const VolumeCreatedDocument = gql`
     subscription VolumeCreated {
   volumeCreated {
     name
+    driver
+    pinned
   }
 }
     `;
