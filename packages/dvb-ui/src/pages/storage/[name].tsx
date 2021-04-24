@@ -60,6 +60,13 @@ export default function Storage(): any {
       </>
       : null
     }
+    { !!error ?
+      <Alert status="error" mt={ 4 }>
+       <AlertIcon />
+        Failed to fetch storage info. { error.message }
+      </Alert>
+      : null
+    }
     { !error && !loading && !data.storage ? 
       <Alert status="error" mt={ 4 }>
        <AlertIcon />

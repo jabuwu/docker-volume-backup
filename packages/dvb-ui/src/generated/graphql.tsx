@@ -68,6 +68,7 @@ export type Mutation = {
   addSchedule?: Maybe<Schedule>;
   removeSchedule: Scalars['Boolean'];
   addS3Bucket?: Maybe<Storage>;
+  updateS3Bucket?: Maybe<Storage>;
 };
 
 
@@ -120,6 +121,16 @@ export type MutationAddS3BucketArgs = {
   accessKey: Scalars['String'];
   region: Scalars['String'];
   bucket: Scalars['String'];
+  name: Scalars['String'];
+};
+
+
+export type MutationUpdateS3BucketArgs = {
+  prefix?: Maybe<Scalars['String']>;
+  secretKey?: Maybe<Scalars['String']>;
+  accessKey?: Maybe<Scalars['String']>;
+  region?: Maybe<Scalars['String']>;
+  bucket?: Maybe<Scalars['String']>;
   name: Scalars['String'];
 };
 
@@ -308,6 +319,28 @@ export type RemoveStorageMutation = (
   & Pick<Mutation, 'removeStorage'>
 );
 
+export type UpdateS3BucketMutationVariables = Exact<{
+  name: Scalars['String'];
+  bucket?: Maybe<Scalars['String']>;
+  region?: Maybe<Scalars['String']>;
+  accessKey?: Maybe<Scalars['String']>;
+  secretKey?: Maybe<Scalars['String']>;
+  prefix?: Maybe<Scalars['String']>;
+}>;
+
+
+export type UpdateS3BucketMutation = (
+  { __typename?: 'Mutation' }
+  & { updateS3Bucket?: Maybe<(
+    { __typename?: 'Storage' }
+    & Pick<Storage, 'name' | 'type'>
+    & { s3Bucket?: Maybe<(
+      { __typename?: 'S3Bucket' }
+      & Pick<S3Bucket, 'name' | 'bucket' | 'region' | 'accessKey' | 'prefix'>
+    )> }
+  )> }
+);
+
 export type AllStorageQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -319,6 +352,23 @@ export type AllStorageQuery = (
     & { s3Bucket?: Maybe<(
       { __typename?: 'S3Bucket' }
       & Pick<S3Bucket, 'name' | 'bucket' | 'prefix'>
+    )> }
+  )> }
+);
+
+export type S3BucketQueryVariables = Exact<{
+  name: Scalars['String'];
+}>;
+
+
+export type S3BucketQuery = (
+  { __typename?: 'Query' }
+  & { storage?: Maybe<(
+    { __typename?: 'Storage' }
+    & Pick<Storage, 'name' | 'type'>
+    & { s3Bucket?: Maybe<(
+      { __typename?: 'S3Bucket' }
+      & Pick<S3Bucket, 'name' | 'bucket' | 'region' | 'accessKey' | 'prefix'>
     )> }
   )> }
 );
@@ -698,6 +748,59 @@ export function useRemoveStorageMutation(baseOptions?: Apollo.MutationHookOption
 export type RemoveStorageMutationHookResult = ReturnType<typeof useRemoveStorageMutation>;
 export type RemoveStorageMutationResult = Apollo.MutationResult<RemoveStorageMutation>;
 export type RemoveStorageMutationOptions = Apollo.BaseMutationOptions<RemoveStorageMutation, RemoveStorageMutationVariables>;
+export const UpdateS3BucketDocument = gql`
+    mutation UpdateS3Bucket($name: String!, $bucket: String, $region: String, $accessKey: String, $secretKey: String, $prefix: String) {
+  updateS3Bucket(
+    name: $name
+    bucket: $bucket
+    region: $region
+    accessKey: $accessKey
+    secretKey: $secretKey
+    prefix: $prefix
+  ) {
+    name
+    type
+    s3Bucket {
+      name
+      bucket
+      region
+      accessKey
+      prefix
+    }
+  }
+}
+    `;
+export type UpdateS3BucketMutationFn = Apollo.MutationFunction<UpdateS3BucketMutation, UpdateS3BucketMutationVariables>;
+
+/**
+ * __useUpdateS3BucketMutation__
+ *
+ * To run a mutation, you first call `useUpdateS3BucketMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateS3BucketMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateS3BucketMutation, { data, loading, error }] = useUpdateS3BucketMutation({
+ *   variables: {
+ *      name: // value for 'name'
+ *      bucket: // value for 'bucket'
+ *      region: // value for 'region'
+ *      accessKey: // value for 'accessKey'
+ *      secretKey: // value for 'secretKey'
+ *      prefix: // value for 'prefix'
+ *   },
+ * });
+ */
+export function useUpdateS3BucketMutation(baseOptions?: Apollo.MutationHookOptions<UpdateS3BucketMutation, UpdateS3BucketMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateS3BucketMutation, UpdateS3BucketMutationVariables>(UpdateS3BucketDocument, options);
+      }
+export type UpdateS3BucketMutationHookResult = ReturnType<typeof useUpdateS3BucketMutation>;
+export type UpdateS3BucketMutationResult = Apollo.MutationResult<UpdateS3BucketMutation>;
+export type UpdateS3BucketMutationOptions = Apollo.BaseMutationOptions<UpdateS3BucketMutation, UpdateS3BucketMutationVariables>;
 export const AllStorageDocument = gql`
     query AllStorage {
   allStorage {
@@ -738,6 +841,49 @@ export function useAllStorageLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions
 export type AllStorageQueryHookResult = ReturnType<typeof useAllStorageQuery>;
 export type AllStorageLazyQueryHookResult = ReturnType<typeof useAllStorageLazyQuery>;
 export type AllStorageQueryResult = Apollo.QueryResult<AllStorageQuery, AllStorageQueryVariables>;
+export const S3BucketDocument = gql`
+    query S3Bucket($name: String!) {
+  storage(name: $name) {
+    name
+    type
+    s3Bucket {
+      name
+      bucket
+      region
+      accessKey
+      prefix
+    }
+  }
+}
+    `;
+
+/**
+ * __useS3BucketQuery__
+ *
+ * To run a query within a React component, call `useS3BucketQuery` and pass it any options that fit your needs.
+ * When your component renders, `useS3BucketQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useS3BucketQuery({
+ *   variables: {
+ *      name: // value for 'name'
+ *   },
+ * });
+ */
+export function useS3BucketQuery(baseOptions: Apollo.QueryHookOptions<S3BucketQuery, S3BucketQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<S3BucketQuery, S3BucketQueryVariables>(S3BucketDocument, options);
+      }
+export function useS3BucketLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<S3BucketQuery, S3BucketQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<S3BucketQuery, S3BucketQueryVariables>(S3BucketDocument, options);
+        }
+export type S3BucketQueryHookResult = ReturnType<typeof useS3BucketQuery>;
+export type S3BucketLazyQueryHookResult = ReturnType<typeof useS3BucketLazyQuery>;
+export type S3BucketQueryResult = Apollo.QueryResult<S3BucketQuery, S3BucketQueryVariables>;
 export const SchedulesDocument = gql`
     query Schedules {
   schedules {

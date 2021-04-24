@@ -1,0 +1,13 @@
+mutation UpdateS3Bucket($name: String!, $bucket: String, $region: String, $accessKey: String, $secretKey: String, $prefix: String) {
+  updateS3Bucket(name: $name, bucket: $bucket, region: $region, accessKey: $accessKey, secretKey: $secretKey, prefix: $prefix) {
+    name
+    type
+    s3Bucket {
+      name
+      bucket
+      region
+      accessKey
+      prefix
+    }
+  }
+}

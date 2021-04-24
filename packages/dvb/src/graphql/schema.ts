@@ -8,6 +8,7 @@ import { s3Buckets } from '../storage/s3';
 import { Schedule, schedules } from '../schedule';
 import { generate } from 'short-uuid';
 import path from 'path';
+import { assign, cloneDeep, pickBy } from 'lodash';
 
 function validateFileName(fileName: string) {
   if (path.isAbsolute(fileName)) {
@@ -183,6 +184,28 @@ class DvmResolver {
       secretKey,
       prefix: prefix ?? '',
     });
+    return Storage.get(bucketInfo.name);
+  }
+  @Mutation(() => Storage, { nullable: true }) updateS3Bucket(
+    @Arg('name', () => String) name: string,
+    @Arg('bucket', () => String, { nullable: true }) bucket: string | undefined,
+    @Arg('region', () => String, { nullable: true }) region: string | undefined,
+    @Arg('accessKey', () => String, { nullable: true }) accessKey: string | undefined,
+    @Arg('secretKey', () => String, { nullable: true }) secretKey: string | undefined,
+    @Arg('prefix', () => String, { nullable: true }) prefix: string | undefined,
+  ): Storage | null {
+    const bucketInfo = cloneDeep(s3Buckets.findOne({ name }));
+    if (!bucketInfo) {
+      return null;
+    }
+    assign(bucketInfo, pickBy({
+      bucket,
+      region,
+      accessKey,
+      secretKey,
+      prefix,
+    }, o => o !== undefined));
+    s3Buckets.update({ name }, bucketInfo);
     return Storage.get(bucketInfo.name);
   }
 }

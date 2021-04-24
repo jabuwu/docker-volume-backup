@@ -1,0 +1,13 @@
+query S3Bucket($name: String!) {
+  storage(name: $name) {
+    name
+    type
+    s3Bucket {
+      name
+      bucket
+      region
+      accessKey
+      prefix
+    }
+  }
+}
