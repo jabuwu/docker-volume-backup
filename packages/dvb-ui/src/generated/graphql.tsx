@@ -178,6 +178,7 @@ export type Schedule = {
   volume: Scalars['String'];
   storage: Scalars['String'];
   hours: Scalars['Float'];
+  lastUpdate: Scalars['Float'];
 };
 
 export type Storage = {
@@ -258,7 +259,7 @@ export type AddScheduleMutation = (
   { __typename?: 'Mutation' }
   & { addSchedule?: Maybe<(
     { __typename?: 'Schedule' }
-    & Pick<Schedule, 'id' | 'volume' | 'storage' | 'hours'>
+    & Pick<Schedule, 'id' | 'volume' | 'storage' | 'hours' | 'lastUpdate'>
   )> }
 );
 
@@ -362,7 +363,7 @@ export type UpdateScheduleMutation = (
   { __typename?: 'Mutation' }
   & { updateSchedule?: Maybe<(
     { __typename?: 'Schedule' }
-    & Pick<Schedule, 'id' | 'volume' | 'storage' | 'hours'>
+    & Pick<Schedule, 'id' | 'volume' | 'storage' | 'hours' | 'lastUpdate'>
   )> }
 );
 
@@ -418,7 +419,7 @@ export type SchedulesQuery = (
   { __typename?: 'Query' }
   & { schedules: Array<(
     { __typename?: 'Schedule' }
-    & Pick<Schedule, 'id' | 'volume' | 'storage' | 'hours'>
+    & Pick<Schedule, 'id' | 'volume' | 'storage' | 'hours' | 'lastUpdate'>
   )> }
 );
 
@@ -563,6 +564,7 @@ export const AddScheduleDocument = gql`
     volume
     storage
     hours
+    lastUpdate
   }
 }
     `;
@@ -846,6 +848,7 @@ export const UpdateScheduleDocument = gql`
     volume
     storage
     hours
+    lastUpdate
   }
 }
     `;
@@ -1006,6 +1009,7 @@ export const SchedulesDocument = gql`
     volume
     storage
     hours
+    lastUpdate
   }
 }
     `;

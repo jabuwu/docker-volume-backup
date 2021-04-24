@@ -17,6 +17,7 @@ export class Schedule {
   @Field()
   hours: number;
 
+  @Field()
   lastUpdate: number;
 }
 

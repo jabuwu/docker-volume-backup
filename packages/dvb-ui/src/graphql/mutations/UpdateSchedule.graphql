@@ -4,5 +4,6 @@ mutation UpdateSchedule($id: String!, $volume: String, $storage: String, $hours:
     volume
     storage
     hours
+    lastUpdate
   }
 }

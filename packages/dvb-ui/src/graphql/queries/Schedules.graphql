@@ -4,5 +4,6 @@ query Schedules {
     volume
     storage
     hours
+    lastUpdate
   }
 }

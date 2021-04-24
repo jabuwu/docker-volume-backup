@@ -16,7 +16,7 @@ export default function Schedules(): any {
   let table: ((openEdit: (id: string) => void) => JSX.Element) | null = null;
   const [ removeSchedule ] = useRemoveScheduleMutation();
   if (loading) {
-    table = () => <LoadingTr colSpan={ 4 } />
+    table = () => <LoadingTr colSpan={ 5 } />
   } else if (error) {
     message = (
       <Alert status="error" mt={ 2 }>
@@ -39,6 +39,9 @@ export default function Schedules(): any {
         </Td>
         <Td>
           <Text>{ schedule.hours }</Text>
+        </Td>
+        <Td>
+          <Text>{ new Date(schedule.lastUpdate).toUTCString() }</Text>
         </Td>
         <Td textAlign="right">
           <Button size="lg" p={ 0 } variant="ghost" colorScheme="blue" onClick={ () => openEdit(schedule.id) } isLoading={ loading }><SettingsIcon /></Button>
@@ -80,6 +83,7 @@ export default function Schedules(): any {
                 <Th>Volume</Th>
                 <Th>Storage</Th>
                 <Th>Hours</Th>
+                <Th>Last Update</Th>
                 <Th></Th>
               </Tr>
             </Thead>
