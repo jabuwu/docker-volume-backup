@@ -7,6 +7,7 @@ import { Alert, AlertIcon, Box, Button, Spinner, Table, Tbody, Td, Th, Thead, Tr
 import LoadingTr  from '../components/loading-tr';
 import AddScheduleModal from '../modals/add-schedule';
 import { AddIcon, DeleteIcon, RepeatIcon } from '@chakra-ui/icons';
+import ConfirmDelete from '../modals/confirm-delete';
 
 export default function Schedules(): any {
   const { data, loading, error, refetch } = useSchedulesQuery({ notifyOnNetworkStatusChange: true });
@@ -40,9 +41,15 @@ export default function Schedules(): any {
           <Text>{ schedule.hours }</Text>
         </Td>
         <Td textAlign="right">
-          <Button colorScheme="red" variant="ghost" onClick={ () => removeSchedule({ variables: { id: schedule.id }, update: (cache) => {
+          <ConfirmDelete name="Schedule" onDelete={ () => removeSchedule({ variables: { id: schedule.id }, update: (cache) => {
             cache.evict({ id: cache.identify(schedule) });
-          } }) }><DeleteIcon /></Button>
+          } }) }>
+            { (open) => (
+              <Button colorScheme="red" variant="ghost" onClick={ open }>
+                <DeleteIcon />
+              </Button>
+            ) }
+          </ConfirmDelete>
         </Td>
       </Tr>
     ))}</>;

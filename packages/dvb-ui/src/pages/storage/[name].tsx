@@ -5,7 +5,8 @@ import { Text, Spinner, Skeleton, AlertIcon, Alert, Table, Tbody, Th, Thead, Tr,
 import Title from '../../components/title';
 import React from 'react';
 import LoadingTr from '../../components/loading-tr';
-import { RepeatIcon } from '@chakra-ui/icons';
+import { DeleteIcon, RepeatIcon } from '@chakra-ui/icons';
+import ConfirmDelete from '../../modals/confirm-delete';
 
 const KB = 1024;
 const MB = KB * 1024;
@@ -87,7 +88,13 @@ export default function Storage(): any {
                   <Td>{ formatSize(backup.stat.size) }</Td>
                   <Td>{ new Date(backup.stat.modified).toUTCString() }</Td>
                   <Td textAlign="right">
-                    <Button colorScheme="red" onClick={ async () => { await deleteBackup({ variables: { storage: name, fileName: backup.fileName } }); refetch() } }>Delete</Button>
+                    <ConfirmDelete name={ backup.fileName } onDelete={ async () => { await deleteBackup({ variables: { storage: name, fileName: backup.fileName } }); refetch() } }>
+                      { (open) => (
+                        <Button colorScheme="red" variant="ghost" onClick={ open }>
+                          <DeleteIcon />
+                        </Button>
+                      ) }
+                    </ConfirmDelete>
                   </Td>
                 </Tr>
               ))

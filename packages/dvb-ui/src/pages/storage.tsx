@@ -22,6 +22,7 @@ import {
 import NextLink from 'next/link';
 import AddS3BucketModal from '../modals/add-s3-bucket';
 import { AddIcon, DeleteIcon, RepeatIcon } from '@chakra-ui/icons';
+import ConfirmDelete from '../modals/confirm-delete';
 
 export default function Storage(): any {
   const { data, loading, error, refetch } = useAllStorageQuery({ notifyOnNetworkStatusChange: true });
@@ -58,9 +59,15 @@ export default function Storage(): any {
           <Text>{ s3Bucket.s3Bucket!.prefix}</Text>
         </Td>
         <Td textAlign="right">
-          <Button colorScheme="red" variant="ghost" onClick={ async () => removeStorage({ variables: { name: s3Bucket.name }, update: (cache) => {
+          <ConfirmDelete name={ s3Bucket.name } onDelete={ () => removeStorage({ variables: { name: s3Bucket.name }, update: (cache) => {
             cache.evict({ id: cache.identify(s3Bucket) });
-          } }) }><DeleteIcon /></Button>
+          } }) }>
+            { (open) => (
+              <Button colorScheme="red" variant="ghost" onClick={ open }>
+                <DeleteIcon />
+              </Button>
+            ) }
+          </ConfirmDelete>
         </Td>
       </Tr>
     ))}</>;
