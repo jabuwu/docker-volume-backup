@@ -1,0 +1,8 @@
+query Schedule($id: String!) {
+  schedule(id: $id) {
+    id
+    volume
+    storage
+    hours
+  }
+}

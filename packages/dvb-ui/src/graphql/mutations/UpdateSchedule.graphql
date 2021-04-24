@@ -1,0 +1,8 @@
+mutation UpdateSchedule($id: String!, $volume: String, $storage: String, $hours: Int) {
+  updateSchedule(id: $id, volume: $volume, storage: $storage, hours: $hours) {
+    id
+    volume
+    storage
+    hours
+  }
+}

@@ -154,6 +154,24 @@ class DvmResolver {
       lastUpdate: new Date().getTime()
     });
   }
+  @Mutation(() => Schedule, { nullable: true }) updateSchedule(
+    @Arg('id', () => String) id: string,
+    @Arg('volume', () => String, { nullable: true }) volume: string | undefined,
+    @Arg('storage', () => String, { nullable: true }) storage: string | undefined,
+    @Arg('hours', () => Int, { nullable: true }) hours: number | undefined,
+  ): Schedule | null {
+    const schedule = cloneDeep(schedules.findOne({ id }));
+    if (!schedule) {
+      return null;
+    }
+    assign(schedule, pickBy({
+      volume,
+      storage,
+      hours,
+    }, o => o !== undefined));
+    schedules.update({ id }, schedule);
+    return schedule;
+  }
   @Mutation(() => Boolean) removeSchedule(
     @Arg('id', () => String) id: string
   ): boolean {

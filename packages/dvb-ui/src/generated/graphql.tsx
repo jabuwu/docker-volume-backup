@@ -66,6 +66,7 @@ export type Mutation = {
   removeStorage: Scalars['Boolean'];
   deleteBackup: Scalars['Boolean'];
   addSchedule?: Maybe<Schedule>;
+  updateSchedule?: Maybe<Schedule>;
   removeSchedule: Scalars['Boolean'];
   addS3Bucket?: Maybe<Storage>;
   updateS3Bucket?: Maybe<Storage>;
@@ -107,6 +108,14 @@ export type MutationAddScheduleArgs = {
   hours: Scalars['Int'];
   storage: Scalars['String'];
   volume: Scalars['String'];
+};
+
+
+export type MutationUpdateScheduleArgs = {
+  hours?: Maybe<Scalars['Int']>;
+  storage?: Maybe<Scalars['String']>;
+  volume?: Maybe<Scalars['String']>;
+  id: Scalars['String'];
 };
 
 
@@ -341,6 +350,22 @@ export type UpdateS3BucketMutation = (
   )> }
 );
 
+export type UpdateScheduleMutationVariables = Exact<{
+  id: Scalars['String'];
+  volume?: Maybe<Scalars['String']>;
+  storage?: Maybe<Scalars['String']>;
+  hours?: Maybe<Scalars['Int']>;
+}>;
+
+
+export type UpdateScheduleMutation = (
+  { __typename?: 'Mutation' }
+  & { updateSchedule?: Maybe<(
+    { __typename?: 'Schedule' }
+    & Pick<Schedule, 'id' | 'volume' | 'storage' | 'hours'>
+  )> }
+);
+
 export type AllStorageQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -370,6 +395,19 @@ export type S3BucketQuery = (
       { __typename?: 'S3Bucket' }
       & Pick<S3Bucket, 'name' | 'bucket' | 'region' | 'accessKey' | 'prefix'>
     )> }
+  )> }
+);
+
+export type ScheduleQueryVariables = Exact<{
+  id: Scalars['String'];
+}>;
+
+
+export type ScheduleQuery = (
+  { __typename?: 'Query' }
+  & { schedule?: Maybe<(
+    { __typename?: 'Schedule' }
+    & Pick<Schedule, 'id' | 'volume' | 'storage' | 'hours'>
   )> }
 );
 
@@ -801,6 +839,45 @@ export function useUpdateS3BucketMutation(baseOptions?: Apollo.MutationHookOptio
 export type UpdateS3BucketMutationHookResult = ReturnType<typeof useUpdateS3BucketMutation>;
 export type UpdateS3BucketMutationResult = Apollo.MutationResult<UpdateS3BucketMutation>;
 export type UpdateS3BucketMutationOptions = Apollo.BaseMutationOptions<UpdateS3BucketMutation, UpdateS3BucketMutationVariables>;
+export const UpdateScheduleDocument = gql`
+    mutation UpdateSchedule($id: String!, $volume: String, $storage: String, $hours: Int) {
+  updateSchedule(id: $id, volume: $volume, storage: $storage, hours: $hours) {
+    id
+    volume
+    storage
+    hours
+  }
+}
+    `;
+export type UpdateScheduleMutationFn = Apollo.MutationFunction<UpdateScheduleMutation, UpdateScheduleMutationVariables>;
+
+/**
+ * __useUpdateScheduleMutation__
+ *
+ * To run a mutation, you first call `useUpdateScheduleMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateScheduleMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateScheduleMutation, { data, loading, error }] = useUpdateScheduleMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      volume: // value for 'volume'
+ *      storage: // value for 'storage'
+ *      hours: // value for 'hours'
+ *   },
+ * });
+ */
+export function useUpdateScheduleMutation(baseOptions?: Apollo.MutationHookOptions<UpdateScheduleMutation, UpdateScheduleMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateScheduleMutation, UpdateScheduleMutationVariables>(UpdateScheduleDocument, options);
+      }
+export type UpdateScheduleMutationHookResult = ReturnType<typeof useUpdateScheduleMutation>;
+export type UpdateScheduleMutationResult = Apollo.MutationResult<UpdateScheduleMutation>;
+export type UpdateScheduleMutationOptions = Apollo.BaseMutationOptions<UpdateScheduleMutation, UpdateScheduleMutationVariables>;
 export const AllStorageDocument = gql`
     query AllStorage {
   allStorage {
@@ -884,6 +961,44 @@ export function useS3BucketLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<S
 export type S3BucketQueryHookResult = ReturnType<typeof useS3BucketQuery>;
 export type S3BucketLazyQueryHookResult = ReturnType<typeof useS3BucketLazyQuery>;
 export type S3BucketQueryResult = Apollo.QueryResult<S3BucketQuery, S3BucketQueryVariables>;
+export const ScheduleDocument = gql`
+    query Schedule($id: String!) {
+  schedule(id: $id) {
+    id
+    volume
+    storage
+    hours
+  }
+}
+    `;
+
+/**
+ * __useScheduleQuery__
+ *
+ * To run a query within a React component, call `useScheduleQuery` and pass it any options that fit your needs.
+ * When your component renders, `useScheduleQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useScheduleQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useScheduleQuery(baseOptions: Apollo.QueryHookOptions<ScheduleQuery, ScheduleQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<ScheduleQuery, ScheduleQueryVariables>(ScheduleDocument, options);
+      }
+export function useScheduleLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ScheduleQuery, ScheduleQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<ScheduleQuery, ScheduleQueryVariables>(ScheduleDocument, options);
+        }
+export type ScheduleQueryHookResult = ReturnType<typeof useScheduleQuery>;
+export type ScheduleLazyQueryHookResult = ReturnType<typeof useScheduleLazyQuery>;
+export type ScheduleQueryResult = Apollo.QueryResult<ScheduleQuery, ScheduleQueryVariables>;
 export const SchedulesDocument = gql`
     query Schedules {
   schedules {
