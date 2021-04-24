@@ -1,7 +1,7 @@
 import Wrapper from '../components/wrapper';
 import Title from '../components/title';
 import { Text } from '@chakra-ui/layout';
-import { useAllStorageQuery, useAddS3BucketMutation, useRemoveS3BucketMutation } from '../generated/graphql';
+import { useAllStorageQuery, useRemoveS3BucketMutation } from '../generated/graphql';
 import LoadingTr from '../components/loading-tr';
 import { useState, useRef } from 'react';
 import {
@@ -17,101 +17,17 @@ import {
   Tr,
   Button,
   Flex,
-  Modal,
-  ModalOverlay,
-  ModalContent, ModalHeader,
-  ModalCloseButton,
-  ModalBody,
-  ModalFooter,
-  Stack,
-  InputGroup,
-  InputLeftAddon,
-  Input,
-  InputRightAddon,
   Link
 } from '@chakra-ui/react';
 import NextLink from 'next/link';
-
-function addS3BucketModalFn(refetch: () => void) {
-  const [ open, setOpen ] = useState(false);
-  const [ addS3Bucket ] = useAddS3BucketMutation();
-  const name = useRef<any>();
-  const bucket = useRef<any>();
-  const region = useRef<any>();
-  const accessKey = useRef<any>();
-  const secretKey = useRef<any>();
-  const prefix = useRef<any>();
-
-  function close() {
-    setOpen(false);
-  }
-
-  async function add() {
-    await addS3Bucket({
-      variables: {
-        name: name.current!.value,
-        bucket: bucket.current!.value,
-        region: region.current!.value,
-        accessKey: accessKey.current!.value,
-        secretKey: secretKey.current!.value,
-        prefix: prefix.current!.value,
-      }
-    });
-    setOpen(false);
-    refetch();
-  }
-
-  return {
-    open: () => setOpen(true),
-    jsx: <Modal size="xl" isOpen={ open } onClose={ close }>
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>Add S3 Bucket</ModalHeader>
-        <ModalCloseButton />
-        <ModalBody>
-          <Stack spacing={4}>
-            <InputGroup size="sm">
-              <InputLeftAddon children="Name" />
-              <Input ref={ name } />
-            </InputGroup>
-            <InputGroup size="sm">
-              <InputLeftAddon children="Bucket" />
-              <Input ref={ bucket } />
-            </InputGroup>
-            <InputGroup size="sm">
-              <InputLeftAddon children="Region" />
-              <Input ref={ region } />
-            </InputGroup>
-            <InputGroup size="sm">
-              <InputLeftAddon children="Access Key" />
-              <Input ref={ accessKey } />
-            </InputGroup>
-            <InputGroup size="sm">
-              <InputLeftAddon children="Secret Key" />
-              <Input ref={ secretKey } />
-            </InputGroup>
-            <InputGroup size="sm">
-              <InputLeftAddon children="Prefix" />
-              <Input ref={ prefix } />
-            </InputGroup>
-          </Stack>
-        </ModalBody>
-        <ModalFooter>
-          <Button colorScheme="green" onClick={ add }>
-            Add
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
-  }
-}
+import AddS3BucketModal from '../modals/add-s3-bucket';
 
 export default function Storage(): any {
   const { data, loading, error, refetch } = useAllStorageQuery({ fetchPolicy: 'network-only', errorPolicy: 'none', notifyOnNetworkStatusChange: true });
   let message: JSX.Element | null = null;
   let s3Table: JSX.Element | null = null;
   let s3Message: JSX.Element | null = null;
-  const addS3BucketModal = addS3BucketModalFn(refetch);
+  const [ addS3BucketModal, setAddS3BucketModal ] = useState(false);
   const [ removeS3Bucket ] = useRemoveS3BucketMutation();
   if (loading) {
     s3Table = <LoadingTr colSpan={ 4 } />
@@ -170,7 +86,7 @@ export default function Storage(): any {
       <Flex mt={ 8 }>
         <Text fontSize="xl">S3 Buckets</Text>
         <Box ml="auto" mt="auto">
-          <Button size="sm" colorScheme="blue" onClick={ addS3BucketModal.open } isLoading={ loading } disable={ error }>Add S3 Bucket</Button>
+          <Button size="sm" colorScheme="blue" onClick={ () => setAddS3BucketModal(true) } isLoading={ loading } disable={ error }>Add S3 Bucket</Button>
           <Button size="sm" ml={ 2 } colorScheme="green" onClick={ () => refetch() } isLoading={ loading }>Refresh</Button>
         </Box>
       </Flex>
@@ -188,7 +104,7 @@ export default function Storage(): any {
           { s3Table }
         </Tbody>
       </Table>) : null }
-      { addS3BucketModal.jsx }
+      <AddS3BucketModal isOpen={ addS3BucketModal } onClose={ () => setAddS3BucketModal(false) } onAdd={ refetch } />
     </Wrapper>
   )
 }
