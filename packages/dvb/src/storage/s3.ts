@@ -18,7 +18,7 @@ export class S3Storage implements StorageInterface {
     const s3 = this.s3();
     await s3.upload({
       Body: stream,
-      Bucket: this.bucket.name,
+      Bucket: this.bucket.bucket,
       Key: `${this.bucket.prefix}${fileName}`,
     }).promise();
   }
@@ -26,7 +26,7 @@ export class S3Storage implements StorageInterface {
     return new Promise<void>((resolve, reject) => {
       const s3 = this.s3();
       const readStream = s3.getObject({
-        Bucket: this.bucket.name,
+        Bucket: this.bucket.bucket,
         Key: `${this.bucket.prefix}${fileName}`,
       }).createReadStream()
       readStream.pipe(stream);
@@ -37,7 +37,7 @@ export class S3Storage implements StorageInterface {
   async del(fileName: string) {
     const s3 = this.s3();
     await s3.deleteObject({
-      Bucket: this.bucket.name,
+      Bucket: this.bucket.bucket,
       Key: `${this.bucket.prefix}${fileName}`,
     }).promise();
   }
@@ -47,7 +47,7 @@ export class S3Storage implements StorageInterface {
     let token: string | undefined;
     while (true) {
       let objects = await s3.listObjectsV2({
-        Bucket: this.bucket.name,
+        Bucket: this.bucket.bucket,
         MaxKeys: 1000,
         ContinuationToken: token,
         Prefix: this.bucket.prefix
@@ -69,7 +69,7 @@ export class S3Storage implements StorageInterface {
   async stat(fileName: string): Promise<StorageBackupStat> {
     const s3 = this.s3();
     const info = await s3.headObject({
-      Bucket: this.bucket.name,
+      Bucket: this.bucket.bucket,
       Key: `${this.bucket.prefix}${fileName}`,
     }).promise();
     return { size: info.ContentLength ?? 0, modified: info.LastModified?.getTime() ?? 0 };
