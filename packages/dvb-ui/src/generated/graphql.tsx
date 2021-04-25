@@ -65,6 +65,7 @@ export type Mutation = {
   pinVolume: Scalars['Boolean'];
   removeStorage: Scalars['Boolean'];
   deleteBackup: Scalars['Boolean'];
+  downloadBackup?: Maybe<Scalars['String']>;
   addSchedule?: Maybe<Schedule>;
   updateSchedule?: Maybe<Schedule>;
   removeSchedule: Scalars['Boolean'];
@@ -99,6 +100,12 @@ export type MutationRemoveStorageArgs = {
 
 
 export type MutationDeleteBackupArgs = {
+  fileName: Scalars['String'];
+  storage: Scalars['String'];
+};
+
+
+export type MutationDownloadBackupArgs = {
   fileName: Scalars['String'];
   storage: Scalars['String'];
 };
@@ -272,6 +279,17 @@ export type DeleteBackupMutationVariables = Exact<{
 export type DeleteBackupMutation = (
   { __typename?: 'Mutation' }
   & Pick<Mutation, 'deleteBackup'>
+);
+
+export type DownloadBackupMutationVariables = Exact<{
+  storage: Scalars['String'];
+  fileName: Scalars['String'];
+}>;
+
+
+export type DownloadBackupMutation = (
+  { __typename?: 'Mutation' }
+  & Pick<Mutation, 'downloadBackup'>
 );
 
 export type ExportVolumeMutationVariables = Exact<{
@@ -628,6 +646,38 @@ export function useDeleteBackupMutation(baseOptions?: Apollo.MutationHookOptions
 export type DeleteBackupMutationHookResult = ReturnType<typeof useDeleteBackupMutation>;
 export type DeleteBackupMutationResult = Apollo.MutationResult<DeleteBackupMutation>;
 export type DeleteBackupMutationOptions = Apollo.BaseMutationOptions<DeleteBackupMutation, DeleteBackupMutationVariables>;
+export const DownloadBackupDocument = gql`
+    mutation DownloadBackup($storage: String!, $fileName: String!) {
+  downloadBackup(storage: $storage, fileName: $fileName)
+}
+    `;
+export type DownloadBackupMutationFn = Apollo.MutationFunction<DownloadBackupMutation, DownloadBackupMutationVariables>;
+
+/**
+ * __useDownloadBackupMutation__
+ *
+ * To run a mutation, you first call `useDownloadBackupMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDownloadBackupMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [downloadBackupMutation, { data, loading, error }] = useDownloadBackupMutation({
+ *   variables: {
+ *      storage: // value for 'storage'
+ *      fileName: // value for 'fileName'
+ *   },
+ * });
+ */
+export function useDownloadBackupMutation(baseOptions?: Apollo.MutationHookOptions<DownloadBackupMutation, DownloadBackupMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DownloadBackupMutation, DownloadBackupMutationVariables>(DownloadBackupDocument, options);
+      }
+export type DownloadBackupMutationHookResult = ReturnType<typeof useDownloadBackupMutation>;
+export type DownloadBackupMutationResult = Apollo.MutationResult<DownloadBackupMutation>;
+export type DownloadBackupMutationOptions = Apollo.BaseMutationOptions<DownloadBackupMutation, DownloadBackupMutationVariables>;
 export const ExportVolumeDocument = gql`
     mutation ExportVolume($volume: String!, $storage: String!, $fileName: String) {
   exportVolume(volume: $volume, storage: $storage, fileName: $fileName)

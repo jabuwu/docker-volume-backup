@@ -1,0 +1,3 @@
+mutation DownloadBackup($storage: String!, $fileName: String!) {
+  downloadBackup(storage: $storage, fileName: $fileName)
+}

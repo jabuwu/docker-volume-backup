@@ -1,11 +1,11 @@
 import Wrapper from '../../components/wrapper';
-import { useStorageQuery, useDeleteBackupMutation } from '../../generated/graphql';
+import { useStorageQuery, useDeleteBackupMutation, useDownloadBackupMutation } from '../../generated/graphql';
 import { useRouter } from 'next/router';
-import { Text, Spinner, Skeleton, AlertIcon, Alert, Table, Tbody, Th, Thead, Tr, Td, Button, Box, Flex } from '@chakra-ui/react';
+import { Text, Spinner, Skeleton, AlertIcon, Alert, Table, Tbody, Th, Thead, Tr, Td, Button, Box, Flex, useToast } from '@chakra-ui/react';
 import Title from '../../components/title';
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import LoadingTr from '../../components/loading-tr';
-import { DeleteIcon, RepeatIcon } from '@chakra-ui/icons';
+import { DeleteIcon, DownloadIcon, RepeatIcon } from '@chakra-ui/icons';
 import ConfirmDelete from '../../modals/confirm-delete';
 
 const KB = 1024;
@@ -33,13 +33,40 @@ export default function Storage(): any {
   const router = useRouter();
   const name = router.query.name as string;
   const [ deleteBackup ] = useDeleteBackupMutation();
+  const [ downloadBackup ] = useDownloadBackupMutation();
   const { data, loading, error, refetch } = useStorageQuery({
     variables: {
       name,
     },
     fetchPolicy: 'network-only',
-    notifyOnNetworkStatusChange: true
+    notifyOnNetworkStatusChange: true,
+    skip: !name
   });
+  const toast = useToast();
+  const [ downloadingFiles, setDownloadingFiles ] = useState([] as string[]);
+  const download = useCallback(async (fileName: string) => {
+    const storage = name;
+    setDownloadingFiles(arr => ([ ...arr, fileName ]));
+    const result = await downloadBackup({
+      variables: {
+        storage,
+        fileName,
+      },
+    });
+    setDownloadingFiles(arr => arr.filter(item => item !== fileName));
+    if (result.data.downloadBackup) {
+      (document as any).location = `${process.env.NEXT_PUBLIC_API || 'http://localhost:1998/api'}${result.data.downloadBackup}`;
+    } else {
+      toast({
+        title: 'Failed to download backup file.',
+        description: `${storage}/${fileName}`,
+        status: 'error',
+      });
+    }
+  }, [ name ]);
+  if (!name) {
+    return <></>;
+  }
   return <Wrapper>
     <Title>{ name }</Title>
     <Flex mt={ 4 }>
@@ -77,7 +104,7 @@ export default function Storage(): any {
     { !error && (data?.storage || loading) ?
       <>
         <Text mt={ 4 } fontSize="xl">Files</Text>
-        <Table variant="striped">
+        <Table variant="striped" size="sm">
           <Thead>
             <Tr>
               <Th>File</Th>
@@ -95,9 +122,12 @@ export default function Storage(): any {
                   <Td>{ formatSize(backup.stat.size) }</Td>
                   <Td>{ new Date(backup.stat.modified).toUTCString() }</Td>
                   <Td textAlign="right">
+                    <Button size="sm" colorScheme="green" variant="ghost" onClick={ () => download(backup.fileName) } isLoading={ downloadingFiles.includes(backup.fileName) }>
+                      <DownloadIcon />
+                    </Button>
                     <ConfirmDelete name={ backup.fileName } onDelete={ async () => { await deleteBackup({ variables: { storage: name, fileName: backup.fileName } }); refetch() } }>
                       { (open) => (
-                        <Button colorScheme="red" variant="ghost" onClick={ open }>
+                        <Button size="sm" colorScheme="red" variant="ghost" onClick={ open }>
                           <DeleteIcon />
                         </Button>
                       ) }

@@ -22,11 +22,15 @@ export class LocalStorage implements StorageInterface {
       });
     });
   }
-  async read(fileName: string, stream: Writable) {
-    const inFile = path.join(workingDir, fileName);
-    const readStream = createReadStream(inFile);
-    await new Promise(resolve => readStream.on('open', resolve));
-    readStream.pipe(stream);
+  read(fileName: string, stream: Writable) {
+    return new Promise<void>(async (resolve, reject) => {
+      const inFile = path.join(workingDir, fileName);
+      const readStream = createReadStream(inFile);
+      await new Promise(resolve => readStream.on('open', resolve));
+      readStream.pipe(stream);
+      readStream.on('error', reject);
+      readStream.on('end', resolve);
+    });
   }
   async del(fileName: string) {
     await unlink(path.join(workingDir, fileName));

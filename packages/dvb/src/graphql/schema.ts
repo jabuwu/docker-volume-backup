@@ -9,6 +9,7 @@ import { Schedule, schedules } from '../schedule';
 import { generate } from 'short-uuid';
 import path from 'path';
 import { assign, cloneDeep, pickBy } from 'lodash';
+import { downloadWriteStream } from '../download';
 
 function validateFileName(fileName: string) {
   if (path.isAbsolute(fileName)) {
@@ -128,6 +129,20 @@ class DvmResolver {
       return true;
     }
     return true;
+  }
+  @Mutation(() => String, { nullable: true }) async downloadBackup(
+    @Arg('storage', () => String) storageName: string,
+    @Arg('fileName', () => String) fileName: string,
+  ): Promise<string | null> {
+    validateFileName(fileName);
+    const storage = getStorage(storageName);
+    if (storage) {
+      const { stream, fileName: downloadFileName } = await downloadWriteStream(fileName);
+      await storage.read(fileName, stream);
+      stream.end();
+      return `/download/${downloadFileName}`;
+    }
+    return null;
   }
 
   ///
