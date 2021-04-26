@@ -48,17 +48,12 @@ class DvmResolver {
     validateFileName(fileName);
     const storageInstance = getStorage(storage);
     if (storageInstance) {
-      try {
-        await context.docker.exportVolume(volume, async (stream) => {
-          await storageInstance.write(fileName!, stream);
-        });
-        return true;
-      } catch (err) {
-        console.error(err);
-        return false;
-      }
+      await context.docker.exportVolume(volume, async (stream) => {
+        await storageInstance.write(fileName!, stream);
+      });
+      return true;
     }
-    return false;
+    throw new Error('Storage does not exist: ' + storage);
   }
   @Mutation(() => Boolean) async importVolume(
     @Arg('volume', () => String) volume: string,
@@ -68,17 +63,12 @@ class DvmResolver {
     validateFileName(fileName);
     const storageInstance = getStorage(storage);
     if (storageInstance) {
-      try {
-        await context.docker.importVolume(volume, async (stream) => {
-          await storageInstance.read(fileName!, stream);
-        });
-        return true;
-      } catch (err) {
-        console.error(err);
-        return false;
-      }
+      await context.docker.importVolume(volume, async (stream) => {
+        await storageInstance.read(fileName!, stream);
+      });
+      return true;
     }
-    return false;
+    throw new Error('Storage does not exist: ' + storage);
   }
   @Mutation(() => Boolean) pinVolume(
     @Arg('volume', () => String) volume: string,

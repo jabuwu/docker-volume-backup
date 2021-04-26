@@ -29,6 +29,11 @@ dockerode.getEvents().then(stream => {
   });
 });
 
+class RunResponse {
+  promise?: Promise<void>;
+  cleanup?: () => void;
+}
+
 export class Docker {
   private _volumes: Volume[] = [];
 
@@ -77,78 +82,76 @@ export class Docker {
     await dockerode.pull('alpine');
   }
 
-  exportVolume(name: string, exportFn: (stream: Readable) => Promise<any>): Promise<void> {
+  runInVolume(name: string, command: string[]): Promise<void>;
+  runInVolume(name: string, command: string[], direction: 'in', cb: (stdin: Writable) => RunResponse | void): Promise<void>;
+  runInVolume(name: string, command: string[], direction: 'out', cb: (pipe: (stdout: Writable, stderr: Writable) => void) => RunResponse | void): Promise<void>;
+  runInVolume(name: string, command: string[]): Promise<void> {
+    const direction: string = arguments[2];
+    const cb: (...args: any[]) => RunResponse | void = arguments[3];
     return new Promise<void>(async (resolve, reject) => {
-      await this.pullAlpine();
-      const container = await dockerode.createContainer({
-        Image: 'alpine',
-        Tty: false,
-        Cmd: [ 'tar', '-czf', '-', 'volume' ],
-        HostConfig: {
-          AutoRemove: true,
-          Binds: [ `${name}:/volume` ]
+      try {
+        await this.pullAlpine();
+        const container = await dockerode.createContainer({
+          Image: 'alpine',
+          Tty: false,
+          Cmd: command,
+          OpenStdin: direction === 'in',
+          StdinOnce: direction === 'in',
+          HostConfig: {
+            AutoRemove: true,
+            Binds: [ `${name}:/volume` ]
+          }
+        });
+        let response: Partial<RunResponse> | undefined;
+        if (direction) {
+          container.attach({ stream: true, ...(direction === 'in' ? { hijack: true, stdin: true } : { stdout: true, stderr: true }) }, function (err, stream) {
+            if (err) {
+              reject(err);
+            } else if (direction === 'in') {
+              response = cb(stream) as any;
+            } else if (direction === 'out') {
+              response = cb((stdout: Writable, stderr: Writable) => {
+                container.modem.demuxStream(stream, stdout, stderr);
+              }) as any;
+            }
+          });
         }
-      });
-      const intermediate = new PassThrough();
-      let exportPromise: Promise<void> | undefined;
-      container.attach({ stream: true, stdout: true, stderr: true }, function (err, stream) {
-        if (err) {
-          reject(err);
-        } else {
-          exportPromise = exportFn(intermediate);
-          container.modem.demuxStream(stream, intermediate, process.stderr);
+        await container.start();
+        const result = await container.wait();
+        if (result.StatusCode !== 0) {
+          throw new Error(`Status code ${result.StatusCode} in volume "${name}" for command "${command.join(' ')}"`);
         }
-      });
-      await container.start();
-      await container.wait();
-      intermediate.end();
-      if (exportPromise) {
-        await exportPromise;
+        if (response) {
+          if (response.cleanup) {
+            response.cleanup();
+          }
+          if (response.promise) {
+            await response.promise;
+          }
+        }
+        resolve();
+      } catch (err) {
+        reject(err);
       }
-      resolve();
     });
   }
 
-  importVolume(name: string, importFn: (stream: Writable) => Promise<any>) {
-    return new Promise<void>(async (resolve, reject) => {
-      await this.pullAlpine();
-      await dockerode.run('alpine', [ 'rm', '-rf', '/volume' ], [], {
-        HostConfig: {
-          AutoRemove: true,
-          Binds: [ `${name}:/volume` ]
-        }
-      });
-      let container = await dockerode.createContainer({
-        Image: 'alpine',
-        Tty: false,
-        Cmd: [ 'tar', '-xzf', '-' ],
-        OpenStdin: true,
-        StdinOnce: true,
-        HostConfig: {
-          AutoRemove: true,
-          Binds: [ `${name}:/volume` ]
-        }
-      });
+  async exportVolume(name: string, exportFn: (stream: Readable) => Promise<any>) {
+    await this.runInVolume(name, [ 'tar', '-czf', '-', 'volume' ], 'out', (pipe) => {
       const intermediate = new PassThrough();
-      let importPromise: Promise<void> | undefined;
-      container.attach({ stream: true, hijack: true, stdin: true, stdout: false, stderr: false }, async function (err, stream) {
-        if (err) {
-          reject(err);
-        } else {
-          importPromise = importFn(intermediate);
-          intermediate.pipe(stream!);
-        }
-      });
-      await container.start();
-      let result = await container.wait();
-      if (result.StatusCode !== 0) {
-        throw new Error('Status code: ' + result.StatusCode);
-      }
-      intermediate.end();
-      if (importPromise) {
-        await importPromise;
-      }
-      resolve();
+      const promise = exportFn(intermediate);
+      pipe(intermediate, process.stderr);
+      return { promise, cleanup() { intermediate.end() } };
+    });
+  }
+
+  async importVolume(name: string, importFn: (stream: Writable) => Promise<any>) {
+    await this.runInVolume(name, [ 'find', 'volume', '-mindepth', '1', '-delete' ]);
+    await this.runInVolume(name, [ 'tar', '-xzf', '-' ], 'in', (stdin) => {
+      const intermediate = new PassThrough();
+      const promise = importFn(intermediate);
+      intermediate.pipe(stdin);
+      return { promise, cleanup() { intermediate.end() } };
     });
   }
 
