@@ -6,6 +6,7 @@ import Dockerode from 'dockerode';
 import { concatMap, map, filter } from 'rxjs/operators';
 import { PassThrough, Readable, Writable } from 'stream';
 import { findIndex } from 'lodash';
+import { createGzip } from 'zlib';
 
 const dockerode = new Dockerode({ socketPath: '/var/run/docker.sock' });
 
@@ -82,13 +83,13 @@ export class Docker {
     await dockerode.pull('alpine');
   }
 
-  runInVolume(name: string, command: string[]): Promise<void>;
+  runInVolume(name: string, command: string[]): Promise<string>;
   runInVolume(name: string, command: string[], direction: 'in', cb: (stdin: Writable) => RunResponse | void): Promise<void>;
   runInVolume(name: string, command: string[], direction: 'out', cb: (pipe: (stdout: Writable, stderr: Writable) => void) => RunResponse | void): Promise<void>;
-  runInVolume(name: string, command: string[]): Promise<void> {
+  runInVolume(name: string, command: string[]): Promise<string | void> {
     const direction: string = arguments[2];
     const cb: (...args: any[]) => RunResponse | void = arguments[3];
-    return new Promise<void>(async (resolve, reject) => {
+    return new Promise<string | void>(async (resolve, reject) => {
       try {
         await this.pullAlpine();
         const container = await dockerode.createContainer({
@@ -103,6 +104,7 @@ export class Docker {
           }
         });
         let response: Partial<RunResponse> | undefined;
+        let out: string | void = void(0);
         if (direction) {
           container.attach({ stream: true, ...(direction === 'in' ? { hijack: true, stdin: true } : { stdout: true, stderr: true }) }, function (err, stream) {
             if (err) {
@@ -113,6 +115,19 @@ export class Docker {
               response = cb((stdout: Writable, stderr: Writable) => {
                 container.modem.demuxStream(stream, stdout, stderr);
               }) as any;
+            }
+          });
+        } else {
+          container.attach({ stream: true, stdout: true, stderr: true }, function (err, stream) {
+            if (err) {
+              reject(err);
+            } else {
+              out = '';
+              const intermediate = new PassThrough();
+              container.modem.demuxStream(stream, intermediate, process.stderr);
+              intermediate.on('data', (data: Buffer) => {
+                out += data.toString();
+              });
             }
           });
         }
@@ -129,28 +144,53 @@ export class Docker {
             await response.promise;
           }
         }
-        resolve();
+        resolve(out);
       } catch (err) {
         reject(err);
       }
     });
   }
 
-  async exportVolume(name: string, exportFn: (stream: Readable) => Promise<any>) {
-    await this.runInVolume(name, [ 'tar', '-czf', '-', 'volume' ], 'out', (pipe) => {
-      const intermediate = new PassThrough();
-      const promise = exportFn(intermediate);
-      pipe(intermediate, process.stderr);
-      return { promise, cleanup() { intermediate.end() } };
+  async statVolume(name: string) {
+    const approximateSize = Number((await this.runInVolume(name, [ 'du', '-k', 'volume' ])).replace(/\s/g, ' ').split(' ')[0]) * 1024;
+    return { approximateSize };
+  }
+
+  async exportVolume(name: string, exportFn: (stream: Readable) => Promise<any>, progressCb?: (progress: number) => void) {
+    const { approximateSize } = await this.statVolume(name);
+    await this.runInVolume(name, [ 'tar', '-cf', '-', 'volume' ], 'out', (pipe) => {
+      const sizeStream = new PassThrough();
+      const gzip = createGzip();
+      const promise = exportFn(gzip);
+      pipe(sizeStream, process.stderr);
+      let bytes = 0;
+      sizeStream.on('data', (data) => {
+        bytes += data.length;
+        progressCb?.(bytes / approximateSize);
+        gzip.write(data);
+      });
+      return {
+        promise,
+        cleanup() {
+          gzip.end();
+          progressCb?.(1);
+        }
+      };
     });
   }
 
-  async importVolume(name: string, importFn: (stream: Writable) => Promise<any>) {
+  async importVolume(name: string, size: number, importFn: (stream: Writable) => Promise<any>, progressCb?: (progress: number) => void) {
     await this.runInVolume(name, [ 'find', 'volume', '-mindepth', '1', '-delete' ]);
     await this.runInVolume(name, [ 'tar', '-xzf', '-' ], 'in', (stdin) => {
       const intermediate = new PassThrough();
       const promise = importFn(intermediate);
-      intermediate.pipe(stdin);
+      let bytes = 0;
+      intermediate.on('data', (data) => {
+        bytes += data.length;
+        progressCb?.(bytes / size);
+        stdin.write(data);
+      });
+      intermediate.on('end', () => stdin.end());
       return { promise, cleanup() { intermediate.end() } };
     });
   }

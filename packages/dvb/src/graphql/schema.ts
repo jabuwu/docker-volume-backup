@@ -63,7 +63,8 @@ class DvmResolver {
     validateFileName(fileName);
     const storageInstance = getStorage(storage);
     if (storageInstance) {
-      await context.docker.importVolume(volume, async (stream) => {
+      const stat = await storageInstance.stat(fileName);
+      await context.docker.importVolume(volume, stat.size, async (stream) => {
         await storageInstance.read(fileName!, stream);
       });
       return true;
