@@ -21,8 +21,9 @@ RUN (cd packages/dvb-ui && npm install)
 # build frontend
 COPY packages/dvb-ui packages/dvb-ui/
 COPY dockerfiles/dvb-ui.env packages/dvb-ui/.env.production
-RUN echo -e -n "\nNEXT_PUBLIC_GIT_COMMIT=$(cat .gitcommit)" >> packages/dvb-ui/.env.production
-RUN echo -e -n "\nNEXT_PUBLIC_GIT_DATE=$(cat .gitdate)" >> packages/dvb-ui/.env.production
+RUN echo "" >> packages/dvb-ui/.env.production
+RUN echo "NEXT_PUBLIC_GIT_COMMIT=$(cat .gitcommit)" >> packages/dvb-ui/.env.production
+RUN echo "NEXT_PUBLIC_GIT_DATE=$(cat .gitdate)" >> packages/dvb-ui/.env.production
 RUN (cd packages/dvb-ui && npm run build)
 
 # build backend
