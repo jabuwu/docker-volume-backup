@@ -10,6 +10,8 @@ import { generate } from 'short-uuid';
 import path from 'path';
 import { assign, cloneDeep, pickBy } from 'lodash';
 import { downloadWriteStream } from '../download';
+import { Task, getSubject } from '../tasks';
+import { filter } from 'rxjs/operators';
 
 function validateFileName(fileName: string) {
   if (path.isAbsolute(fileName)) {
@@ -39,7 +41,7 @@ class DvmResolver {
   @Query(() => [Volume]) async volumes() {
     return await context.docker.getVolumes();
   }
-  @Mutation(() => Boolean) async exportVolume(
+  @Mutation(() => String) async exportVolume(
     @Arg('volume', () => String) volume: string,
     @Arg('storage', () => String) storage: string,
     @Arg('fileName', () => String, { nullable: true }) fileName: string | undefined,
@@ -48,14 +50,19 @@ class DvmResolver {
     validateFileName(fileName);
     const storageInstance = getStorage(storage);
     if (storageInstance) {
-      await context.docker.exportVolume(volume, async (stream) => {
-        await storageInstance.write(fileName!, stream);
-      });
-      return true;
+      return new Task(async (update, complete) => {
+        update({ status: 'Preparing...' });
+        await context.docker.exportVolume(volume, async (stream) => {
+          await storageInstance.write(fileName!, stream);
+        }, (progress) => {
+          update({ status: 'Backing up...', progress });
+        });
+        complete();
+      }).id;
     }
     throw new Error('Storage does not exist: ' + storage);
   }
-  @Mutation(() => Boolean) async importVolume(
+  @Mutation(() => String) async importVolume(
     @Arg('volume', () => String) volume: string,
     @Arg('storage', () => String) storage: string,
     @Arg('fileName', () => String) fileName: string
@@ -63,11 +70,17 @@ class DvmResolver {
     validateFileName(fileName);
     const storageInstance = getStorage(storage);
     if (storageInstance) {
-      const stat = await storageInstance.stat(fileName);
-      await context.docker.importVolume(volume, stat.size, async (stream) => {
-        await storageInstance.read(fileName!, stream);
-      });
-      return true;
+      return new Task(async (update, complete) => {
+        update({ status: 'Getting file info...' });
+        const stat = await storageInstance.stat(fileName);
+        update({ status: 'Preparing...' });
+        await context.docker.importVolume(volume, stat.size, async (stream) => {
+          await storageInstance.read(fileName!, stream);
+        }, (progress) => {
+          update({ status: 'Restoring...', progress });
+        });
+        complete();
+      }).id;
     }
     throw new Error('Storage does not exist: ' + storage);
   }
@@ -231,6 +244,16 @@ class DvmResolver {
     }, o => o !== undefined));
     s3Buckets.update({ name }, bucketInfo);
     return Storage.get(bucketInfo.name);
+  }
+
+  ////
+  // Tasks
+  ///
+  @Subscription(() => Task, { subscribe: (_, args) => { return fromObservable(getSubject(args.id).pipe(filter(item => item.status !== '')))() } }) taskUpdated(
+    @Arg('id', () => String) _id: string,
+    @Root() task: Task
+  ): Task {
+    return task;
   }
 }
 

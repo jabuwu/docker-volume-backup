@@ -60,8 +60,8 @@ export type ContainerPort = {
 
 export type Mutation = {
   __typename?: 'Mutation';
-  exportVolume: Scalars['Boolean'];
-  importVolume: Scalars['Boolean'];
+  exportVolume: Scalars['String'];
+  importVolume: Scalars['String'];
   pinVolume: Scalars['Boolean'];
   removeStorage: Scalars['Boolean'];
   deleteBackup: Scalars['Boolean'];
@@ -212,6 +212,20 @@ export type Subscription = {
   __typename?: 'Subscription';
   volumeCreated: Volume;
   volumeDestroyed: Scalars['String'];
+  taskUpdated: Task;
+};
+
+
+export type SubscriptionTaskUpdatedArgs = {
+  id: Scalars['String'];
+};
+
+export type Task = {
+  __typename?: 'Task';
+  id: Scalars['String'];
+  done: Scalars['Boolean'];
+  status: Scalars['String'];
+  progress?: Maybe<Scalars['Float']>;
 };
 
 export type Volume = {
@@ -502,6 +516,19 @@ export type VolumesQuery = (
     { __typename?: 'Volume' }
     & Pick<Volume, 'name' | 'driver' | 'pinned'>
   )> }
+);
+
+export type TaskUpdatedSubscriptionVariables = Exact<{
+  id: Scalars['String'];
+}>;
+
+
+export type TaskUpdatedSubscription = (
+  { __typename?: 'Subscription' }
+  & { taskUpdated: (
+    { __typename?: 'Task' }
+    & Pick<Task, 'id' | 'status' | 'done' | 'progress'>
+  ) }
 );
 
 export type VolumeCreatedSubscriptionVariables = Exact<{ [key: string]: never; }>;
@@ -1245,6 +1272,39 @@ export function useVolumesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Vo
 export type VolumesQueryHookResult = ReturnType<typeof useVolumesQuery>;
 export type VolumesLazyQueryHookResult = ReturnType<typeof useVolumesLazyQuery>;
 export type VolumesQueryResult = Apollo.QueryResult<VolumesQuery, VolumesQueryVariables>;
+export const TaskUpdatedDocument = gql`
+    subscription TaskUpdated($id: String!) {
+  taskUpdated(id: $id) {
+    id
+    status
+    done
+    progress
+  }
+}
+    `;
+
+/**
+ * __useTaskUpdatedSubscription__
+ *
+ * To run a query within a React component, call `useTaskUpdatedSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useTaskUpdatedSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useTaskUpdatedSubscription({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useTaskUpdatedSubscription(baseOptions: Apollo.SubscriptionHookOptions<TaskUpdatedSubscription, TaskUpdatedSubscriptionVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<TaskUpdatedSubscription, TaskUpdatedSubscriptionVariables>(TaskUpdatedDocument, options);
+      }
+export type TaskUpdatedSubscriptionHookResult = ReturnType<typeof useTaskUpdatedSubscription>;
+export type TaskUpdatedSubscriptionResult = Apollo.SubscriptionResult<TaskUpdatedSubscription>;
 export const VolumeCreatedDocument = gql`
     subscription VolumeCreated {
   volumeCreated {
