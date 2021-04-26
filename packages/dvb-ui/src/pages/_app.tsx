@@ -9,6 +9,9 @@ import React from 'react';
 import { ApolloProvider } from '@apollo/client';
 import Head from 'next/head';
 import HeaderImage from '../components/header-image';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+dayjs.extend(relativeTime)
 
 export default function App({ Component, pageProps }) {
   const router = useRouter();

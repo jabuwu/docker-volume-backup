@@ -3,12 +3,13 @@ import { useSchedulesQuery, useRemoveScheduleMutation } from '../generated/graph
 import Wrapper from '../components/wrapper';
 import Title from '../components/title';
 import React, { useState } from 'react';
-import { Alert, AlertIcon, Box, Button, Spinner, Table, Tbody, Td, Th, Thead, Tr, Flex } from '@chakra-ui/react';
+import { Alert, AlertIcon, Box, Button, Spinner, Table, Tbody, Td, Th, Thead, Tr, Flex, Tooltip } from '@chakra-ui/react';
 import LoadingTr  from '../components/loading-tr';
 import AddScheduleModal from '../modals/add-schedule';
 import EditScheduleModal from '../modals/edit-schedule';
 import { AddIcon, DeleteIcon, RepeatIcon, SettingsIcon } from '@chakra-ui/icons';
 import ConfirmDelete from '../modals/confirm-delete';
+import dayjs from 'dayjs';
 
 export default function Schedules(): any {
   const { data, loading, error, refetch } = useSchedulesQuery({ notifyOnNetworkStatusChange: true });
@@ -41,7 +42,11 @@ export default function Schedules(): any {
           <Text>{ schedule.hours }</Text>
         </Td>
         <Td>
-          <Text>{ new Date(schedule.lastUpdate).toUTCString() }</Text>
+          <Tooltip label={ dayjs(schedule.lastUpdate).format('YYYY-MM-DD hh:mm:ssa') } openDelay={ 500 }>
+            <Text>
+              { dayjs(schedule.lastUpdate).fromNow() }
+            </Text>
+          </Tooltip>
         </Td>
         <Td textAlign="right">
           <Button size="lg" p={ 0 } variant="ghost" colorScheme="blue" onClick={ () => openEdit(schedule.id) } isLoading={ loading }><SettingsIcon /></Button>

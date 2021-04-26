@@ -1,12 +1,13 @@
 import Wrapper from '../../components/wrapper';
 import { useStorageQuery, useDeleteBackupMutation, useDownloadBackupMutation } from '../../generated/graphql';
 import { useRouter } from 'next/router';
-import { Text, Spinner, Skeleton, AlertIcon, Alert, Table, Tbody, Th, Thead, Tr, Td, Button, Box, Flex, useToast } from '@chakra-ui/react';
+import { Text, Skeleton, AlertIcon, Alert, Table, Tbody, Th, Thead, Tr, Td, Button, Box, Flex, useToast, Tooltip } from '@chakra-ui/react';
 import Title from '../../components/title';
 import React, { useCallback, useState } from 'react';
 import LoadingTr from '../../components/loading-tr';
 import { DeleteIcon, DownloadIcon, RepeatIcon } from '@chakra-ui/icons';
 import ConfirmDelete from '../../modals/confirm-delete';
+import dayjs from 'dayjs';
 
 const KB = 1024;
 const MB = KB * 1024;
@@ -120,7 +121,13 @@ export default function Storage(): any {
                 <Tr key={ backup.fileName }>
                   <Td>{ backup.fileName }</Td>
                   <Td>{ formatSize(backup.stat.size) }</Td>
-                  <Td>{ new Date(backup.stat.modified).toUTCString() }</Td>
+                  <Td>
+                    <Tooltip label={ dayjs(backup.stat.modified).format('YYYY-MM-DD hh:mm:ssa') } openDelay={ 500 }>
+                      <Text>
+                        { dayjs(backup.stat.modified).fromNow() }
+                      </Text>
+                    </Tooltip>
+                  </Td>
                   <Td textAlign="right">
                     <Button size="sm" colorScheme="green" variant="ghost" onClick={ () => download(backup.fileName) } isLoading={ downloadingFiles.includes(backup.fileName) }>
                       <DownloadIcon />
