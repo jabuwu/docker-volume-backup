@@ -93,6 +93,7 @@ export default function Schedules(): any {
           </Table>) : null
         ) }
       </EditScheduleModal>
+      <Box mt={ 8 }></Box>
     </Wrapper>
   )
 }

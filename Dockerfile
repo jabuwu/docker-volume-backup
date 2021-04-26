@@ -6,6 +6,12 @@ WORKDIR /root
 RUN apt-get update --fix-missing
 RUN apt-get install -y nginx
 
+# git commit
+COPY .git .git
+RUN git rev-parse --short HEAD > .gitcommit
+RUN git show -s --format=%ci $(git rev-parse --short HEAD) | sed 's/ .*//' > .gitdate
+RUN rm -rf .git
+
 # install node modules
 COPY packages/dvb/package*.json ./packages/dvb/
 RUN (cd packages/dvb && npm install)
@@ -15,6 +21,8 @@ RUN (cd packages/dvb-ui && npm install)
 # build frontend
 COPY packages/dvb-ui packages/dvb-ui/
 COPY dockerfiles/dvb-ui.env packages/dvb-ui/.env.production
+RUN echo -e -n "\nNEXT_PUBLIC_GIT_COMMIT=$(cat .gitcommit)" >> packages/dvb-ui/.env.production
+RUN echo -e -n "\nNEXT_PUBLIC_GIT_DATE=$(cat .gitdate)" >> packages/dvb-ui/.env.production
 RUN (cd packages/dvb-ui && npm run build)
 
 # build backend
@@ -25,6 +33,10 @@ COPY dockerfiles/dvb.env packages/dvb/.env
 # configure nginx
 RUN rm /etc/nginx/sites-enabled/default
 COPY dockerfiles/dvb.nginx /etc/nginx/sites-enabled/dvb
+
+# attribution
+RUN npx license-report --output=html --package=packages/dvb/package.json > packages/dvb-ui/public/attributions/backend.html
+RUN npx license-report --output=html --package=packages/dvb-ui/package.json > packages/dvb-ui/public/attributions/frontend.html
 
 # clean up
 RUN apt-get autoremove -y && \

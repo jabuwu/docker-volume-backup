@@ -142,5 +142,6 @@ export default function Storage(): any {
       </>
       : null
     }
+    <Box mt={ 8 }></Box>
   </Wrapper>;
 }

@@ -130,6 +130,7 @@ export default function Storage(): any {
           </Table>) : null
         }
       </EditS3BucketModal>
+      <Box mt={ 8 }></Box>
     </Wrapper>
   )
 }
