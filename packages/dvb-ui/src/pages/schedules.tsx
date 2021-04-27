@@ -42,7 +42,7 @@ export default function Schedules(): any {
           <Text>{ schedule.hours }</Text>
         </Td>
         <Td>
-          <Tooltip label={ dayjs(schedule.lastUpdate).format('YYYY-MM-DD hh:mm:ssa') } openDelay={ 500 }>
+          <Tooltip label={ dayjs(schedule.lastUpdate).format('YYYY-MM-DD hh:mm:ssa') }>
             <Text>
               { dayjs(schedule.lastUpdate).fromNow() }
             </Text>

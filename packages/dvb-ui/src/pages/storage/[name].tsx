@@ -105,47 +105,52 @@ export default function Storage(): any {
     { !error && (data?.storage || loading) ?
       <>
         <Text mt={ 4 } fontSize="xl">Files</Text>
-        <Table variant="striped" size="sm">
-          <Thead>
-            <Tr>
-              <Th>File</Th>
-              <Th>Size</Th>
-              <Th>Modified</Th>
-              <Th></Th>
-            </Tr>
-          </Thead>
-          <Tbody>
-            { loading ? <LoadingTr colSpan={ 4 } /> : null }
-            { !loading && data?.storage ?
-              data.storage.backups.map(backup => (
-                <Tr key={ backup.fileName }>
-                  <Td>{ backup.fileName }</Td>
-                  <Td>{ formatSize(backup.stat.size) }</Td>
-                  <Td>
-                    <Tooltip label={ dayjs(backup.stat.modified).format('YYYY-MM-DD hh:mm:ssa') } openDelay={ 500 }>
-                      <Text>
-                        { dayjs(backup.stat.modified).fromNow() }
-                      </Text>
-                    </Tooltip>
-                  </Td>
-                  <Td textAlign="right">
-                    <Button size="sm" colorScheme="green" variant="ghost" onClick={ () => download(backup.fileName) } isLoading={ downloadingFiles.includes(backup.fileName) }>
-                      <DownloadIcon />
-                    </Button>
-                    <ConfirmDelete name={ backup.fileName } onDelete={ async () => { await deleteBackup({ variables: { storage: name, fileName: backup.fileName } }); refetch() } }>
-                      { (open) => (
-                        <Button size="sm" colorScheme="red" variant="ghost" onClick={ open }>
-                          <DeleteIcon />
-                        </Button>
-                      ) }
-                    </ConfirmDelete>
-                  </Td>
-                </Tr>
-              ))
-              : null
-            }
-          </Tbody>
-        </Table>
+        { ((data?.storage && data.storage.backups.length > 0) || loading) ?
+          <Table variant="striped" size="sm" mt={ 4 }>
+            <Thead>
+              <Tr>
+                <Th>File</Th>
+                <Th>Size</Th>
+                <Th>Modified</Th>
+                <Th></Th>
+              </Tr>
+            </Thead>
+            <Tbody>
+              { loading ? <LoadingTr colSpan={ 4 } /> : null }
+              { !loading && data?.storage ?
+                data.storage.backups.map(backup => (
+                  <Tr key={ backup.fileName }>
+                    <Td>{ backup.fileName }</Td>
+                    <Td>{ formatSize(backup.stat.size) }</Td>
+                    <Td>
+                      <Tooltip label={ dayjs(backup.stat.modified).format('YYYY-MM-DD hh:mm:ssa') }>
+                        <Text>
+                          { dayjs(backup.stat.modified).fromNow() }
+                        </Text>
+                      </Tooltip>
+                    </Td>
+                    <Td textAlign="right">
+                      <Button size="sm" colorScheme="green" variant="ghost" onClick={ () => download(backup.fileName) } isLoading={ downloadingFiles.includes(backup.fileName) }>
+                        <DownloadIcon />
+                      </Button>
+                      <ConfirmDelete name={ backup.fileName } onDelete={ async () => { await deleteBackup({ variables: { storage: name, fileName: backup.fileName } }); refetch() } }>
+                        { (open) => (
+                          <Button size="sm" colorScheme="red" variant="ghost" onClick={ open }>
+                            <DeleteIcon />
+                          </Button>
+                        ) }
+                      </ConfirmDelete>
+                    </Td>
+                  </Tr>
+                ))
+                : null
+              }
+            </Tbody>
+          </Table>
+        : null }
+        { data?.storage && data.storage.backups.length === 0 ?
+          <Text mt={ 2 } color="lightgray">No files found.</Text>
+        : null }
       </>
       : null
     }

@@ -91,7 +91,7 @@ export default function EditS3BucketModal({ children }: { children: (open: (name
             </Stack>
           </ModalBody>
           <ModalFooter>
-            <Button colorScheme="blue" onClick={ update } isLoading={ loading } disabled={ !!error }>
+            <Button colorScheme="blue" onClick={ update } isLoading={ loading } disabled={ !!error || !name || !bucket || !region || !accessKey }>
               Update
             </Button>
           </ModalFooter>

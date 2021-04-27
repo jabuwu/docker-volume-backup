@@ -151,7 +151,7 @@ export default function AddS3BucketModal({ children }: { children: (open: () => 
               <Button colorScheme="gray" onClick={ () => setShowPolicy(value => !value) } leftIcon={ <InfoIcon /> }>
                 { showPolicy ? 'Hide Policy' : 'Show Policy' }
               </Button>
-              <Button ml="auto" colorScheme="green" onClick={ add }>
+              <Button ml="auto" colorScheme="green" onClick={ add } disabled={ !name || !bucket || !region || !accessKey || !secretKey }>
                 Add
               </Button>
             </Flex>
