@@ -13,6 +13,7 @@ export default function BackupVolumeModal({ children }: { children: (open: (volu
   const [ taskId, setTaskId ] = useState('');
   const [ status, setStatus ] = useState('');
   const [ progress, setProgress ] = useState(undefined as undefined | number);
+  const [ progressError, setProgressError ] = useState(undefined as undefined | string);
   useTaskUpdatedSubscription({
     variables: {
       id: taskId,
@@ -23,8 +24,12 @@ export default function BackupVolumeModal({ children }: { children: (open: (volu
         const data = subscriptionData?.data?.taskUpdated;
         if (data.done) {
           setTaskId('');
-          setWorking(false);
-          close();
+          if (data.error) {
+            setProgressError(data.error);
+          } else {
+            setWorking(false);
+            close();
+          }
         } else {
           setStatus(data.status);
           setProgress(data.progress);
@@ -39,7 +44,9 @@ export default function BackupVolumeModal({ children }: { children: (open: (volu
     setVolume(volume);
     setTaskId('');
     setStatus('');
+    setWorking(false);
     setProgress(undefined);
+    setProgressError('');
   }, []);
 
   const close = useCallback(() => {
@@ -93,18 +100,31 @@ export default function BackupVolumeModal({ children }: { children: (open: (volu
                   <Input value={ fileName } onChange={ e => setFileName(e.target.value) } disabled={ working } />
                 </InputGroup>
               : null }
-              { working ?
+              { working && !progressError ?
                 <>
                   <Text>{ status }</Text>
                   <Progress value={ progress * 100 } isIndeterminate={ progress == null } />
                 </>
               : null }
+              { working && progressError ?
+                <Alert status="error">
+                  <AlertIcon />
+                  Failed to backup volume. { progressError }
+                </Alert>
+              : null }
             </Stack>
           </ModalBody>
           <ModalFooter>
-            <Button colorScheme="blue" onClick={ backup } disabled={ !storageData || !storage || working } isLoading={ working }>
-              Backup
-            </Button>
+            { !progressError ?
+              <Button colorScheme="blue" onClick={ backup } disabled={ !storageData || !storage || working } isLoading={ working }>
+                Backup
+              </Button>
+            : null }
+            { progressError ?
+              <Button colorScheme="red" onClick={ close }>
+                Close
+              </Button>
+            : null }
           </ModalFooter>
         </ModalContent>
       </Modal>

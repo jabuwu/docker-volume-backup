@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "npx lerna run dev --stream",
-    "gen": "npx lerna run gen --stream --scope dvb-ui"
+    "gen": "npx lerna run gen --stream --scope docker-volume-backup-ui"
   },
   "devDependencies": {
     "lerna": "^4.0.0",

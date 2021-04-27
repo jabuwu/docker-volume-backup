@@ -224,6 +224,7 @@ export type Task = {
   __typename?: 'Task';
   id: Scalars['String'];
   done: Scalars['Boolean'];
+  error?: Maybe<Scalars['String']>;
   status: Scalars['String'];
   progress?: Maybe<Scalars['Float']>;
 };
@@ -527,7 +528,7 @@ export type TaskUpdatedSubscription = (
   { __typename?: 'Subscription' }
   & { taskUpdated: (
     { __typename?: 'Task' }
-    & Pick<Task, 'id' | 'status' | 'done' | 'progress'>
+    & Pick<Task, 'id' | 'status' | 'done' | 'progress' | 'error'>
   ) }
 );
 
@@ -1279,6 +1280,7 @@ export const TaskUpdatedDocument = gql`
     status
     done
     progress
+    error
   }
 }
     `;

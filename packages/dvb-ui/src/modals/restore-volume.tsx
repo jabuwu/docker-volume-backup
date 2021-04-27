@@ -15,6 +15,7 @@ export default function RestoreVolumeModal({ children }: { children: (open: (vol
   const [ taskId, setTaskId ] = useState('');
   const [ status, setStatus ] = useState('');
   const [ progress, setProgress ] = useState(undefined as undefined | number);
+  const [ progressError, setProgressError ] = useState(undefined as undefined | string);
   useTaskUpdatedSubscription({
     variables: {
       id: taskId,
@@ -25,8 +26,12 @@ export default function RestoreVolumeModal({ children }: { children: (open: (vol
         const data = subscriptionData?.data?.taskUpdated;
         if (data.done) {
           setTaskId('');
-          setWorking(false);
-          close();
+          if (data.error) {
+            setProgressError(data.error);
+          } else {
+            setWorking(false);
+            close();
+          }
         } else {
           setStatus(data.status);
           setProgress(data.progress);
@@ -42,7 +47,9 @@ export default function RestoreVolumeModal({ children }: { children: (open: (vol
     setVolume(volume);
     setTaskId('');
     setStatus('');
+    setWorking(false);
     setProgress(undefined);
+    setProgressError(undefined);
   }, []);
 
   const close = useCallback(() => {
@@ -125,18 +132,31 @@ export default function RestoreVolumeModal({ children }: { children: (open: (vol
                   <Spinner size="xl" />
                 </Box>
               : null }
-              { working ?
+              { working && !progressError ?
                 <>
                   <Text>{ status }</Text>
                   <Progress value={ progress * 100 } isIndeterminate={ progress == null } />
                 </>
               : null }
+              { working && progressError ?
+                <Alert status="error">
+                  <AlertIcon />
+                  Failed to restore volume. { progressError }
+                </Alert>
+              : null }
             </Stack>
           </ModalBody>
           <ModalFooter>
-            <Button colorScheme="orange" onClick={ restore } disabled={ !storageData || !storage || !fileName || working } isLoading={ working }>
-              Restore
-            </Button>
+            { !progressError ?
+              <Button colorScheme="orange" onClick={ restore } disabled={ !storageData || !storage || !fileName || working } isLoading={ working }>
+                Restore
+              </Button>
+            : null }
+            { progressError ?
+              <Button colorScheme="red" onClick={ close }>
+                Close
+              </Button>
+            : null }
           </ModalFooter>
         </ModalContent>
       </Modal>

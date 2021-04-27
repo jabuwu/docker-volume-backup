@@ -20,11 +20,17 @@ export class Task {
     this.progress = null;
     this.done = false;
     taskUpdateMap$[this.id] = new BehaviorSubject<Task>(clone(this));
-    cb(debounce((args) => {
-      this.update(args);
-    }, 100, { maxWait: 100 }), debounce(() => {
-      this.complete();
-    }, 100, { maxWait: 100 }));
+    (async() => {
+      try {
+        await cb(debounce((args) => {
+          this.update(args);
+        }, 100, { maxWait: 100 }), debounce(() => {
+          this.complete();
+        }, 100, { maxWait: 100 }));
+      } catch (err) {
+        this.throw(err);
+      }
+    })();
   }
 
   @Field()
@@ -33,6 +39,9 @@ export class Task {
   @Field()
   done: boolean;
 
+  @Field(() => String, { nullable: true })
+  error?: string;
+
   @Field()
   status: string;
 
@@ -40,12 +49,24 @@ export class Task {
   progress: number | null;
 
   update(data: Partial<Omit<Task, 'id' | 'done'>>) {
-    assign(this, data);
-    taskUpdateMap$[this.id].next(clone(this));
+    if (!this.done) {
+      assign(this, data);
+      taskUpdateMap$[this.id].next(clone(this));
+    }
   }
 
   complete() {
-    this.done = true;
-    taskUpdateMap$[this.id].next(clone(this));
+    if (!this.done) {
+      this.done = true;
+      taskUpdateMap$[this.id].next(clone(this));
+    }
+  }
+
+  throw(err: Error) {
+    if (!this.done) {
+      this.error = err.message;
+      this.done = true;
+      taskUpdateMap$[this.id].next(clone(this));
+    }
   }
 }

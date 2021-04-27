@@ -4,5 +4,6 @@ subscription TaskUpdated($id: String!) {
     status
     done
     progress
+    error
   }
 }

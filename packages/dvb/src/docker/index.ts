@@ -1,7 +1,7 @@
 import { Container } from './container';
 import { Volume, pinnedVolumes } from './volume';
 import { camelCaseObj } from '../utility/camel-case-obj';
-import { Observable, Subject } from 'rxjs';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import Dockerode from 'dockerode';
 import { concatMap, map, filter } from 'rxjs/operators';
 import { PassThrough, Readable, Writable } from 'stream';
@@ -103,18 +103,32 @@ export class Docker {
             Binds: [ `${name}:/volume` ]
           }
         });
-        let response: Partial<RunResponse> | undefined;
+        let responseCleanupCb: Partial<RunResponse>['cleanup'];
         let out: string | void = void(0);
+        const responseComplete = new BehaviorSubject(false);
+        function handleResponse(response: RunResponse) {
+          if (response.promise) {
+            response.promise.then(() => {
+              responseComplete.next(true);
+            }).catch((err) => {
+              reject(err);
+              responseComplete.next(true);
+            });
+          } else {
+            responseComplete.next(true);
+          }
+          responseCleanupCb = response.cleanup;
+        }
         if (direction) {
           container.attach({ stream: true, ...(direction === 'in' ? { hijack: true, stdin: true } : { stdout: true, stderr: true }) }, function (err, stream) {
             if (err) {
               reject(err);
             } else if (direction === 'in') {
-              response = cb(stream) as any;
+              handleResponse(cb(stream) as any);
             } else if (direction === 'out') {
-              response = cb((stdout: Writable, stderr: Writable) => {
+              handleResponse(cb((stdout: Writable, stderr: Writable) => {
                 container.modem.demuxStream(stream, stdout, stderr);
-              }) as any;
+              }) as any);
             }
           });
         } else {
@@ -128,6 +142,7 @@ export class Docker {
               intermediate.on('data', (data: Buffer) => {
                 out += data.toString();
               });
+              responseComplete.next(true);
             }
           });
         }
@@ -136,14 +151,10 @@ export class Docker {
         if (result.StatusCode !== 0) {
           throw new Error(`Status code ${result.StatusCode} in volume "${name}" for command "${command.join(' ')}"`);
         }
-        if (response) {
-          if (response.cleanup) {
-            response.cleanup();
-          }
-          if (response.promise) {
-            await response.promise;
-          }
+        if (responseCleanupCb) {
+          responseCleanupCb();
         }
+        await new Promise<boolean>(resolve => responseComplete.pipe(filter(complete => complete === true)).subscribe(resolve));
         resolve(out);
       } catch (err) {
         reject(err);
