@@ -12,6 +12,7 @@ import { assign, cloneDeep, pickBy } from 'lodash';
 import { downloadWriteStream } from '../download';
 import { Task, getSubject } from '../tasks';
 import { filter } from 'rxjs/operators';
+import { ftpServers } from '../storage/ftp';
 
 function validateFileName(fileName: string) {
   if (path.isAbsolute(fileName)) {
@@ -120,7 +121,13 @@ class DvmResolver {
   @Mutation(() => Boolean) async removeStorage(
     @Arg('name', () => String) name: string,
   ): Promise<boolean> {
-    return s3Buckets.del({ name });
+    if (s3Buckets.del({ name })) {
+      return true;
+    }
+    if (ftpServers.del({ name })) {
+      return true;
+    }
+    return false;
   }
   @Mutation(() => Boolean) async deleteBackup(
     @Arg('storage', () => String) storageName: string,
@@ -244,6 +251,59 @@ class DvmResolver {
     }, o => o !== undefined));
     s3Buckets.update({ name }, bucketInfo);
     return Storage.get(bucketInfo.name);
+  }
+
+  ////
+  // FTP Servers
+  ///
+  @Mutation(() => Storage, { nullable: true }) addFtpServer(
+    @Arg('name', () => String) name: string,
+    @Arg('host', () => String) host: string,
+    @Arg('port', () => Int) port: number,
+    @Arg('user', () => String) user: string,
+    @Arg('password', () => String) password: string,
+    @Arg('secure', () => Boolean) secure: boolean,
+    @Arg('prefix', () => String, { nullable: true }) prefix: string | undefined,
+  ): Storage | null {
+    const storage = getStorage(name);
+    if (storage) {
+      // TODO: return an error
+      return null;
+    }
+    const serverInfo = ftpServers.create({
+      name,
+      host,
+      port,
+      user,
+      password,
+      secure,
+      prefix: prefix ?? '',
+    });
+    return Storage.get(serverInfo.name);
+  }
+  @Mutation(() => Storage, { nullable: true }) updateFtpServer(
+    @Arg('name', () => String) name: string,
+    @Arg('host', () => String, { nullable: true }) host: string | undefined,
+    @Arg('port', () => Int, { nullable: true }) port: number | undefined,
+    @Arg('user', () => String, { nullable: true }) user: string | undefined,
+    @Arg('password', () => String, { nullable: true }) password: string | undefined,
+    @Arg('secure', () => Boolean, { nullable: true }) secure: boolean | undefined,
+    @Arg('prefix', () => String, { nullable: true }) prefix: string | undefined,
+  ): Storage | null {
+    const serverInfo = cloneDeep(ftpServers.findOne({ name }));
+    if (!serverInfo) {
+      return null;
+    }
+    assign(serverInfo, pickBy({
+      host,
+      port,
+      user,
+      password,
+      secure,
+      prefix,
+    }, o => o !== undefined));
+    ftpServers.update({ name }, serverInfo);
+    return Storage.get(serverInfo.name);
   }
 
   ////

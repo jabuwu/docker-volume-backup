@@ -11,6 +11,7 @@ export const db = low(adapter);
 db.defaults({
   versions: {},
   s3Buckets: [],
+  ftpServers: [],
   schedules: [],
   pinnedVolumes: [],
 }).write();

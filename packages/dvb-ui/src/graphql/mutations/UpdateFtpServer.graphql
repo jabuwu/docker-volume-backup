@@ -1,0 +1,6 @@
+#import "../fragments/StorageData"
+mutation UpdateFtpServer($name: String!, $host: String, $user: String, $password: String, $secure: Boolean, $port: Int, $prefix: String) {
+  updateFtpServer(name: $name, host: $host, user: $user, password: $password, secure: $secure, port: $port, prefix: $prefix) {
+    ...storageData
+  }
+}

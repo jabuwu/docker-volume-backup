@@ -1,0 +1,17 @@
+fragment storageData on Storage {
+  name
+  type
+  s3Bucket {
+    name
+    bucket
+    prefix
+  }
+  ftpServer {
+    name
+    host
+    port
+    user
+    secure
+    prefix
+  }
+}

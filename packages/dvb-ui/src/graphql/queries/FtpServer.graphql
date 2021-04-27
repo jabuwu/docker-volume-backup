@@ -1,0 +1,14 @@
+query FtpServer($name: String!) {
+  storage(name: $name) {
+    name
+    type
+    ftpServer {
+      name
+      host
+      port
+      user
+      secure
+      prefix
+    }
+  }
+}

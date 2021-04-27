@@ -1,11 +1,6 @@
+#import "../fragments/StorageData"
 query AllStorage {
   allStorage {
-    name
-    type
-    s3Bucket {
-      name
-      bucket
-      prefix
-    }
+    ...storageData
   }
 }

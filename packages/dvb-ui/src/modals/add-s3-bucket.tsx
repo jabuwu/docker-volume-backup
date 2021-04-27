@@ -81,7 +81,9 @@ export default function AddS3BucketModal({ children }: { children: (open: () => 
       update: (cache, { data }) => {
         if (data.addS3Bucket) {
           const queryData = Object.assign({}, cache.readQuery<AllStorageQuery>({ query: AllStorageDocument }));
-          if (!queryData.allStorage.find(item => item.name === data.addS3Bucket!.name)) {
+          if (!queryData.allStorage) {
+            queryData.allStorage = [data.addS3Bucket];
+          } else if (!queryData.allStorage.find(item => item.name === data.addS3Bucket!.name)) {
             queryData.allStorage = [...queryData.allStorage, data.addS3Bucket];
           }
           cache.writeQuery({ query: AllStorageDocument, data: queryData });

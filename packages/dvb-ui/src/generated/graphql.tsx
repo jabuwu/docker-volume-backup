@@ -57,6 +57,16 @@ export type ContainerPort = {
   type: Scalars['String'];
 };
 
+export type FtpServer = {
+  __typename?: 'FtpServer';
+  name: Scalars['String'];
+  host: Scalars['String'];
+  port: Scalars['Int'];
+  user: Scalars['String'];
+  secure: Scalars['Boolean'];
+  prefix: Scalars['String'];
+};
+
 
 export type Mutation = {
   __typename?: 'Mutation';
@@ -71,6 +81,8 @@ export type Mutation = {
   removeSchedule: Scalars['Boolean'];
   addS3Bucket?: Maybe<Storage>;
   updateS3Bucket?: Maybe<Storage>;
+  addFtpServer?: Maybe<Storage>;
+  updateFtpServer?: Maybe<Storage>;
 };
 
 
@@ -150,6 +162,28 @@ export type MutationUpdateS3BucketArgs = {
   name: Scalars['String'];
 };
 
+
+export type MutationAddFtpServerArgs = {
+  prefix?: Maybe<Scalars['String']>;
+  secure: Scalars['Boolean'];
+  password: Scalars['String'];
+  user: Scalars['String'];
+  port: Scalars['Int'];
+  host: Scalars['String'];
+  name: Scalars['String'];
+};
+
+
+export type MutationUpdateFtpServerArgs = {
+  prefix?: Maybe<Scalars['String']>;
+  secure?: Maybe<Scalars['Boolean']>;
+  password?: Maybe<Scalars['String']>;
+  user?: Maybe<Scalars['String']>;
+  port?: Maybe<Scalars['Int']>;
+  host?: Maybe<Scalars['String']>;
+  name: Scalars['String'];
+};
+
 export type Query = {
   __typename?: 'Query';
   containers: Array<Container>;
@@ -193,6 +227,7 @@ export type Storage = {
   type: Scalars['String'];
   name: Scalars['String'];
   s3Bucket?: Maybe<S3Bucket>;
+  ftpServer?: Maybe<FtpServer>;
   backups: Array<StorageBackup>;
 };
 
@@ -248,6 +283,37 @@ export type VolumeUsageData = {
   refCount: Scalars['Float'];
 };
 
+export type StorageDataFragment = (
+  { __typename?: 'Storage' }
+  & Pick<Storage, 'name' | 'type'>
+  & { s3Bucket?: Maybe<(
+    { __typename?: 'S3Bucket' }
+    & Pick<S3Bucket, 'name' | 'bucket' | 'prefix'>
+  )>, ftpServer?: Maybe<(
+    { __typename?: 'FtpServer' }
+    & Pick<FtpServer, 'name' | 'host' | 'port' | 'user' | 'secure' | 'prefix'>
+  )> }
+);
+
+export type AddFtpServerMutationVariables = Exact<{
+  name: Scalars['String'];
+  host: Scalars['String'];
+  user: Scalars['String'];
+  password: Scalars['String'];
+  secure: Scalars['Boolean'];
+  port: Scalars['Int'];
+  prefix?: Maybe<Scalars['String']>;
+}>;
+
+
+export type AddFtpServerMutation = (
+  { __typename?: 'Mutation' }
+  & { addFtpServer?: Maybe<(
+    { __typename?: 'Storage' }
+    & StorageDataFragment
+  )> }
+);
+
 export type AddS3BucketMutationVariables = Exact<{
   name: Scalars['String'];
   bucket: Scalars['String'];
@@ -262,11 +328,7 @@ export type AddS3BucketMutation = (
   { __typename?: 'Mutation' }
   & { addS3Bucket?: Maybe<(
     { __typename?: 'Storage' }
-    & Pick<Storage, 'name' | 'type'>
-    & { s3Bucket?: Maybe<(
-      { __typename?: 'S3Bucket' }
-      & Pick<S3Bucket, 'name' | 'bucket' | 'prefix'>
-    )> }
+    & StorageDataFragment
   )> }
 );
 
@@ -362,6 +424,25 @@ export type RemoveStorageMutation = (
   & Pick<Mutation, 'removeStorage'>
 );
 
+export type UpdateFtpServerMutationVariables = Exact<{
+  name: Scalars['String'];
+  host?: Maybe<Scalars['String']>;
+  user?: Maybe<Scalars['String']>;
+  password?: Maybe<Scalars['String']>;
+  secure?: Maybe<Scalars['Boolean']>;
+  port?: Maybe<Scalars['Int']>;
+  prefix?: Maybe<Scalars['String']>;
+}>;
+
+
+export type UpdateFtpServerMutation = (
+  { __typename?: 'Mutation' }
+  & { updateFtpServer?: Maybe<(
+    { __typename?: 'Storage' }
+    & StorageDataFragment
+  )> }
+);
+
 export type UpdateS3BucketMutationVariables = Exact<{
   name: Scalars['String'];
   bucket?: Maybe<Scalars['String']>;
@@ -376,11 +457,7 @@ export type UpdateS3BucketMutation = (
   { __typename?: 'Mutation' }
   & { updateS3Bucket?: Maybe<(
     { __typename?: 'Storage' }
-    & Pick<Storage, 'name' | 'type'>
-    & { s3Bucket?: Maybe<(
-      { __typename?: 'S3Bucket' }
-      & Pick<S3Bucket, 'name' | 'bucket' | 'region' | 'accessKey' | 'prefix'>
-    )> }
+    & StorageDataFragment
   )> }
 );
 
@@ -407,10 +484,23 @@ export type AllStorageQuery = (
   { __typename?: 'Query' }
   & { allStorage: Array<(
     { __typename?: 'Storage' }
+    & StorageDataFragment
+  )> }
+);
+
+export type FtpServerQueryVariables = Exact<{
+  name: Scalars['String'];
+}>;
+
+
+export type FtpServerQuery = (
+  { __typename?: 'Query' }
+  & { storage?: Maybe<(
+    { __typename?: 'Storage' }
     & Pick<Storage, 'name' | 'type'>
-    & { s3Bucket?: Maybe<(
-      { __typename?: 'S3Bucket' }
-      & Pick<S3Bucket, 'name' | 'bucket' | 'prefix'>
+    & { ftpServer?: Maybe<(
+      { __typename?: 'FtpServer' }
+      & Pick<FtpServer, 'name' | 'host' | 'port' | 'user' | 'secure' | 'prefix'>
     )> }
   )> }
 );
@@ -551,7 +641,72 @@ export type VolumeDestroyedSubscription = (
   & Pick<Subscription, 'volumeDestroyed'>
 );
 
+export const StorageDataFragmentDoc = gql`
+    fragment storageData on Storage {
+  name
+  type
+  s3Bucket {
+    name
+    bucket
+    prefix
+  }
+  ftpServer {
+    name
+    host
+    port
+    user
+    secure
+    prefix
+  }
+}
+    `;
+export const AddFtpServerDocument = gql`
+    mutation AddFtpServer($name: String!, $host: String!, $user: String!, $password: String!, $secure: Boolean!, $port: Int!, $prefix: String) {
+  addFtpServer(
+    name: $name
+    host: $host
+    user: $user
+    password: $password
+    secure: $secure
+    port: $port
+    prefix: $prefix
+  ) {
+    ...storageData
+  }
+}
+    ${StorageDataFragmentDoc}`;
+export type AddFtpServerMutationFn = Apollo.MutationFunction<AddFtpServerMutation, AddFtpServerMutationVariables>;
 
+/**
+ * __useAddFtpServerMutation__
+ *
+ * To run a mutation, you first call `useAddFtpServerMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddFtpServerMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addFtpServerMutation, { data, loading, error }] = useAddFtpServerMutation({
+ *   variables: {
+ *      name: // value for 'name'
+ *      host: // value for 'host'
+ *      user: // value for 'user'
+ *      password: // value for 'password'
+ *      secure: // value for 'secure'
+ *      port: // value for 'port'
+ *      prefix: // value for 'prefix'
+ *   },
+ * });
+ */
+export function useAddFtpServerMutation(baseOptions?: Apollo.MutationHookOptions<AddFtpServerMutation, AddFtpServerMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddFtpServerMutation, AddFtpServerMutationVariables>(AddFtpServerDocument, options);
+      }
+export type AddFtpServerMutationHookResult = ReturnType<typeof useAddFtpServerMutation>;
+export type AddFtpServerMutationResult = Apollo.MutationResult<AddFtpServerMutation>;
+export type AddFtpServerMutationOptions = Apollo.BaseMutationOptions<AddFtpServerMutation, AddFtpServerMutationVariables>;
 export const AddS3BucketDocument = gql`
     mutation AddS3Bucket($name: String!, $bucket: String!, $region: String!, $accessKey: String!, $secretKey: String!, $prefix: String!) {
   addS3Bucket(
@@ -562,16 +717,10 @@ export const AddS3BucketDocument = gql`
     secretKey: $secretKey
     prefix: $prefix
   ) {
-    name
-    type
-    s3Bucket {
-      name
-      bucket
-      prefix
-    }
+    ...storageData
   }
 }
-    `;
+    ${StorageDataFragmentDoc}`;
 export type AddS3BucketMutationFn = Apollo.MutationFunction<AddS3BucketMutation, AddS3BucketMutationVariables>;
 
 /**
@@ -866,6 +1015,53 @@ export function useRemoveStorageMutation(baseOptions?: Apollo.MutationHookOption
 export type RemoveStorageMutationHookResult = ReturnType<typeof useRemoveStorageMutation>;
 export type RemoveStorageMutationResult = Apollo.MutationResult<RemoveStorageMutation>;
 export type RemoveStorageMutationOptions = Apollo.BaseMutationOptions<RemoveStorageMutation, RemoveStorageMutationVariables>;
+export const UpdateFtpServerDocument = gql`
+    mutation UpdateFtpServer($name: String!, $host: String, $user: String, $password: String, $secure: Boolean, $port: Int, $prefix: String) {
+  updateFtpServer(
+    name: $name
+    host: $host
+    user: $user
+    password: $password
+    secure: $secure
+    port: $port
+    prefix: $prefix
+  ) {
+    ...storageData
+  }
+}
+    ${StorageDataFragmentDoc}`;
+export type UpdateFtpServerMutationFn = Apollo.MutationFunction<UpdateFtpServerMutation, UpdateFtpServerMutationVariables>;
+
+/**
+ * __useUpdateFtpServerMutation__
+ *
+ * To run a mutation, you first call `useUpdateFtpServerMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateFtpServerMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateFtpServerMutation, { data, loading, error }] = useUpdateFtpServerMutation({
+ *   variables: {
+ *      name: // value for 'name'
+ *      host: // value for 'host'
+ *      user: // value for 'user'
+ *      password: // value for 'password'
+ *      secure: // value for 'secure'
+ *      port: // value for 'port'
+ *      prefix: // value for 'prefix'
+ *   },
+ * });
+ */
+export function useUpdateFtpServerMutation(baseOptions?: Apollo.MutationHookOptions<UpdateFtpServerMutation, UpdateFtpServerMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateFtpServerMutation, UpdateFtpServerMutationVariables>(UpdateFtpServerDocument, options);
+      }
+export type UpdateFtpServerMutationHookResult = ReturnType<typeof useUpdateFtpServerMutation>;
+export type UpdateFtpServerMutationResult = Apollo.MutationResult<UpdateFtpServerMutation>;
+export type UpdateFtpServerMutationOptions = Apollo.BaseMutationOptions<UpdateFtpServerMutation, UpdateFtpServerMutationVariables>;
 export const UpdateS3BucketDocument = gql`
     mutation UpdateS3Bucket($name: String!, $bucket: String, $region: String, $accessKey: String, $secretKey: String, $prefix: String) {
   updateS3Bucket(
@@ -876,18 +1072,10 @@ export const UpdateS3BucketDocument = gql`
     secretKey: $secretKey
     prefix: $prefix
   ) {
-    name
-    type
-    s3Bucket {
-      name
-      bucket
-      region
-      accessKey
-      prefix
-    }
+    ...storageData
   }
 }
-    `;
+    ${StorageDataFragmentDoc}`;
 export type UpdateS3BucketMutationFn = Apollo.MutationFunction<UpdateS3BucketMutation, UpdateS3BucketMutationVariables>;
 
 /**
@@ -962,16 +1150,10 @@ export type UpdateScheduleMutationOptions = Apollo.BaseMutationOptions<UpdateSch
 export const AllStorageDocument = gql`
     query AllStorage {
   allStorage {
-    name
-    type
-    s3Bucket {
-      name
-      bucket
-      prefix
-    }
+    ...storageData
   }
 }
-    `;
+    ${StorageDataFragmentDoc}`;
 
 /**
  * __useAllStorageQuery__
@@ -999,6 +1181,50 @@ export function useAllStorageLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions
 export type AllStorageQueryHookResult = ReturnType<typeof useAllStorageQuery>;
 export type AllStorageLazyQueryHookResult = ReturnType<typeof useAllStorageLazyQuery>;
 export type AllStorageQueryResult = Apollo.QueryResult<AllStorageQuery, AllStorageQueryVariables>;
+export const FtpServerDocument = gql`
+    query FtpServer($name: String!) {
+  storage(name: $name) {
+    name
+    type
+    ftpServer {
+      name
+      host
+      port
+      user
+      secure
+      prefix
+    }
+  }
+}
+    `;
+
+/**
+ * __useFtpServerQuery__
+ *
+ * To run a query within a React component, call `useFtpServerQuery` and pass it any options that fit your needs.
+ * When your component renders, `useFtpServerQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useFtpServerQuery({
+ *   variables: {
+ *      name: // value for 'name'
+ *   },
+ * });
+ */
+export function useFtpServerQuery(baseOptions: Apollo.QueryHookOptions<FtpServerQuery, FtpServerQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<FtpServerQuery, FtpServerQueryVariables>(FtpServerDocument, options);
+      }
+export function useFtpServerLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<FtpServerQuery, FtpServerQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<FtpServerQuery, FtpServerQueryVariables>(FtpServerDocument, options);
+        }
+export type FtpServerQueryHookResult = ReturnType<typeof useFtpServerQuery>;
+export type FtpServerLazyQueryHookResult = ReturnType<typeof useFtpServerLazyQuery>;
+export type FtpServerQueryResult = Apollo.QueryResult<FtpServerQuery, FtpServerQueryVariables>;
 export const S3BucketDocument = gql`
     query S3Bucket($name: String!) {
   storage(name: $name) {

@@ -3,6 +3,7 @@ import { LocalStorage } from './local';
 import { S3Bucket, s3Buckets, S3Storage } from './s3';
 import { ObjectType, Field } from 'type-graphql';
 import { assign, find } from 'lodash';
+import { FtpServer, ftpServers, FtpStorage } from './ftp';
 
 @ObjectType()
 export class StorageBackupStat {
@@ -44,6 +45,10 @@ export function getStorage(name: string): StorageInterface | null {
   if (s3Bucket) {
     return new S3Storage(s3Bucket);
   }
+  const ftpServer = ftpServers.findOne({ name });
+  if (ftpServer) {
+    return new FtpStorage(ftpServer);
+  }
   return null;
 }
 
@@ -60,8 +65,16 @@ export class Storage {
       storages.push(new Storage({
         type: 's3Bucket',
         name: s3Bucket.name,
-        s3Bucket: s3Bucket,
+        s3Bucket,
         interface: new S3Storage(s3Bucket),
+      }));
+    }
+    for (const ftpServer of ftpServers.all()) {
+      storages.push(new Storage({
+        type: 'ftpServer',
+        name: ftpServer.name,
+        ftpServer,
+        interface: new FtpStorage(ftpServer),
       }));
     }
     return storages;
@@ -77,13 +90,16 @@ export class Storage {
   }
 
   @Field(() => String)
-  type: 'local' | 's3Bucket';
+  type: 'local' | 's3Bucket' | 'ftpServer';
 
   @Field(() => String)
   name: string;
 
   @Field(() => S3Bucket, { nullable: true })
   s3Bucket?: S3Bucket;
+
+  @Field(() => FtpServer, { nullable: true })
+  ftpServer?: FtpServer;
 
   @Field(() => [StorageBackup])
   async backups(): Promise<StorageBackup[]> {

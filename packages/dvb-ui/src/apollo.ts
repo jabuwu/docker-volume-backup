@@ -60,6 +60,9 @@ export const apolloClient = new ApolloClient({
       S3Bucket: {
         keyFields: [ 'name' ]
       },
+      FtpServer: {
+        keyFields: [ 'name' ]
+      },
     },
   }),
   connectToDevTools: true,

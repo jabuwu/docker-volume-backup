@@ -30,6 +30,7 @@ export default function EditS3BucketModal({ children }: { children: (open: (name
       setRegion(data.storage!.s3Bucket!.region);
       setAccessKey(data.storage!.s3Bucket!.accessKey);
       setSecretKey('');
+      setSecretKey('');
       setPrefix(data.storage!.s3Bucket!.prefix);
     }
   }, [ isOpen, data ]);
