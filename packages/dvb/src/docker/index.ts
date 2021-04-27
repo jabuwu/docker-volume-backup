@@ -52,7 +52,7 @@ export class Docker {
       map(event => dockerode.getVolume(event.Actor.ID)),
       concatMap(volume => volume.inspect()),
       map(info => {
-        const volume: Volume = camelCaseObj(info)
+        const volume: Volume = new Volume(this, camelCaseObj(info));
         volume.pinned = pinnedVolumes.has(volume.name);
         return volume;
       }),
@@ -207,13 +207,13 @@ export class Docker {
   }
 
   async getContainers(): Promise<Container[]> {
-    const arr: Container[] = (await dockerode.listContainers()).map(camelCaseObj);
+    const arr: Container[] = (await dockerode.listContainers({ all: true })).map(camelCaseObj);
     arr.sort((a, b) => a.id > b.id ? 1 : -1);
     return arr;
   }
 
   async getVolumes(): Promise<Volume[]> {
-    const arr: Volume[] = (await dockerode.listVolumes()).Volumes.map(camelCaseObj);
+    const arr: Volume[] = (await dockerode.listVolumes()).Volumes.map(volume => new Volume(this, camelCaseObj(volume)));
     arr.forEach(volume => volume.pinned = pinnedVolumes.has(volume.name));
     return arr;
   }

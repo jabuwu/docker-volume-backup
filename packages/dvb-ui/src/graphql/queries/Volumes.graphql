@@ -3,5 +3,9 @@ query Volumes {
     name
     driver
     pinned
+    containers {
+      names
+      state
+    }
   }
 }

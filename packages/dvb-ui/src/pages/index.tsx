@@ -2,7 +2,7 @@ import { useVolumesQuery, usePinVolumeMutation } from '../generated/graphql';
 import Wrapper from '../components/wrapper';
 import Title from '../components/title';
 import React from 'react';
-import { Alert, AlertIcon, Button, Box, Spinner, Table, Tbody, Td, Th, Thead, Tr, Flex, Text } from '@chakra-ui/react';
+import { Alert, AlertIcon, Button, Box, Spinner, Table, Tbody, Td, Th, Thead, Tr, Flex, Text, Tooltip, Popover, PopoverArrow, PopoverBody, PopoverCloseButton, PopoverContent, PopoverHeader, PopoverTrigger, Tag } from '@chakra-ui/react';
 import { RepeatIcon, StarIcon } from '@chakra-ui/icons';
 import LoadingTr  from '../components/loading-tr';
 import BackupVolumeModal from '../modals/backup-volume';
@@ -14,7 +14,7 @@ export default function Index(): any {
   let message: JSX.Element | null = null;
   let table: ((openBackup: (volume: string) => void, openRestore: (volume: string) => void) => JSX.Element) | null = null;
   if (loading) {
-    table = () => (<LoadingTr colSpan={ 3 } />);
+    table = () => (<LoadingTr colSpan={ 4 } />);
   } else if (error) {
     message = (
       <Alert status="error" mt={ 2 }>
@@ -41,11 +41,36 @@ export default function Index(): any {
             } }) }>
               <StarIcon />
             </Button>
-            <Text ml={ 2 } my="auto" fontWeight="bold">{ volume.name }</Text>
+            <Box ml={ 2 } my="auto" fontWeight="bold">{
+              volume.name.length > 30 ?
+              <Tooltip label={ volume.name }><Text>{ `${volume.name.substr(0, 30)}...` }</Text></Tooltip> :
+              <Text>{ volume.name }</Text>
+            }</Box>
           </Flex>
         </Td>
         <Td>
           <Text>{ volume.driver }</Text>
+        </Td>
+        <Td>
+          <Popover>
+            <PopoverTrigger>
+              <Button variant="ghost" disabled={ volume.containers.length === 0 }>{ volume.containers.length }</Button>
+            </PopoverTrigger>
+            <PopoverContent>
+              <PopoverArrow />
+              <PopoverCloseButton />
+              <PopoverHeader>Containers</PopoverHeader>
+              <PopoverBody>
+                {
+                  volume.containers.map(container => (
+                    <Tooltip label={ container.state === 'running' ? 'Container is running' : 'Container has stopped' }>
+                      <Tag m={ 1 } colorScheme={ container.state === 'running' ? 'green' : 'red' }>{ container.names[0].substr(1) }</Tag>
+                    </Tooltip>
+                  ))
+                }
+              </PopoverBody>
+            </PopoverContent>
+          </Popover>
         </Td>
         <Td textAlign="right">
           <Button colorScheme="blue" onClick={ () => openBackup(volume.name) }>Backup</Button>
@@ -74,6 +99,7 @@ export default function Index(): any {
                     <Tr>
                       <Th>Name</Th>
                       <Th>Driver</Th>
+                      <Th>Containers</Th>
                       <Th></Th>
                     </Tr>
                   </Thead>

@@ -275,6 +275,7 @@ export type Volume = {
   options?: Maybe<Scalars['JSON']>;
   usageData?: Maybe<VolumeUsageData>;
   pinned: Scalars['Boolean'];
+  containers: Array<Container>;
 };
 
 export type VolumeUsageData = {
@@ -606,6 +607,10 @@ export type VolumesQuery = (
   & { volumes: Array<(
     { __typename?: 'Volume' }
     & Pick<Volume, 'name' | 'driver' | 'pinned'>
+    & { containers: Array<(
+      { __typename?: 'Container' }
+      & Pick<Container, 'names' | 'state'>
+    )> }
   )> }
 );
 
@@ -1469,6 +1474,10 @@ export const VolumesDocument = gql`
     name
     driver
     pinned
+    containers {
+      names
+      state
+    }
   }
 }
     `;

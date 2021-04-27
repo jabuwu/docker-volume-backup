@@ -1,6 +1,9 @@
+import { Docker } from '.';
 import { Field, ObjectType } from 'type-graphql';
 import { GraphQLJSON } from '../graphql/scalars/json';
 import { DBList } from '../db';
+import { Container } from './container';
+import { assign } from 'lodash';
 
 @ObjectType()
 export class VolumeUsageData {
@@ -10,6 +13,10 @@ export class VolumeUsageData {
 
 @ObjectType()
 export class Volume {
+  constructor(private docker: Docker, data: Partial<Volume>) {
+    assign(this, data);
+  }
+
   @Field()
   name: string;
   @Field()
@@ -28,6 +35,17 @@ export class Volume {
   usageData?: VolumeUsageData;
   @Field()
   pinned: boolean;
+  @Field(() => [Container])
+  async containers(): Promise<Container[]> {
+    return (await this.docker.getContainers()).filter(container => {
+      for (const mount of container.mounts) {
+        if (mount.type === 'volume' && mount.name === this.name) {
+          return true;
+        }
+      }
+      return false;
+    });
+  }
 }
 
 export const pinnedVolumes = new DBList<string>('pinnedVolumes');
