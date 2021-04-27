@@ -1,0 +1,9 @@
+fragment volumeData on Volume {
+  name
+  driver
+  pinned
+  containers {
+    names
+    state
+  }
+}

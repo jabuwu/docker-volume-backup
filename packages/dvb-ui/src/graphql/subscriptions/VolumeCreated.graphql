@@ -1,7 +1,6 @@
+#import "../fragments/VolumeData"
 subscription VolumeCreated {
   volumeCreated {
-    name
-    driver
-    pinned
+    ...volumeData
   }
 }

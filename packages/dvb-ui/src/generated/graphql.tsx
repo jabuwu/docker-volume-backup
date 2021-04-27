@@ -296,6 +296,15 @@ export type StorageDataFragment = (
   )> }
 );
 
+export type VolumeDataFragment = (
+  { __typename?: 'Volume' }
+  & Pick<Volume, 'name' | 'driver' | 'pinned'>
+  & { containers: Array<(
+    { __typename?: 'Container' }
+    & Pick<Container, 'names' | 'state'>
+  )> }
+);
+
 export type AddFtpServerMutationVariables = Exact<{
   name: Scalars['String'];
   host: Scalars['String'];
@@ -606,11 +615,7 @@ export type VolumesQuery = (
   { __typename?: 'Query' }
   & { volumes: Array<(
     { __typename?: 'Volume' }
-    & Pick<Volume, 'name' | 'driver' | 'pinned'>
-    & { containers: Array<(
-      { __typename?: 'Container' }
-      & Pick<Container, 'names' | 'state'>
-    )> }
+    & VolumeDataFragment
   )> }
 );
 
@@ -634,7 +639,7 @@ export type VolumeCreatedSubscription = (
   { __typename?: 'Subscription' }
   & { volumeCreated: (
     { __typename?: 'Volume' }
-    & Pick<Volume, 'name' | 'driver' | 'pinned'>
+    & VolumeDataFragment
   ) }
 );
 
@@ -662,6 +667,17 @@ export const StorageDataFragmentDoc = gql`
     user
     secure
     prefix
+  }
+}
+    `;
+export const VolumeDataFragmentDoc = gql`
+    fragment volumeData on Volume {
+  name
+  driver
+  pinned
+  containers {
+    names
+    state
   }
 }
     `;
@@ -1471,16 +1487,10 @@ export type StorageListQueryResult = Apollo.QueryResult<StorageListQuery, Storag
 export const VolumesDocument = gql`
     query Volumes {
   volumes {
-    name
-    driver
-    pinned
-    containers {
-      names
-      state
-    }
+    ...volumeData
   }
 }
-    `;
+    ${VolumeDataFragmentDoc}`;
 
 /**
  * __useVolumesQuery__
@@ -1545,12 +1555,10 @@ export type TaskUpdatedSubscriptionResult = Apollo.SubscriptionResult<TaskUpdate
 export const VolumeCreatedDocument = gql`
     subscription VolumeCreated {
   volumeCreated {
-    name
-    driver
-    pinned
+    ...volumeData
   }
 }
-    `;
+    ${VolumeDataFragmentDoc}`;
 
 /**
  * __useVolumeCreatedSubscription__
