@@ -99,7 +99,7 @@ export default function Storage(): any {
               </Td>
               <Td>
                 <Flex>
-                  { ftpServer.ftpServer!.secure ? <Tooltip label="Secure"><LockIcon my="auto" color="lightgreen" /></Tooltip> : <Tooltip label="Unsecure"><UnlockIcon my="auto" color="pink" /></Tooltip> }
+                  { ftpServer.ftpServer!.secure ? <Tooltip label="Secure"><LockIcon my="auto" color="lightgreen" /></Tooltip> : <Tooltip label="Insecure"><UnlockIcon my="auto" color="pink" /></Tooltip> }
                   <Text my="auto" ml={ 2 }>{ `ftp://${ftpServer.ftpServer!.host}:${ftpServer.ftpServer!.port}` }</Text>
                 </Flex>
               </Td>
