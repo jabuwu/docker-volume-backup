@@ -5,7 +5,7 @@ import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import Dockerode from 'dockerode';
 import { concatMap, map, filter } from 'rxjs/operators';
 import { PassThrough, Readable, Writable } from 'stream';
-import { findIndex } from 'lodash';
+import { find, findIndex } from 'lodash';
 import { createGzip } from 'zlib';
 
 const dockerode = new Dockerode({ socketPath: '/var/run/docker.sock' });
@@ -206,10 +206,57 @@ export class Docker {
     });
   }
 
+  private async eachVolumeContainer(volumeName: string, cb: (container: Container) => Promise<void> | void) {
+    const volume = await this.getVolume(volumeName);
+    if (!volume) {
+      new Error('Volume not found: ' + volumeName);
+    }
+    const containers = await volume!.containers();
+    for (const container of containers) {
+      await cb(container);
+    }
+  }
+
+  async stopVolumeContainers(volume: string): Promise<string[]> {
+    const stopped: string[] = [];
+    await this.eachVolumeContainer(volume, async (c) => {
+      const container = dockerode.getContainer(c.id);
+      try {
+        await container.stop();
+        stopped.push(container.id);
+      } catch (err) {
+        // 304: container already stopped
+        if (err.statusCode !== 304) {
+          throw err;
+        }
+      }
+    });
+    return stopped;
+  }
+
+  async startVolumeContainers(volume: string, filter?: string[]) {
+    await this.eachVolumeContainer(volume, async (c) => {
+      if (!filter || filter.includes(c.id)) {
+        const container = dockerode.getContainer(c.id);
+        await container.start();
+      }
+    });
+  }
+
+  async getContainer(id: string): Promise<Container | null> {
+    const containers = await this.getContainers();
+    return find(containers, { id }) ?? null;
+  }
+
   async getContainers(): Promise<Container[]> {
     const arr: Container[] = (await dockerode.listContainers({ all: true })).map(camelCaseObj);
     arr.sort((a, b) => a.id > b.id ? 1 : -1);
     return arr;
+  }
+
+  async getVolume(name: string): Promise<Volume | null> {
+    const containers = await this.getVolumes();
+    return find(containers, { name }) ?? null;
   }
 
   async getVolumes(): Promise<Volume[]> {

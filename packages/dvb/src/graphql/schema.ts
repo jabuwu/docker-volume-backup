@@ -8,7 +8,7 @@ import { s3Buckets } from '../storage/s3';
 import { Schedule, schedules } from '../schedule';
 import { generate } from 'short-uuid';
 import path from 'path';
-import { assign, cloneDeep, pickBy } from 'lodash';
+import { assign, cloneDeep, debounce, pickBy } from 'lodash';
 import { downloadWriteStream } from '../download';
 import { Task, getSubject } from '../tasks';
 import { filter } from 'rxjs/operators';
@@ -46,18 +46,28 @@ class DvmResolver {
     @Arg('volume', () => String) volume: string,
     @Arg('storage', () => String) storage: string,
     @Arg('fileName', () => String, { nullable: true }) fileName: string | undefined,
+    @Arg('stopContainers', () => Boolean, { nullable: true }) stopContainers: string | undefined,
   ) {
     fileName = fileName || `${volume}.tgz`;
     validateFileName(fileName);
     const storageInstance = getStorage(storage);
     if (storageInstance) {
-      return new Task(async (update, complete) => {
+      return new Task(async ({ update, complete }) => {
+        let stoppedContainers: string[] = [];
+        if (stopContainers) {
+          update({ status: 'Stopping containers...' });
+          stoppedContainers = await context.docker.stopVolumeContainers(volume);
+        }
         update({ status: 'Preparing...' });
         await context.docker.exportVolume(volume, async (stream) => {
           await storageInstance.write(fileName!, stream);
-        }, (progress) => {
+        }, debounce((progress) => {
           update({ status: 'Backing up...', progress });
-        });
+        }, 100, { maxWait: 100 }));
+        if (stopContainers && stoppedContainers.length > 0) {
+          update({ status: 'Starting containers...', progress: null });
+          await context.docker.startVolumeContainers(volume, stoppedContainers);
+        }
         complete();
       }).id;
     }
@@ -66,20 +76,30 @@ class DvmResolver {
   @Mutation(() => String) async importVolume(
     @Arg('volume', () => String) volume: string,
     @Arg('storage', () => String) storage: string,
-    @Arg('fileName', () => String) fileName: string
+    @Arg('fileName', () => String) fileName: string,
+    @Arg('stopContainers', () => Boolean, { nullable: true }) stopContainers: string | undefined,
   ) {
     validateFileName(fileName);
     const storageInstance = getStorage(storage);
     if (storageInstance) {
-      return new Task(async (update, complete) => {
+      return new Task(async ({ update, complete }) => {
+        let stoppedContainers: string[] = [];
+        if (stopContainers) {
+          update({ status: 'Stopping containers...' });
+          stoppedContainers = await context.docker.stopVolumeContainers(volume);
+        }
         update({ status: 'Getting file info...' });
         const stat = await storageInstance.stat(fileName);
         update({ status: 'Preparing...' });
         await context.docker.importVolume(volume, stat.size, async (stream) => {
           await storageInstance.read(fileName!, stream);
-        }, (progress) => {
+        }, debounce((progress) => {
           update({ status: 'Restoring...', progress });
-        });
+        }, 100, { maxWait: 100 }));
+        if (stopContainers && stoppedContainers.length > 0) {
+          update({ status: 'Starting containers...', progress: null });
+          await context.docker.startVolumeContainers(volume, stoppedContainers);
+        }
         complete();
       }).id;
     }

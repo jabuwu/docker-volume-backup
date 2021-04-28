@@ -1,4 +1,4 @@
-import { Text, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Stack, Alert, AlertIcon, Select, InputGroup, InputLeftAddon, Input, ModalFooter, Button, Progress } from '@chakra-ui/react';
+import { Text, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Stack, Alert, AlertIcon, Select, InputGroup, InputLeftAddon, Input, ModalFooter, Button, Progress, Flex, Box, Checkbox } from '@chakra-ui/react';
 import React, { useState, useCallback } from 'react';
 import { useExportVolumeMutation, useStorageListQuery, useTaskUpdatedSubscription } from '../generated/graphql';
 
@@ -8,6 +8,7 @@ export default function BackupVolumeModal({ children }: { children: (open: (volu
   const [ working, setWorking ] = useState(false);
   const [ exportVolume ] = useExportVolumeMutation();
   const { data: storageData, loading: storageLoading, error: storageError } = useStorageListQuery();
+  const [ stopContainers, setStopContainers ] = useState(true);
   const [ storage, setStorage ] = useState('');
   const [ fileName, setFileName ] = useState('');
   const [ taskId, setTaskId ] = useState('');
@@ -40,6 +41,8 @@ export default function BackupVolumeModal({ children }: { children: (open: (volu
 
   const open = useCallback((volume: string) => {
     setIsOpen(true);
+    setStopContainers(true);
+    setStorage('');
     setFileName(`${volume}-${Date.now()}.tgz`);
     setVolume(volume);
     setTaskId('');
@@ -61,6 +64,7 @@ export default function BackupVolumeModal({ children }: { children: (open: (volu
         volume,
         storage,
         fileName,
+        stopContainers,
       },
     });
     // TODO: error if null?
@@ -115,16 +119,25 @@ export default function BackupVolumeModal({ children }: { children: (open: (volu
             </Stack>
           </ModalBody>
           <ModalFooter>
-            { !progressError ?
-              <Button colorScheme="blue" onClick={ backup } disabled={ !storageData || !storage || working } isLoading={ working }>
-                Backup
-              </Button>
-            : null }
-            { progressError ?
-              <Button colorScheme="red" onClick={ close }>
-                Close
-              </Button>
-            : null }
+            <Flex w="100%">
+              { !working ?
+                <Box>
+                  <Checkbox isChecked={ stopContainers } onChange={ e => setStopContainers(e.target.checked) }>Stop Containers During Backup</Checkbox>
+                </Box>
+              : null}
+              <Box ml="auto">
+                { !progressError ?
+                  <Button colorScheme="blue" onClick={ backup } disabled={ !storageData || !storage || working } isLoading={ working }>
+                    Backup
+                  </Button>
+                : null }
+                { progressError ?
+                  <Button colorScheme="red" onClick={ close }>
+                    Close
+                  </Button>
+                : null }
+              </Box>
+            </Flex>
           </ModalFooter>
         </ModalContent>
       </Modal>

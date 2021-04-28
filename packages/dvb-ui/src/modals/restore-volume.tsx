@@ -1,4 +1,4 @@
-import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Stack, Alert, AlertIcon, Select, InputGroup, InputLeftAddon, Input, ModalFooter, Button, Box, Radio, RadioGroup, Spinner, Text, Progress } from '@chakra-ui/react';
+import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Stack, Alert, AlertIcon, Select, InputGroup, InputLeftAddon, Input, ModalFooter, Button, Box, Radio, RadioGroup, Spinner, Text, Progress, Checkbox, Flex } from '@chakra-ui/react';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useImportVolumeMutation, useStorageListQuery, useStorageBackupsLazyQuery, useTaskUpdatedSubscription } from '../generated/graphql';
 
@@ -8,6 +8,7 @@ export default function RestoreVolumeModal({ children }: { children: (open: (vol
   const [ importVolume ] = useImportVolumeMutation();
   const [ getStorageBackups, { data: backupsData, loading: backupsLoading, error: backupsError } ] = useStorageBackupsLazyQuery({ fetchPolicy: 'network-only' });
   const { data: storageData, loading: storageLoading, error: storageError } = useStorageListQuery();
+  const [ stopContainers, setStopContainers ] = useState(true);
   const [ storage, setStorage ] = useState('');
   const [ filter, setFilter ] = useState('');
   const [ fileName, setFileName ] = useState('');
@@ -42,6 +43,7 @@ export default function RestoreVolumeModal({ children }: { children: (open: (vol
 
   const open = useCallback((volume: string) => {
     setIsOpen(true);
+    setStopContainers(true);
     setStorage('');
     setFilter(`${volume}-`);
     setVolume(volume);
@@ -74,7 +76,8 @@ export default function RestoreVolumeModal({ children }: { children: (open: (vol
       variables: {
         volume,
         fileName,
-        storage
+        storage,
+        stopContainers,
       },
     });
     // TODO: error if null?
@@ -147,16 +150,25 @@ export default function RestoreVolumeModal({ children }: { children: (open: (vol
             </Stack>
           </ModalBody>
           <ModalFooter>
-            { !progressError ?
-              <Button colorScheme="orange" onClick={ restore } disabled={ !storageData || !storage || !fileName || working } isLoading={ working }>
-                Restore
-              </Button>
-            : null }
-            { progressError ?
-              <Button colorScheme="red" onClick={ close }>
-                Close
-              </Button>
-            : null }
+            <Flex w="100%">
+              { !working ?
+                <Box>
+                  <Checkbox isChecked={ stopContainers } onChange={ e => setStopContainers(e.target.checked) }>Stop Containers During Restore</Checkbox>
+                </Box>
+              : null}
+              <Box ml="auto">
+                { !progressError ?
+                  <Button colorScheme="orange" onClick={ restore } disabled={ !storageData || !storage || !fileName || working } isLoading={ working }>
+                    Restore
+                  </Button>
+                : null }
+                { progressError ?
+                  <Button colorScheme="red" onClick={ close }>
+                    Close
+                  </Button>
+                : null }
+              </Box>
+            </Flex>
           </ModalFooter>
         </ModalContent>
       </Modal>

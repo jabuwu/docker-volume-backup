@@ -63,7 +63,7 @@ export default function Index(): any {
               <PopoverBody>
                 {
                   volume.containers.map(container => (
-                    <Tooltip label={ container.state === 'running' ? 'Container is running' : 'Container has stopped' }>
+                    <Tooltip label={ container.state === 'running' ? 'Container is running' : 'Container has stopped' } key={ container.id }>
                       <Tag m={ 1 } colorScheme={ container.state === 'running' ? 'green' : 'red' }>{ container.names[0].substr(1) }</Tag>
                     </Tooltip>
                   ))

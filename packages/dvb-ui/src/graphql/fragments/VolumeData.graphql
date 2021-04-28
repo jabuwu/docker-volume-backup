@@ -3,6 +3,7 @@ fragment volumeData on Volume {
   driver
   pinned
   containers {
+    id
     names
     state
   }

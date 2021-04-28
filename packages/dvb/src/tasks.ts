@@ -1,6 +1,6 @@
 import { ObjectType, Field, Float } from 'type-graphql';
 import { generate } from 'short-uuid';
-import { assign, debounce, clone } from 'lodash';
+import { assign, clone } from 'lodash';
 import { BehaviorSubject, Observable } from 'rxjs';
 
 // TODO: clear out this map somehow?
@@ -14,7 +14,7 @@ export function getSubject(id: string): Observable<Task> {
 
 @ObjectType()
 export class Task {
-  constructor(cb: (update: (data: Partial<Omit<Task, 'id' | 'done'>>) => void, complete: () => void) => Promise<void> | void) {
+  constructor(cb: (fns: { update: (data: Partial<Omit<Task, 'id' | 'done'>>) => void, complete: () => void, throwError: (err: Error) => void }) => Promise<void> | void) {
     this.id = generate();
     this.status = '';
     this.progress = null;
@@ -22,11 +22,11 @@ export class Task {
     taskUpdateMap$[this.id] = new BehaviorSubject<Task>(clone(this));
     (async() => {
       try {
-        await cb(debounce((args) => {
-          this.update(args);
-        }, 100, { maxWait: 100 }), debounce(() => {
-          this.complete();
-        }, 100, { maxWait: 100 }));
+        await cb({
+          update: this.update.bind(this),
+          complete: this.complete.bind(this),
+          throwError: this.throw.bind(this),
+        });
       } catch (err) {
         this.throw(err);
       }

@@ -87,6 +87,7 @@ export type Mutation = {
 
 
 export type MutationExportVolumeArgs = {
+  stopContainers?: Maybe<Scalars['Boolean']>;
   fileName?: Maybe<Scalars['String']>;
   storage: Scalars['String'];
   volume: Scalars['String'];
@@ -94,6 +95,7 @@ export type MutationExportVolumeArgs = {
 
 
 export type MutationImportVolumeArgs = {
+  stopContainers?: Maybe<Scalars['Boolean']>;
   fileName: Scalars['String'];
   storage: Scalars['String'];
   volume: Scalars['String'];
@@ -301,7 +303,7 @@ export type VolumeDataFragment = (
   & Pick<Volume, 'name' | 'driver' | 'pinned'>
   & { containers: Array<(
     { __typename?: 'Container' }
-    & Pick<Container, 'names' | 'state'>
+    & Pick<Container, 'id' | 'names' | 'state'>
   )> }
 );
 
@@ -383,6 +385,7 @@ export type ExportVolumeMutationVariables = Exact<{
   volume: Scalars['String'];
   storage: Scalars['String'];
   fileName?: Maybe<Scalars['String']>;
+  stopContainers?: Maybe<Scalars['Boolean']>;
 }>;
 
 
@@ -395,6 +398,7 @@ export type ImportVolumeMutationVariables = Exact<{
   volume: Scalars['String'];
   storage: Scalars['String'];
   fileName: Scalars['String'];
+  stopContainers?: Maybe<Scalars['Boolean']>;
 }>;
 
 
@@ -676,6 +680,7 @@ export const VolumeDataFragmentDoc = gql`
   driver
   pinned
   containers {
+    id
     names
     state
   }
@@ -877,8 +882,13 @@ export type DownloadBackupMutationHookResult = ReturnType<typeof useDownloadBack
 export type DownloadBackupMutationResult = Apollo.MutationResult<DownloadBackupMutation>;
 export type DownloadBackupMutationOptions = Apollo.BaseMutationOptions<DownloadBackupMutation, DownloadBackupMutationVariables>;
 export const ExportVolumeDocument = gql`
-    mutation ExportVolume($volume: String!, $storage: String!, $fileName: String) {
-  exportVolume(volume: $volume, storage: $storage, fileName: $fileName)
+    mutation ExportVolume($volume: String!, $storage: String!, $fileName: String, $stopContainers: Boolean) {
+  exportVolume(
+    volume: $volume
+    storage: $storage
+    fileName: $fileName
+    stopContainers: $stopContainers
+  )
 }
     `;
 export type ExportVolumeMutationFn = Apollo.MutationFunction<ExportVolumeMutation, ExportVolumeMutationVariables>;
@@ -899,6 +909,7 @@ export type ExportVolumeMutationFn = Apollo.MutationFunction<ExportVolumeMutatio
  *      volume: // value for 'volume'
  *      storage: // value for 'storage'
  *      fileName: // value for 'fileName'
+ *      stopContainers: // value for 'stopContainers'
  *   },
  * });
  */
@@ -910,8 +921,13 @@ export type ExportVolumeMutationHookResult = ReturnType<typeof useExportVolumeMu
 export type ExportVolumeMutationResult = Apollo.MutationResult<ExportVolumeMutation>;
 export type ExportVolumeMutationOptions = Apollo.BaseMutationOptions<ExportVolumeMutation, ExportVolumeMutationVariables>;
 export const ImportVolumeDocument = gql`
-    mutation ImportVolume($volume: String!, $storage: String!, $fileName: String!) {
-  importVolume(volume: $volume, storage: $storage, fileName: $fileName)
+    mutation ImportVolume($volume: String!, $storage: String!, $fileName: String!, $stopContainers: Boolean) {
+  importVolume(
+    volume: $volume
+    storage: $storage
+    fileName: $fileName
+    stopContainers: $stopContainers
+  )
 }
     `;
 export type ImportVolumeMutationFn = Apollo.MutationFunction<ImportVolumeMutation, ImportVolumeMutationVariables>;
@@ -932,6 +948,7 @@ export type ImportVolumeMutationFn = Apollo.MutationFunction<ImportVolumeMutatio
  *      volume: // value for 'volume'
  *      storage: // value for 'storage'
  *      fileName: // value for 'fileName'
+ *      stopContainers: // value for 'stopContainers'
  *   },
  * });
  */
