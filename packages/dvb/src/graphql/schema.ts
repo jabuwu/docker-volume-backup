@@ -191,13 +191,15 @@ class DvmResolver {
     @Arg('volume', () => String) volume: string,
     @Arg('storage', () => String) storage: string,
     @Arg('hours', () => Int) hours: number,
+    @Arg('stopContainers', () => Boolean) stopContainers: boolean,
   ): Schedule | null {
     return schedules.create({
       id: generate(),
       volume,
       storage,
       hours,
-      lastUpdate: new Date().getTime()
+      stopContainers,
+      lastUpdate: new Date().getTime(),
     });
   }
   @Mutation(() => Schedule, { nullable: true }) updateSchedule(
@@ -205,6 +207,7 @@ class DvmResolver {
     @Arg('volume', () => String, { nullable: true }) volume: string | undefined,
     @Arg('storage', () => String, { nullable: true }) storage: string | undefined,
     @Arg('hours', () => Int, { nullable: true }) hours: number | undefined,
+    @Arg('stopContainers', () => Boolean, { nullable: true }) stopContainers: boolean | undefined,
   ): Schedule | null {
     const schedule = cloneDeep(schedules.findOne({ id }));
     if (!schedule) {
@@ -214,6 +217,7 @@ class DvmResolver {
       volume,
       storage,
       hours,
+      stopContainers,
     }, o => o !== undefined));
     schedules.update({ id }, schedule);
     return schedule;

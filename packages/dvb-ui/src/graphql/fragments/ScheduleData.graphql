@@ -1,0 +1,8 @@
+fragment scheduleData on Schedule {
+  id
+  volume
+  storage
+  hours
+  stopContainers
+  lastUpdate
+}

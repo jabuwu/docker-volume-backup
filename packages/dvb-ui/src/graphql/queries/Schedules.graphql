@@ -1,9 +1,6 @@
+#import "../fragments/ScheduleData"
 query Schedules {
   schedules {
-    id
-    volume
-    storage
-    hours
-    lastUpdate
+    ...scheduleData
   }
 }

@@ -126,6 +126,7 @@ export type MutationDownloadBackupArgs = {
 
 
 export type MutationAddScheduleArgs = {
+  stopContainers: Scalars['Boolean'];
   hours: Scalars['Int'];
   storage: Scalars['String'];
   volume: Scalars['String'];
@@ -133,6 +134,7 @@ export type MutationAddScheduleArgs = {
 
 
 export type MutationUpdateScheduleArgs = {
+  stopContainers?: Maybe<Scalars['Boolean']>;
   hours?: Maybe<Scalars['Int']>;
   storage?: Maybe<Scalars['String']>;
   volume?: Maybe<Scalars['String']>;
@@ -222,6 +224,7 @@ export type Schedule = {
   storage: Scalars['String'];
   hours: Scalars['Float'];
   lastUpdate: Scalars['Float'];
+  stopContainers: Scalars['Boolean'];
 };
 
 export type Storage = {
@@ -286,6 +289,11 @@ export type VolumeUsageData = {
   refCount: Scalars['Float'];
 };
 
+export type ScheduleDataFragment = (
+  { __typename?: 'Schedule' }
+  & Pick<Schedule, 'id' | 'volume' | 'storage' | 'hours' | 'stopContainers' | 'lastUpdate'>
+);
+
 export type StorageDataFragment = (
   { __typename?: 'Storage' }
   & Pick<Storage, 'name' | 'type'>
@@ -348,6 +356,7 @@ export type AddScheduleMutationVariables = Exact<{
   volume: Scalars['String'];
   storage: Scalars['String'];
   hours: Scalars['Int'];
+  stopContainers: Scalars['Boolean'];
 }>;
 
 
@@ -355,7 +364,7 @@ export type AddScheduleMutation = (
   { __typename?: 'Mutation' }
   & { addSchedule?: Maybe<(
     { __typename?: 'Schedule' }
-    & Pick<Schedule, 'id' | 'volume' | 'storage' | 'hours' | 'lastUpdate'>
+    & ScheduleDataFragment
   )> }
 );
 
@@ -480,6 +489,7 @@ export type UpdateScheduleMutationVariables = Exact<{
   volume?: Maybe<Scalars['String']>;
   storage?: Maybe<Scalars['String']>;
   hours?: Maybe<Scalars['Int']>;
+  stopContainers?: Maybe<Scalars['Boolean']>;
 }>;
 
 
@@ -487,7 +497,7 @@ export type UpdateScheduleMutation = (
   { __typename?: 'Mutation' }
   & { updateSchedule?: Maybe<(
     { __typename?: 'Schedule' }
-    & Pick<Schedule, 'id' | 'volume' | 'storage' | 'hours' | 'lastUpdate'>
+    & ScheduleDataFragment
   )> }
 );
 
@@ -545,7 +555,7 @@ export type ScheduleQuery = (
   { __typename?: 'Query' }
   & { schedule?: Maybe<(
     { __typename?: 'Schedule' }
-    & Pick<Schedule, 'id' | 'volume' | 'storage' | 'hours'>
+    & ScheduleDataFragment
   )> }
 );
 
@@ -556,7 +566,7 @@ export type SchedulesQuery = (
   { __typename?: 'Query' }
   & { schedules: Array<(
     { __typename?: 'Schedule' }
-    & Pick<Schedule, 'id' | 'volume' | 'storage' | 'hours' | 'lastUpdate'>
+    & ScheduleDataFragment
   )> }
 );
 
@@ -655,6 +665,16 @@ export type VolumeDestroyedSubscription = (
   & Pick<Subscription, 'volumeDestroyed'>
 );
 
+export const ScheduleDataFragmentDoc = gql`
+    fragment scheduleData on Schedule {
+  id
+  volume
+  storage
+  hours
+  stopContainers
+  lastUpdate
+}
+    `;
 export const StorageDataFragmentDoc = gql`
     fragment storageData on Storage {
   name
@@ -779,16 +799,17 @@ export type AddS3BucketMutationHookResult = ReturnType<typeof useAddS3BucketMuta
 export type AddS3BucketMutationResult = Apollo.MutationResult<AddS3BucketMutation>;
 export type AddS3BucketMutationOptions = Apollo.BaseMutationOptions<AddS3BucketMutation, AddS3BucketMutationVariables>;
 export const AddScheduleDocument = gql`
-    mutation AddSchedule($volume: String!, $storage: String!, $hours: Int!) {
-  addSchedule(volume: $volume, storage: $storage, hours: $hours) {
-    id
-    volume
-    storage
-    hours
-    lastUpdate
+    mutation AddSchedule($volume: String!, $storage: String!, $hours: Int!, $stopContainers: Boolean!) {
+  addSchedule(
+    volume: $volume
+    storage: $storage
+    hours: $hours
+    stopContainers: $stopContainers
+  ) {
+    ...scheduleData
   }
 }
-    `;
+    ${ScheduleDataFragmentDoc}`;
 export type AddScheduleMutationFn = Apollo.MutationFunction<AddScheduleMutation, AddScheduleMutationVariables>;
 
 /**
@@ -807,6 +828,7 @@ export type AddScheduleMutationFn = Apollo.MutationFunction<AddScheduleMutation,
  *      volume: // value for 'volume'
  *      storage: // value for 'storage'
  *      hours: // value for 'hours'
+ *      stopContainers: // value for 'stopContainers'
  *   },
  * });
  */
@@ -1146,16 +1168,18 @@ export type UpdateS3BucketMutationHookResult = ReturnType<typeof useUpdateS3Buck
 export type UpdateS3BucketMutationResult = Apollo.MutationResult<UpdateS3BucketMutation>;
 export type UpdateS3BucketMutationOptions = Apollo.BaseMutationOptions<UpdateS3BucketMutation, UpdateS3BucketMutationVariables>;
 export const UpdateScheduleDocument = gql`
-    mutation UpdateSchedule($id: String!, $volume: String, $storage: String, $hours: Int) {
-  updateSchedule(id: $id, volume: $volume, storage: $storage, hours: $hours) {
-    id
-    volume
-    storage
-    hours
-    lastUpdate
+    mutation UpdateSchedule($id: String!, $volume: String, $storage: String, $hours: Int, $stopContainers: Boolean) {
+  updateSchedule(
+    id: $id
+    volume: $volume
+    storage: $storage
+    hours: $hours
+    stopContainers: $stopContainers
+  ) {
+    ...scheduleData
   }
 }
-    `;
+    ${ScheduleDataFragmentDoc}`;
 export type UpdateScheduleMutationFn = Apollo.MutationFunction<UpdateScheduleMutation, UpdateScheduleMutationVariables>;
 
 /**
@@ -1175,6 +1199,7 @@ export type UpdateScheduleMutationFn = Apollo.MutationFunction<UpdateScheduleMut
  *      volume: // value for 'volume'
  *      storage: // value for 'storage'
  *      hours: // value for 'hours'
+ *      stopContainers: // value for 'stopContainers'
  *   },
  * });
  */
@@ -1309,13 +1334,10 @@ export type S3BucketQueryResult = Apollo.QueryResult<S3BucketQuery, S3BucketQuer
 export const ScheduleDocument = gql`
     query Schedule($id: String!) {
   schedule(id: $id) {
-    id
-    volume
-    storage
-    hours
+    ...scheduleData
   }
 }
-    `;
+    ${ScheduleDataFragmentDoc}`;
 
 /**
  * __useScheduleQuery__
@@ -1347,14 +1369,10 @@ export type ScheduleQueryResult = Apollo.QueryResult<ScheduleQuery, ScheduleQuer
 export const SchedulesDocument = gql`
     query Schedules {
   schedules {
-    id
-    volume
-    storage
-    hours
-    lastUpdate
+    ...scheduleData
   }
 }
-    `;
+    ${ScheduleDataFragmentDoc}`;
 
 /**
  * __useSchedulesQuery__

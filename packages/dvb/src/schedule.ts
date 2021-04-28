@@ -19,9 +19,15 @@ export class Schedule {
 
   @Field()
   lastUpdate: number;
+
+  @Field()
+  stopContainers: boolean;
 }
 
 export const schedules = new DBStore<Schedule>('schedules');
+schedules.migrate(1, item => {
+  item.stopContainers = false;
+});
 
 setInterval(async () => {
   const list = schedules.all();
@@ -32,9 +38,16 @@ setInterval(async () => {
       const storageInstance = getStorage(schedule.storage);
       if (storageInstance) {
         try {
+          let stoppedContainers: string[] = [];
+          if (schedule.stopContainers) {
+            stoppedContainers = await context.docker.stopVolumeContainers(schedule.volume);
+          }
           await context.docker.exportVolume(schedule.volume, async (stream) => {
             await storageInstance.write(fileName!, stream);
           });
+          if (schedule.stopContainers && stoppedContainers.length > 0) {
+            await context.docker.startVolumeContainers(schedule.volume, stoppedContainers);
+          }
         } catch (err) {
           // TODO: report errors
           console.error(err);

@@ -1,4 +1,4 @@
-import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Stack, Alert, AlertIcon, Select, ModalFooter, Button, NumberDecrementStepper, NumberIncrementStepper, NumberInput, NumberInputField, NumberInputStepper } from '@chakra-ui/react';
+import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Stack, Alert, AlertIcon, Select, ModalFooter, Button, NumberDecrementStepper, NumberIncrementStepper, NumberInput, NumberInputField, NumberInputStepper, Box, Flex, Checkbox } from '@chakra-ui/react';
 import React, { useState, useCallback, useEffect } from 'react';
 import { useUpdateScheduleMutation, useVolumesQuery, useStorageListQuery, SchedulesQuery, SchedulesDocument, useScheduleLazyQuery } from '../generated/graphql';
 
@@ -12,6 +12,7 @@ export default function EditScheduleModal({ children }: { children: (open: (id: 
   const [ storage, setStorage ] = useState('');
   const [ volume, setVolume ] = useState('');
   const [ hours, setHours ] = useState(1);
+  const [ stopContainers, setStopContainers ] = useState(true);
 
   const open = useCallback((id: string) => {
     setIsOpen(true);
@@ -20,6 +21,7 @@ export default function EditScheduleModal({ children }: { children: (open: (id: 
       setStorage('');
       setVolume('');
       setHours(1);
+      setStopContainers(true);
   }, []);
 
   useEffect(() => {
@@ -27,6 +29,7 @@ export default function EditScheduleModal({ children }: { children: (open: (id: 
       setStorage(data.schedule.storage);
       setVolume(data.schedule.volume);
       setHours(data.schedule.hours);
+      setStopContainers(data.schedule.stopContainers);
     }
   }, [ isOpen, data ]);
 
@@ -41,10 +44,11 @@ export default function EditScheduleModal({ children }: { children: (open: (id: 
         storage,
         volume,
         hours,
+        stopContainers,
       },
     });
     close();
-  }, [ storage, volume, hours ]);
+  }, [ storage, volume, hours, stopContainers ]);
 
   return (
     <>
@@ -104,9 +108,16 @@ export default function EditScheduleModal({ children }: { children: (open: (id: 
             </Stack>
           </ModalBody>
           <ModalFooter>
-            <Button colorScheme="blue" onClick={ update } disabled={ !volume || !storage || !!error }>
-              Update
-            </Button>
+            <Flex w="100%">
+              <Box>
+                <Checkbox isChecked={ stopContainers } onChange={ e => setStopContainers(e.target.checked) }>Stop Containers During Backup</Checkbox>
+              </Box>
+              <Box ml="auto">
+                <Button colorScheme="blue" onClick={ update } disabled={ !volume || !storage || !!error }>
+                  Update
+                </Button>
+              </Box>
+            </Flex>
           </ModalFooter>
         </ModalContent>
       </Modal>

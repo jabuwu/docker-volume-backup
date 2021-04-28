@@ -1,4 +1,4 @@
-import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Stack, Alert, AlertIcon, Select, ModalFooter, Button, NumberDecrementStepper, NumberIncrementStepper, NumberInput, NumberInputField, NumberInputStepper } from '@chakra-ui/react';
+import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Stack, Alert, AlertIcon, Select, ModalFooter, Button, NumberDecrementStepper, NumberIncrementStepper, NumberInput, NumberInputField, NumberInputStepper, Box, Checkbox, Flex } from '@chakra-ui/react';
 import React, { useState, useRef, useCallback } from 'react';
 import { useAddScheduleMutation, useVolumesQuery, useStorageListQuery, SchedulesQuery, SchedulesDocument } from '../generated/graphql';
 
@@ -10,6 +10,7 @@ export default function AddScheduleModal({ children }: { children: (open: () => 
   const [ storage, setStorage ] = useState('');
   const [ volume, setVolume ] = useState('');
   const hours = useRef<any>();
+  const [ stopContainers, setStopContainers ] = useState(true);
 
   const open = useCallback(() => {
     setIsOpen(true);
@@ -25,6 +26,7 @@ export default function AddScheduleModal({ children }: { children: (open: () => 
         storage,
         volume,
         hours: Number(hours.current!.value),
+        stopContainers,
       },
       update: (cache, { data }) => {
         if (data.addSchedule) {
@@ -37,7 +39,7 @@ export default function AddScheduleModal({ children }: { children: (open: () => 
       }
     });
     close();
-  }, [ storage, volume, hours ]);
+  }, [ storage, volume, hours, stopContainers ]);
 
   return (
     <>
@@ -91,9 +93,16 @@ export default function AddScheduleModal({ children }: { children: (open: () => 
             </Stack>
           </ModalBody>
           <ModalFooter>
-            <Button colorScheme="green" onClick={ add } disabled={ !volume || !storage }>
-              Add
-            </Button>
+            <Flex w="100%">
+              <Box>
+                <Checkbox isChecked={ stopContainers } onChange={ e => setStopContainers(e.target.checked) }>Stop Containers During Backup</Checkbox>
+              </Box>
+              <Box ml="auto">
+                <Button colorScheme="green" onClick={ add } disabled={ !volume || !storage }>
+                  Add
+                </Button>
+              </Box>
+            </Flex>
           </ModalFooter>
         </ModalContent>
       </Modal>
