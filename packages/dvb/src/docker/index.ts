@@ -7,6 +7,7 @@ import { concatMap, map, filter } from 'rxjs/operators';
 import { PassThrough, Readable, Writable } from 'stream';
 import { find, findIndex } from 'lodash';
 import { createGzip } from 'zlib';
+import { generate } from 'short-uuid';
 
 const dockerode = new Dockerode({ socketPath: '/var/run/docker.sock' });
 
@@ -93,6 +94,7 @@ export class Docker {
       try {
         await this.pullAlpine();
         const container = await dockerode.createContainer({
+          name: `docker-volume-backup-${generate().substr(0, 8)}`,
           Image: 'alpine',
           Tty: false,
           Cmd: command,
