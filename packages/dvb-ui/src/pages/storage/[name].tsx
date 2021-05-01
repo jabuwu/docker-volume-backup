@@ -1,12 +1,12 @@
 import Wrapper from '../../components/wrapper';
-import { useStorageQuery, useDeleteBackupMutation, useDownloadBackupMutation } from '../../generated/graphql';
+import { useStorageQuery, useDeleteBackupMutation, useDownloadBackupMutation, StorageBackup } from '../../generated/graphql';
 import { useRouter } from 'next/router';
-import { Text, Skeleton, AlertIcon, Alert, Table, Tbody, Th, Thead, Tr, Td, Button, Box, Flex, useToast, Tooltip } from '@chakra-ui/react';
+import { Text, Skeleton, AlertIcon, Alert, Table, Tbody, Th, Thead, Tr, Td, Button, Box, Flex, useToast, Tooltip, Input } from '@chakra-ui/react';
 import Title from '../../components/title';
 import React, { useCallback, useState } from 'react';
-import LoadingTr from '../../components/loading-tr';
 import { DeleteIcon, DownloadIcon, RepeatIcon } from '@chakra-ui/icons';
 import ConfirmDelete from '../../modals/confirm-delete';
+import SortableTable, { SortableTableHeader } from '../../components/sortable-table';
 import dayjs from 'dayjs';
 
 const KB = 1024;
@@ -33,6 +33,7 @@ function formatSize(size: number) {
 export default function Storage(): any {
   const router = useRouter();
   const name = router.query.name as string;
+  const [ filter, setFilter ] = useState('');
   const [ deleteBackup ] = useDeleteBackupMutation();
   const [ downloadBackup ] = useDownloadBackupMutation();
   const { data, loading, error, refetch } = useStorageQuery({
@@ -104,50 +105,55 @@ export default function Storage(): any {
     }
     { !error && (data?.storage || loading) ?
       <>
-        <Text mt={ 4 } fontSize="xl">Files</Text>
+        <Flex>
+          <Text mt={ 4 } fontSize="xl">Files</Text>
+          <Input disabled={ loading || !data?.storage || (data?.storage && data.storage.backups.length === 0) } ml="auto" my="auto" w="40%" size="sm" placeholder="Filter" value={ filter } onChange={ e => setFilter(e.target.value) } />
+        </Flex>
         { ((data?.storage && data.storage.backups.length > 0) || loading) ?
-          <Table variant="striped" size="sm" mt={ 4 }>
-            <Thead>
-              <Tr>
-                <Th>File</Th>
-                <Th>Size</Th>
-                <Th>Modified</Th>
-                <Th></Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              { loading ? <LoadingTr colSpan={ 4 } /> : null }
-              { !loading && data?.storage ?
-                data.storage.backups.map(backup => (
-                  <Tr key={ backup.fileName }>
-                    <Td>{ backup.fileName }</Td>
-                    <Td>{ formatSize(backup.stat.size) }</Td>
-                    <Td>
-                      <Tooltip label={ dayjs(backup.stat.modified).format('YYYY-MM-DD hh:mm:ssa') }>
-                        <Text>
-                          { dayjs(backup.stat.modified).fromNow() }
-                        </Text>
-                      </Tooltip>
-                    </Td>
-                    <Td textAlign="right">
-                      <Button size="sm" colorScheme="green" variant="ghost" onClick={ () => download(backup.fileName) } isLoading={ downloadingFiles.includes(backup.fileName) }>
-                        <DownloadIcon />
-                      </Button>
-                      <ConfirmDelete name={ backup.fileName } onDelete={ async () => { await deleteBackup({ variables: { storage: name, fileName: backup.fileName } }); refetch() } }>
-                        { (open) => (
-                          <Button size="sm" colorScheme="red" variant="ghost" onClick={ open }>
-                            <DeleteIcon />
-                          </Button>
-                        ) }
-                      </ConfirmDelete>
-                    </Td>
-                  </Tr>
-                ))
-                : null
-              }
-            </Tbody>
-          </Table>
-        : null }
+          <SortableTable isLoading={ loading } initialPath="stat.modified" filter={ filter } headers={
+            [
+              {
+                title: 'File',
+                path: 'fileName',
+                filterable: true,
+              },
+              {
+                title: 'Size',
+                path: 'stat.size',
+                render: (backup) => formatSize(backup.stat.size)
+              },
+              {
+                title: 'Modified',
+                path: 'stat.modified',
+                reverse: true,
+                render: (backup) => (
+                  <Tooltip label={ dayjs(backup.stat.modified).format('YYYY-MM-DD hh:mm:ssa') }>
+                    { dayjs(backup.stat.modified).fromNow() }
+                  </Tooltip>
+                )
+              },
+              {
+                title: '',
+                align: 'right',
+                render: (backup) => (
+                  <>
+                    <Button size="sm" colorScheme="green" variant="ghost" onClick={ () => download(backup.fileName) } isLoading={ downloadingFiles.includes(backup.fileName) }>
+                      <DownloadIcon />
+                    </Button>
+                    <ConfirmDelete name={ backup.fileName } onDelete={ async () => { await deleteBackup({ variables: { storage: name, fileName: backup.fileName } }); refetch() } }>
+                      { (open) => (
+                        <Button size="sm" colorScheme="red" variant="ghost" onClick={ open }>
+                          <DeleteIcon />
+                        </Button>
+                      ) }
+                    </ConfirmDelete>
+                  </>
+                ),
+              },
+            ] as SortableTableHeader<StorageBackup>[]
+          } data={ data?.storage?.backups || [] } />
+          : null
+        }
         { data?.storage && data.storage.backups.length === 0 ?
           <Text mt={ 2 } color="lightgray">No files found.</Text>
         : null }
