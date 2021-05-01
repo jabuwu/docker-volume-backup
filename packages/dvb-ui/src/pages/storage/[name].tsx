@@ -8,27 +8,7 @@ import { DeleteIcon, DownloadIcon, RepeatIcon } from '@chakra-ui/icons';
 import ConfirmDelete from '../../modals/confirm-delete';
 import SortableTable, { SortableTableHeader } from '../../components/sortable-table';
 import dayjs from 'dayjs';
-
-const KB = 1024;
-const MB = KB * 1024;
-const GB = MB * 1024;
-const TB = GB * 1024;
-const PB = TB * 1024;
-function formatSize(size: number) {
-  if (size > PB) {
-    return `${(size / PB).toFixed(2)}PB`;
-  } else if (size > TB) {
-    return `${(size / TB).toFixed(2)}TB`;
-  } else if (size > GB) {
-    return `${(size / GB).toFixed(2)}GB`;
-  } else if (size > MB) {
-    return `${(size / MB).toFixed(2)}MB`;
-  } else if (size > KB) {
-    return `${(size / KB).toFixed(2)}KB`;
-  } else {
-    return `${size} Bytes`;
-  }
-}
+import { formatBytes } from '../../utility/format-bytes';
 
 export default function Storage(): any {
   const router = useRouter();
@@ -120,7 +100,7 @@ export default function Storage(): any {
               {
                 title: 'Size',
                 path: 'stat.size',
-                render: (backup) => formatSize(backup.stat.size)
+                render: (backup) => formatBytes(backup.stat.size)
               },
               {
                 title: 'Modified',

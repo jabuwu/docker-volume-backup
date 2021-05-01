@@ -1,6 +1,9 @@
-import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Stack, Alert, AlertIcon, Select, InputGroup, InputLeftAddon, Input, ModalFooter, Button, Box, Radio, RadioGroup, Spinner, Text, Progress, Checkbox, Flex } from '@chakra-ui/react';
+import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Stack, Alert, AlertIcon, Select, InputGroup, InputLeftAddon, Input, ModalFooter, Button, Box, Radio, RadioGroup, Spinner, Text, Progress, Checkbox, Flex, Tooltip } from '@chakra-ui/react';
 import React, { useState, useEffect, useCallback } from 'react';
-import { useImportVolumeMutation, useStorageListQuery, useStorageBackupsLazyQuery, useTaskUpdatedSubscription } from '../generated/graphql';
+import SortableTable, { SortableTableHeader } from '../components/sortable-table';
+import { useImportVolumeMutation, useStorageListQuery, useStorageBackupsLazyQuery, useTaskUpdatedSubscription, StorageBackup } from '../generated/graphql';
+import { formatBytes } from '../utility/format-bytes';
+import dayjs from 'dayjs';
 
 export default function RestoreVolumeModal({ children }: { children: (open: (volume: string) => void) => void }) {
   const [ isOpen, setIsOpen ] = React.useState(false);
@@ -119,14 +122,36 @@ export default function RestoreVolumeModal({ children }: { children: (open: (vol
                     <Input value={ filter } onChange={ e => setFilter(e.target.value) } />
                   </InputGroup>
                   <RadioGroup defaultValue="1" value={ fileName } onChange={ value => setFileName(value) }>
-                    <Stack>
-                      { backupsData.storage!.backups.filter(backup => backup.fileName.startsWith(filter)).map(backup => (
-                        <Radio key={ backup.fileName } value={ backup.fileName }>{ backup.fileName}</Radio>
-                      )) }
-                      { backupsData.storage!.backups.filter(backup => backup.fileName.startsWith(filter)).length === 0 ?
-                        <Text>{ !!filter ? 'No files found matching the filter.' : 'No files found.' }</Text>
-                      : null }
-                    </Stack>
+                    <SortableTable itemsPerPage={ 10 } data={ backupsData.storage!.backups } initialPath="stat.modified" filter={ filter } headers={
+                      [
+                        {
+                          title: '',
+                          render: (backup) => (
+                            <Radio value={ backup.fileName }></Radio>
+                          ),
+                        },
+                        {
+                          title: 'File',
+                          path: 'fileName',
+                          filterable: true,
+                        },
+                        {
+                          title: 'Size',
+                          path: 'stat.size',
+                          render: (backup) => formatBytes(backup.stat.size)
+                        },
+                        {
+                          title: 'Modified',
+                          path: 'stat.modified',
+                          reverse: true,
+                          render: (backup) => (
+                            <Tooltip label={ dayjs(backup.stat.modified).format('YYYY-MM-DD hh:mm:ssa') }>
+                              { dayjs(backup.stat.modified).fromNow() }
+                            </Tooltip>
+                          )
+                        },
+                      ] as SortableTableHeader<StorageBackup>[]
+                    } onItemClick={ item => setFileName(item.fileName) } />
                   </RadioGroup>
                 </>
               : null }

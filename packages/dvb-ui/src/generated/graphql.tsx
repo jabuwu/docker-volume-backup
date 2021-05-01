@@ -607,6 +607,10 @@ export type StorageBackupsQuery = (
     & { backups: Array<(
       { __typename?: 'StorageBackup' }
       & Pick<StorageBackup, 'fileName'>
+      & { stat: (
+        { __typename?: 'StorageBackupStat' }
+        & Pick<StorageBackupStat, 'size' | 'modified'>
+      ) }
     )> }
   )> }
 );
@@ -1452,6 +1456,10 @@ export const StorageBackupsDocument = gql`
     name
     backups {
       fileName
+      stat {
+        size
+        modified
+      }
     }
   }
 }

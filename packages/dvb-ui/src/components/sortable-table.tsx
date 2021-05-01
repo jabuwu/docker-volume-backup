@@ -1,7 +1,7 @@
 import { TriangleUpIcon, TriangleDownIcon } from '@chakra-ui/icons';
 import { Table, Tbody, Th, Td, Thead, Tr, ButtonGroup, Button } from '@chakra-ui/react';
 import React, { useEffect, useMemo, useState } from 'react';
-import { get, find } from 'lodash';
+import { get, find, uniq } from 'lodash';
 import LoadingTr from './loading-tr';
 
 export type SortableTableHeader<T> = {
@@ -34,8 +34,8 @@ function doFilter(item: any, filter: string | undefined, headers: SortableTableH
   return false;
 }
 
-export default function SortableTable<T>({ headers, data, isLoading, initialPath, filter }: { headers: SortableTableHeader<T>[], data: T[], isLoading?: boolean, initialPath: string, filter?: string }) {
-  const itemsPerPage = 50;
+export default function SortableTable<T>({ headers, data, isLoading, initialPath, filter, onItemClick, itemsPerPage }: { headers: SortableTableHeader<T>[], data: T[], isLoading?: boolean, initialPath: string, filter?: string, onItemClick?: (item: T) => void, itemsPerPage?: number }) {
+  itemsPerPage = itemsPerPage ?? 50;
   const [ sort, setSort ] = useState({ path: initialPath, ascending: true, reverse: find(headers, { path: initialPath })?.reverse === true, page: 0 });
 
   const pageCount = useMemo(() => {
@@ -58,6 +58,22 @@ export default function SortableTable<T>({ headers, data, isLoading, initialPath
       setSort(value => ({ ...value, page: pageCount - 1}));
     }
   }, [ pageCount ]);
+
+  const maxPageButtons = 6;
+  const pageNumbers = useMemo(() => {
+    if (pageCount <= maxPageButtons) {
+      return Array.from(Array(pageCount)).map((_, i) => i);
+    } else {
+      const min = Math.min(Math.max(1, sort.page - Math.floor((maxPageButtons - 2) / 2)), pageCount - maxPageButtons);
+      const arr: number[] = [];
+      arr.push(0);
+      for (let i = min; i <= min + maxPageButtons - 2; ++i) {
+        arr.push(i);
+      }
+      arr.push(pageCount - 1);
+      return uniq(arr);
+    }
+  }, [ data, filter, sort ]);
 
   return (
     <>
@@ -85,7 +101,7 @@ export default function SortableTable<T>({ headers, data, isLoading, initialPath
         </Thead>
         <Tbody>
           { !isLoading ? sortedData.map((item, i) => (
-            <Tr key={ i }>
+            <Tr key={ i } cursor={ onItemClick ? 'pointer' : 'default' } onClick={ onItemClick ? () => onItemClick(item) : () => {} }>
               { headers.map(header => (
                 <Td key={ header.title } textAlign={ header.align || 'left' }>
                   { header.render ? header.render(item) : get(item, header.path) }
@@ -99,7 +115,7 @@ export default function SortableTable<T>({ headers, data, isLoading, initialPath
       { pageCount > 1 ? 
         <ButtonGroup isAttached={ true } variant="outline" mt={ 2 }>
           <Button disabled={ sort.page === 0 } onClick={ () => setSort(value => ({ ...value, page: value.page - 1 })) }>Previous</Button>
-          { Array.from(Array(pageCount)).map((_, i) => (
+          { pageNumbers.map(i => (
             <Button key={ i } onClick={ () => setSort(value => ({ ...value, page: i })) } variant={ sort.page === i ? 'solid' : 'outline' }>{ i + 1 }</Button>
           )) }
           <Button disabled={ sort.page === pageCount - 1 } onClick={ () => setSort(value => ({ ...value, page: value.page + 1 })) }>Next</Button>

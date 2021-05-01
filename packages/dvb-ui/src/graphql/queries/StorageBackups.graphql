@@ -3,6 +3,10 @@ query StorageBackups($name: String!) {
     name
     backups {
       fileName
+      stat {
+        size
+        modified
+      }
     }
   }
 }
