@@ -17,8 +17,8 @@ export type SortableTableHeader<T> = {
   render: (item: T) => any;
 });
 
-function doFilter(item: any, filter: string, headers: SortableTableHeader<any>[]) {
-  if (filter === '') {
+function doFilter(item: any, filter: string | undefined, headers: SortableTableHeader<any>[]) {
+  if (!filter) {
     return true;
   }
   for (const header of headers) {
@@ -65,7 +65,7 @@ export default function SortableTable<T>({ headers, data, isLoading, initialPath
         <Thead>
           <Tr userSelect="none">
             { headers.map(header => (
-              <Th cursor={ !!header.path ? 'pointer' : 'default' } onClick={ header.path ? () => {
+              <Th key={ header.title } cursor={ !!header.path ? 'pointer' : 'default' } onClick={ header.path ? () => {
                 if (header.path === sort.path) {
                   setSort(value => ({ ...value, ascending: !value.ascending }));
                 } else {
@@ -84,10 +84,10 @@ export default function SortableTable<T>({ headers, data, isLoading, initialPath
           </Tr>
         </Thead>
         <Tbody>
-          { !isLoading ? sortedData.map(item => (
-            <Tr>
+          { !isLoading ? sortedData.map((item, i) => (
+            <Tr key={ i }>
               { headers.map(header => (
-                <Td textAlign={ header.align || 'left' }>
+                <Td key={ header.title } textAlign={ header.align || 'left' }>
                   { header.render ? header.render(item) : get(item, header.path) }
                 </Td>
               )) }
@@ -100,7 +100,7 @@ export default function SortableTable<T>({ headers, data, isLoading, initialPath
         <ButtonGroup isAttached={ true } variant="outline" mt={ 2 }>
           <Button disabled={ sort.page === 0 } onClick={ () => setSort(value => ({ ...value, page: value.page - 1 })) }>Previous</Button>
           { Array.from(Array(pageCount)).map((_, i) => (
-            <Button onClick={ () => setSort(value => ({ ...value, page: i })) } variant={ sort.page === i ? 'solid' : 'outline' }>{ i + 1 }</Button>
+            <Button key={ i } onClick={ () => setSort(value => ({ ...value, page: i })) } variant={ sort.page === i ? 'solid' : 'outline' }>{ i + 1 }</Button>
           )) }
           <Button disabled={ sort.page === pageCount - 1 } onClick={ () => setSort(value => ({ ...value, page: value.page + 1 })) }>Next</Button>
         </ButtonGroup>
