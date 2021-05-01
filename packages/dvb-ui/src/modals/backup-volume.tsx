@@ -43,7 +43,7 @@ export default function BackupVolumeModal({ children }: { children: (open: (volu
     setIsOpen(true);
     setStopContainers(true);
     setStorage('');
-    setFileName(`${volume}-${Date.now()}.tgz`);
+    setFileName(`${volume}--${Date.now()}.tgz`);
     setVolume(volume);
     setTaskId('');
     setStatus('');

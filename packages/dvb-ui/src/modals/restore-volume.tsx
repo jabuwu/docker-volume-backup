@@ -45,7 +45,7 @@ export default function RestoreVolumeModal({ children }: { children: (open: (vol
     setIsOpen(true);
     setStopContainers(true);
     setStorage('');
-    setFilter(`${volume}-`);
+    setFilter(`${volume}--`);
     setVolume(volume);
     setTaskId('');
     setStatus('');

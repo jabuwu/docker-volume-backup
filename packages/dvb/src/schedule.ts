@@ -34,7 +34,7 @@ setInterval(async () => {
   for (const schedule of list) {
     if (Date.now() > schedule.lastUpdate + schedule.hours * 60 * 60 * 1000) {
       schedules.update({ id: schedule.id }, { lastUpdate: Date.now() });
-      const fileName = `${schedule.volume}-${Date.now()}.tgz`;
+      const fileName = `${schedule.volume}--${Date.now()}.tgz`;
       const storageInstance = getStorage(schedule.storage);
       if (storageInstance) {
         try {
