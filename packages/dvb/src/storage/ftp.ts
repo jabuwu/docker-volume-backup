@@ -4,6 +4,7 @@ import { StorageInterface, StorageBackup, StorageBackupStat } from '.';
 import { DBStore } from '../db';
 import * as ftp from 'basic-ftp';
 import { omit } from 'lodash';
+import path from 'path';
 
 export class FtpStorage implements StorageInterface {
   constructor(private server: FtpServer) {
@@ -16,7 +17,10 @@ export class FtpStorage implements StorageInterface {
   async write(fileName: string, stream: Readable) {
     const client = await this.client();
     try {
-      await client.uploadFrom(stream, fileName);
+      const fullPath = `${this.server.prefix}${fileName}`;
+      console.log(fullPath);
+      await client.ensureDir(path.dirname(fullPath));
+      await client.uploadFrom(stream, path.basename(fullPath));
     } finally {
       client.close();
     }
@@ -24,7 +28,8 @@ export class FtpStorage implements StorageInterface {
   async read(fileName: string, stream: Writable) {
     const client = await this.client();
     try {
-      await client.downloadTo(stream, fileName);
+      const fullPath = `${this.server.prefix}${fileName}`;
+      await client.downloadTo(stream, fullPath);
     } finally {
       client.close();
     }
@@ -32,7 +37,8 @@ export class FtpStorage implements StorageInterface {
   async del(fileName: string) {
     const client = await this.client();
     try {
-      await client.remove(fileName);
+      const fullPath = `${this.server.prefix}${fileName}`;
+      await client.remove(fullPath);
     } finally {
       client.close();
     }
@@ -40,7 +46,26 @@ export class FtpStorage implements StorageInterface {
   async list(): Promise<StorageBackup[]> {
     const client = await this.client();
     try {
-      return (await client.list()).map(item => new StorageBackup(this, { fileName: item.name }));
+      const prefix = `${await client.pwd()}${this.server.prefix}`;
+      const prefixSplit = prefix.split('/');
+      const prefixDir = prefixSplit.slice(0, prefixSplit.length - 1).join('/') + '/';
+      const backups: StorageBackup[] = [];
+      const listDir = async (dir: string) => {
+        const items = await client.list(dir);
+        for (const item of items) {
+          const fullName = path.join(dir, item.name);
+          if (fullName.startsWith(prefix)) {
+            if (item.isDirectory) {
+              await listDir(path.join(dir, item.name));
+            }
+            if (item.isFile) {
+              backups.push(new StorageBackup(this, { fileName: fullName.substr(prefix.length) }));
+            }
+          }
+        }
+      }
+      await listDir(prefixDir);
+      return backups;
     } finally {
       client.close();
     }
@@ -48,9 +73,10 @@ export class FtpStorage implements StorageInterface {
   async stat(fileName: string): Promise<StorageBackupStat> {
     const client = await this.client();
     try {
+      const fullPath = `${this.server.prefix}${fileName}`;
       return {
-        size: await client.size(fileName),
-        modified: await (await client.lastMod(fileName)).getTime(),
+        size: await client.size(fullPath),
+        modified: await (await client.lastMod(fullPath)).getTime(),
       };
     } finally {
       client.close();
