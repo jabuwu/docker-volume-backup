@@ -1,7 +1,7 @@
 import { StorageInterface, StorageBackup, StorageBackupStat } from '.';
-import { createReadStream, createWriteStream, unlink } from 'fs-extra';
+import { access, createReadStream, createWriteStream, unlink } from 'fs-extra';
 import { Readable, Writable } from 'stream';
-import { ensureDirSync, ensureDir, stat } from 'fs-extra';
+import { constants, ensureDirSync, ensureDir, stat } from 'fs-extra';
 import { BACKUPS_DIR } from '../env';
 import klaw from 'klaw';
 import path from 'path';
@@ -54,5 +54,13 @@ export class LocalStorage implements StorageInterface {
   async stat(fileName: string): Promise<StorageBackupStat> {
     const info = await stat(path.join(workingDir, fileName));
     return { size: info.size, modified: info.mtime.getTime() };
+  }
+  async exists(fileName: string): Promise<boolean> {
+    try {
+      await access(fileName, constants.F_OK);
+      return true;
+    } catch (err) {
+      return false;
+    }
   }
 }

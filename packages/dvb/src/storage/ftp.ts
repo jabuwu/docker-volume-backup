@@ -82,6 +82,18 @@ export class FtpStorage implements StorageInterface {
       client.close();
     }
   }
+  async exists(fileName: string): Promise<boolean> {
+    const client = await this.client();
+    try {
+      const fullPath = `${this.server.prefix}${fileName}`;
+      await client.size(fullPath);
+      return true;
+    } catch (err) {
+      return false;
+    } finally {
+      client.close();
+    }
+  }
 }
 
 @ObjectType()

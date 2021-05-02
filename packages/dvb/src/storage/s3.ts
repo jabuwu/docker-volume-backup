@@ -74,6 +74,21 @@ export class S3Storage implements StorageInterface {
     }).promise();
     return { size: info.ContentLength ?? 0, modified: info.LastModified?.getTime() ?? 0 };
   }
+  async exists(fileName: string): Promise<boolean> {
+    const s3 = this.s3();
+    try {
+      await s3.headObject({
+        Bucket: this.bucket.bucket,
+        Key: `${this.bucket.prefix}${fileName}`,
+      }).promise();
+      return true;
+    } catch (err) {
+      if (err.code === 'NotFound') {
+        return false;
+      }
+      throw err;
+    }
+  }
 }
 
 @ObjectType()

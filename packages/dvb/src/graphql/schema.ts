@@ -11,7 +11,6 @@ import path from 'path';
 import { assign, cloneDeep, debounce, pickBy } from 'lodash';
 import { downloadWriteStream } from '../download';
 import { Task, getSubject } from '../tasks';
-import { filter } from 'rxjs/operators';
 import { ftpServers } from '../storage/ftp';
 
 function validateFileName(fileName: string) {
@@ -53,6 +52,9 @@ class DvmResolver {
     const storageInstance = getStorage(storage);
     if (storageInstance) {
       return new Task(async ({ update, complete }) => {
+        if (await storageInstance.exists(fileName!)) {
+          throw new Error(`Backup file already exists: ${fileName}`);
+        }
         let stoppedContainers: string[] = [];
         if (stopContainers) {
           update({ status: 'Stopping containers...' });
@@ -338,7 +340,7 @@ class DvmResolver {
   ////
   // Tasks
   ///
-  @Subscription(() => Task, { subscribe: (_, args) => { return fromObservable(getSubject(args.id).pipe(filter(item => item.status !== '')))() } }) taskUpdated(
+  @Subscription(() => Task, { subscribe: (_, args) => { return fromObservable(getSubject(args.id))() } }) taskUpdated(
     @Arg('id', () => String) _id: string,
     @Root() task: Task
   ): Task {

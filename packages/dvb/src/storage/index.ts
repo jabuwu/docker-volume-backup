@@ -35,6 +35,7 @@ export interface StorageInterface {
   del(fileName: string): Promise<void>;
   list(): Promise<StorageBackup[]>;
   stat(fileName: string): Promise<StorageBackupStat>;
+  exists(fileName: string): Promise<boolean>;
 }
 
 export function getStorage(name: string): StorageInterface | null {
