@@ -126,6 +126,11 @@ class DvmResolver {
   ): string {
     return volume;
   }
+  @Subscription(() => Volume, { subscribe: fromObservable(context.docker.volumeContainerStatusUpdated$) }) async volumeUpdated(
+    @Root() update: { volume: string }
+  ): Promise<Volume> {
+    return (await context.docker.getVolume(update.volume))!;
+  }
 
   ////
   // Storage

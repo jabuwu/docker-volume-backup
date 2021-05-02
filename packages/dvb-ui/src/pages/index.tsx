@@ -1,4 +1,4 @@
-import { useVolumesQuery, usePinVolumeMutation } from '../generated/graphql';
+import { useVolumesQuery, usePinVolumeMutation, useVolumeUpdatedSubscription } from '../generated/graphql';
 import Wrapper from '../components/wrapper';
 import Title from '../components/title';
 import React from 'react';
@@ -11,6 +11,7 @@ import RestoreVolumeModal from '../modals/restore-volume';
 export default function Index(): any {
   const { data, loading, error, refetch } = useVolumesQuery({ notifyOnNetworkStatusChange: true });
   const [ pinVolume ] = usePinVolumeMutation();
+  useVolumeUpdatedSubscription();
   let message: JSX.Element | null = null;
   let table: ((openBackup: (volume: string) => void, openRestore: (volume: string) => void) => JSX.Element) | null = null;
   if (loading) {

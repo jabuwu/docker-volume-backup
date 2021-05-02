@@ -252,6 +252,7 @@ export type Subscription = {
   __typename?: 'Subscription';
   volumeCreated: Volume;
   volumeDestroyed: Scalars['String'];
+  volumeUpdated: Volume;
   taskUpdated: Task;
 };
 
@@ -667,6 +668,17 @@ export type VolumeDestroyedSubscriptionVariables = Exact<{ [key: string]: never;
 export type VolumeDestroyedSubscription = (
   { __typename?: 'Subscription' }
   & Pick<Subscription, 'volumeDestroyed'>
+);
+
+export type VolumeUpdatedSubscriptionVariables = Exact<{ [key: string]: never; }>;
+
+
+export type VolumeUpdatedSubscription = (
+  { __typename?: 'Subscription' }
+  & { volumeUpdated: (
+    { __typename?: 'Volume' }
+    & VolumeDataFragment
+  ) }
 );
 
 export const ScheduleDataFragmentDoc = gql`
@@ -1651,3 +1663,32 @@ export function useVolumeDestroyedSubscription(baseOptions?: Apollo.Subscription
       }
 export type VolumeDestroyedSubscriptionHookResult = ReturnType<typeof useVolumeDestroyedSubscription>;
 export type VolumeDestroyedSubscriptionResult = Apollo.SubscriptionResult<VolumeDestroyedSubscription>;
+export const VolumeUpdatedDocument = gql`
+    subscription VolumeUpdated {
+  volumeUpdated {
+    ...volumeData
+  }
+}
+    ${VolumeDataFragmentDoc}`;
+
+/**
+ * __useVolumeUpdatedSubscription__
+ *
+ * To run a query within a React component, call `useVolumeUpdatedSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useVolumeUpdatedSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useVolumeUpdatedSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useVolumeUpdatedSubscription(baseOptions?: Apollo.SubscriptionHookOptions<VolumeUpdatedSubscription, VolumeUpdatedSubscriptionVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<VolumeUpdatedSubscription, VolumeUpdatedSubscriptionVariables>(VolumeUpdatedDocument, options);
+      }
+export type VolumeUpdatedSubscriptionHookResult = ReturnType<typeof useVolumeUpdatedSubscription>;
+export type VolumeUpdatedSubscriptionResult = Apollo.SubscriptionResult<VolumeUpdatedSubscription>;

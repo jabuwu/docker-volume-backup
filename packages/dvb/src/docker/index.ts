@@ -5,7 +5,7 @@ import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import Dockerode from 'dockerode';
 import { concatMap, map, filter } from 'rxjs/operators';
 import { PassThrough, Readable, Writable } from 'stream';
-import { find, findIndex } from 'lodash';
+import { find, findIndex, omit } from 'lodash';
 import { createGzip } from 'zlib';
 import { generate } from 'short-uuid';
 
@@ -41,6 +41,7 @@ export class Docker {
 
   public volumeCreate$: Observable<Volume>;
   public volumeDestroy$: Observable<string>;
+  public volumeContainerStatusUpdated$: Observable<{ container: string, volume: string, status: string }>;
 
   constructor() {
     this.getVolumes().then((volumes) => {
@@ -77,6 +78,20 @@ export class Docker {
         }
         return false;
       })
+    );
+    this.volumeContainerStatusUpdated$ = event$.pipe(
+      filter((event: DockerEvent) => event.Type === 'container' && (event.Action === 'start' || event.Action === 'die')),
+      map(event => ({
+        container: event.Actor.ID,
+        status: event.Action === 'start' ? 'running' : 'stopped',
+      })),
+      concatMap(async (info) => ({ ...info, inspect: await dockerode.getContainer(info.container).inspect() })),
+      concatMap(info => {
+        return info.inspect.Mounts.map(mount => ({
+          volume: (<any>mount).Type === 'volume' ? (mount.Name || '') : '',
+          ...omit(info, 'inspect'),
+        })).filter(mount => !!mount.volume);
+      }),
     );
   }
 
