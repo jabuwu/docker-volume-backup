@@ -1,5 +1,5 @@
 import { TriangleUpIcon, TriangleDownIcon } from '@chakra-ui/icons';
-import { Table, Tbody, Th, Td, Thead, Tr, ButtonGroup, Button } from '@chakra-ui/react';
+import { Table, Tbody, Th, Td, Thead, Tr, ButtonGroup, Button, Box, Flex } from '@chakra-ui/react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { get, find, uniq } from 'lodash';
 import LoadingTr from './loading-tr';
@@ -9,6 +9,7 @@ export type SortableTableHeader<T> = {
   align?: 'left' | 'right';
   reverse?: boolean;
   filterable?: boolean;
+  clickable?: boolean;
 } & ({
   path: string;
   render?: (item: T) => any;
@@ -34,8 +35,8 @@ function doFilter(item: any, filter: string | undefined, headers: SortableTableH
   return false;
 }
 
-export default function SortableTable<T>({ headers, data, isLoading, initialPath, filter, onItemClick, itemsPerPage }: { headers: SortableTableHeader<T>[], data: T[], isLoading?: boolean, initialPath: string, filter?: string, onItemClick?: (item: T) => void, itemsPerPage?: number }) {
-  itemsPerPage = itemsPerPage ?? 50;
+export default function SortableTable<T>({ headers, data, isLoading, initialPath, filter, onItemClick, itemsPerPage, rightOfPagination }: { headers: SortableTableHeader<T>[], data: T[], isLoading?: boolean, initialPath: string, filter?: string, onItemClick?: (item: T) => void, itemsPerPage?: number, rightOfPagination?: any }) {
+  itemsPerPage = itemsPerPage ?? 20;
   const [ sort, setSort ] = useState({ path: initialPath, ascending: true, reverse: find(headers, { path: initialPath })?.reverse === true, page: 0 });
 
   const pageCount = useMemo(() => {
@@ -80,8 +81,8 @@ export default function SortableTable<T>({ headers, data, isLoading, initialPath
       <Table variant="striped" size="sm">
         <Thead>
           <Tr userSelect="none">
-            { headers.map(header => (
-              <Th key={ header.title } cursor={ !!header.path ? 'pointer' : 'default' } onClick={ header.path ? () => {
+            { headers.map((header, i) => (
+              <Th key={ i } cursor={ !!header.path ? 'pointer' : 'default' } onClick={ header.path ? () => {
                 if (header.path === sort.path) {
                   setSort(value => ({ ...value, ascending: !value.ascending }));
                 } else {
@@ -101,9 +102,9 @@ export default function SortableTable<T>({ headers, data, isLoading, initialPath
         </Thead>
         <Tbody>
           { !isLoading ? sortedData.map((item, i) => (
-            <Tr key={ i } cursor={ onItemClick ? 'pointer' : 'default' } onClick={ onItemClick ? () => onItemClick(item) : () => {} }>
-              { headers.map(header => (
-                <Td key={ header.title } textAlign={ header.align || 'left' }>
+            <Tr key={ i }>
+              { headers.map((header, i) => (
+                <Td key={ i } textAlign={ header.align || 'left' } cursor={ (onItemClick && header.clickable !== false) ? 'pointer' : 'default' } onClick={ (onItemClick && header.clickable !== false) ? () => onItemClick(item) : () => {} }>
                   { header.render ? header.render(item) : get(item, header.path) }
                 </Td>
               )) }
@@ -112,15 +113,22 @@ export default function SortableTable<T>({ headers, data, isLoading, initialPath
           { isLoading ? <LoadingTr colSpan={ headers.length } /> : null }
         </Tbody>
       </Table>
-      { pageCount > 1 ? 
-        <ButtonGroup isAttached={ true } variant="outline" mt={ 2 }>
-          <Button disabled={ sort.page === 0 } onClick={ () => setSort(value => ({ ...value, page: value.page - 1 })) }>Previous</Button>
-          { pageNumbers.map(i => (
-            <Button key={ i } onClick={ () => setSort(value => ({ ...value, page: i })) } variant={ sort.page === i ? 'solid' : 'outline' }>{ i + 1 }</Button>
-          )) }
-          <Button disabled={ sort.page === pageCount - 1 } onClick={ () => setSort(value => ({ ...value, page: value.page + 1 })) }>Next</Button>
-        </ButtonGroup>
-      : null }
+      <Flex mt={ 2 }>
+        <Box>
+        { pageCount > 1 ? 
+          <ButtonGroup isAttached={ true } variant="outline">
+            <Button disabled={ sort.page === 0 } onClick={ () => setSort(value => ({ ...value, page: value.page - 1 })) }>Previous</Button>
+            { pageNumbers.map(i => (
+              <Button key={ i } onClick={ () => setSort(value => ({ ...value, page: i })) } variant={ sort.page === i ? 'solid' : 'outline' }>{ i + 1 }</Button>
+            )) }
+            <Button disabled={ sort.page === pageCount - 1 } onClick={ () => setSort(value => ({ ...value, page: value.page + 1 })) }>Next</Button>
+          </ButtonGroup>
+        : null }
+        </Box>
+        <Box ml="auto" my="auto">
+          { rightOfPagination ? rightOfPagination : null }
+        </Box>
+      </Flex>
     </>
   )
 }

@@ -1,0 +1,3 @@
+mutation DeleteMultipleBackups($storage: String!, $fileNames: [String!]!) {
+  deleteMultipleBackups(storage: $storage, fileNames: $fileNames)
+}

@@ -78,6 +78,7 @@ export type Mutation = {
   pinVolume: Scalars['Boolean'];
   removeStorage: Scalars['Boolean'];
   deleteBackup: Scalars['Boolean'];
+  deleteMultipleBackups: Scalars['String'];
   downloadBackup?: Maybe<Scalars['String']>;
   addSchedule?: Maybe<Schedule>;
   updateSchedule?: Maybe<Schedule>;
@@ -118,6 +119,12 @@ export type MutationRemoveStorageArgs = {
 
 export type MutationDeleteBackupArgs = {
   fileName: Scalars['String'];
+  storage: Scalars['String'];
+};
+
+
+export type MutationDeleteMultipleBackupsArgs = {
+  fileNames: Array<Scalars['String']>;
   storage: Scalars['String'];
 };
 
@@ -269,7 +276,7 @@ export type Task = {
   id: Scalars['String'];
   done: Scalars['Boolean'];
   error?: Maybe<Scalars['String']>;
-  result: Scalars['Any'];
+  result?: Maybe<Scalars['Any']>;
   status: Scalars['String'];
   progress?: Maybe<Scalars['Float']>;
 };
@@ -382,6 +389,17 @@ export type DeleteBackupMutationVariables = Exact<{
 export type DeleteBackupMutation = (
   { __typename?: 'Mutation' }
   & Pick<Mutation, 'deleteBackup'>
+);
+
+export type DeleteMultipleBackupsMutationVariables = Exact<{
+  storage: Scalars['String'];
+  fileNames: Array<Scalars['String']> | Scalars['String'];
+}>;
+
+
+export type DeleteMultipleBackupsMutation = (
+  { __typename?: 'Mutation' }
+  & Pick<Mutation, 'deleteMultipleBackups'>
 );
 
 export type DownloadBackupMutationVariables = Exact<{
@@ -891,6 +909,38 @@ export function useDeleteBackupMutation(baseOptions?: Apollo.MutationHookOptions
 export type DeleteBackupMutationHookResult = ReturnType<typeof useDeleteBackupMutation>;
 export type DeleteBackupMutationResult = Apollo.MutationResult<DeleteBackupMutation>;
 export type DeleteBackupMutationOptions = Apollo.BaseMutationOptions<DeleteBackupMutation, DeleteBackupMutationVariables>;
+export const DeleteMultipleBackupsDocument = gql`
+    mutation DeleteMultipleBackups($storage: String!, $fileNames: [String!]!) {
+  deleteMultipleBackups(storage: $storage, fileNames: $fileNames)
+}
+    `;
+export type DeleteMultipleBackupsMutationFn = Apollo.MutationFunction<DeleteMultipleBackupsMutation, DeleteMultipleBackupsMutationVariables>;
+
+/**
+ * __useDeleteMultipleBackupsMutation__
+ *
+ * To run a mutation, you first call `useDeleteMultipleBackupsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteMultipleBackupsMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteMultipleBackupsMutation, { data, loading, error }] = useDeleteMultipleBackupsMutation({
+ *   variables: {
+ *      storage: // value for 'storage'
+ *      fileNames: // value for 'fileNames'
+ *   },
+ * });
+ */
+export function useDeleteMultipleBackupsMutation(baseOptions?: Apollo.MutationHookOptions<DeleteMultipleBackupsMutation, DeleteMultipleBackupsMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteMultipleBackupsMutation, DeleteMultipleBackupsMutationVariables>(DeleteMultipleBackupsDocument, options);
+      }
+export type DeleteMultipleBackupsMutationHookResult = ReturnType<typeof useDeleteMultipleBackupsMutation>;
+export type DeleteMultipleBackupsMutationResult = Apollo.MutationResult<DeleteMultipleBackupsMutation>;
+export type DeleteMultipleBackupsMutationOptions = Apollo.BaseMutationOptions<DeleteMultipleBackupsMutation, DeleteMultipleBackupsMutationVariables>;
 export const DownloadBackupDocument = gql`
     mutation DownloadBackup($storage: String!, $fileName: String!) {
   downloadBackup(storage: $storage, fileName: $fileName)

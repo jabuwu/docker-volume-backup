@@ -166,6 +166,24 @@ class DvmResolver {
     }
     return true;
   }
+  @Mutation(() => String) deleteMultipleBackups(
+    @Arg('storage', () => String) storageName: string,
+    @Arg('fileNames', () => [String]) fileNames: string[],
+  ): string {
+    return new Task(async (update) => {
+      const storage = getStorage(storageName);
+      if (storage) {
+        for (let i = 0; i < fileNames.length; ++i) {
+          const fileName = fileNames[i];
+          update({ status: `Deleting ${fileName}`, progress: i / fileNames.length });
+          await storage.del(fileName);
+        }
+        return true;
+      } else {
+        throw new Error(`Storage does not exist: ${storageName}`);
+      }
+    }).id;
+  }
   @Mutation(() => String, { nullable: true }) async downloadBackup(
     @Arg('storage', () => String) storageName: string,
     @Arg('fileName', () => String) fileName: string,

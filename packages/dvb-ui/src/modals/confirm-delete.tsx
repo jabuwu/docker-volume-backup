@@ -16,7 +16,7 @@ export default function ConfirmDelete({ children, onDelete, name }: { children: 
   const del = useCallback(() => {
     onDelete();
     close();
-  }, []);
+  }, [ onDelete ]);
 
   return (
     <>
