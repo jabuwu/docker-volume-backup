@@ -3,7 +3,7 @@ import { useStorageQuery, useDeleteBackupMutation, useDownloadBackupMutation, St
 import { useRouter } from 'next/router';
 import { Text, Skeleton, AlertIcon, Alert, Table, Tbody, Th, Thead, Tr, Td, Button, Box, Flex, useToast, Tooltip, Input, CircularProgress } from '@chakra-ui/react';
 import Title from '../../components/title';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { CheckIcon, DeleteIcon, DownloadIcon, RepeatIcon } from '@chakra-ui/icons';
 import ConfirmDelete from '../../modals/confirm-delete';
 import SortableTable, { SortableTableHeader } from '../../components/sortable-table';
@@ -47,6 +47,12 @@ export default function Storage(): any {
   const downloadFile = useCallback(async (fileName: string) => {
       (document as any).location = `${process.env.NEXT_PUBLIC_API || 'http://localhost:1998/api'}${fileName}`;
   }, [ name ]);
+  const filterLength = useMemo(() => {
+    if (data?.storage) {
+      return data.storage.backups.filter(backup => backup.fileName.includes(filter)).length;
+    }
+    return 0;
+  }, [ data, filter ]);
   if (!name) {
     return <></>;
   }
@@ -87,7 +93,7 @@ export default function Storage(): any {
     { !error && (data?.storage || loading) ?
       <>
         <Flex>
-          <Text mt={ 4 } fontSize="xl">Files</Text>
+          <Text mt={ 4 } fontSize="xl">{ data?.storage ? `Files (${filter !== '' ? `${filterLength} / ${data.storage.backups.length}` : data.storage.backups.length})` : 'Files' }</Text>
           <Input disabled={ loading || !data?.storage || (data?.storage && data.storage.backups.length === 0) } ml="auto" my="auto" w="40%" size="sm" placeholder="Filter" value={ filter } onChange={ e => setFilter(e.target.value) } />
         </Flex>
         { ((data?.storage && data.storage.backups.length > 0) || loading) ?
