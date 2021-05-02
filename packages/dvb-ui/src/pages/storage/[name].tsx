@@ -1,14 +1,15 @@
 import Wrapper from '../../components/wrapper';
 import { useStorageQuery, useDeleteBackupMutation, useDownloadBackupMutation, StorageBackup } from '../../generated/graphql';
 import { useRouter } from 'next/router';
-import { Text, Skeleton, AlertIcon, Alert, Table, Tbody, Th, Thead, Tr, Td, Button, Box, Flex, useToast, Tooltip, Input } from '@chakra-ui/react';
+import { Text, Skeleton, AlertIcon, Alert, Table, Tbody, Th, Thead, Tr, Td, Button, Box, Flex, useToast, Tooltip, Input, CircularProgress } from '@chakra-ui/react';
 import Title from '../../components/title';
 import React, { useCallback, useState } from 'react';
-import { DeleteIcon, DownloadIcon, RepeatIcon } from '@chakra-ui/icons';
+import { CheckIcon, DeleteIcon, DownloadIcon, RepeatIcon } from '@chakra-ui/icons';
 import ConfirmDelete from '../../modals/confirm-delete';
 import SortableTable, { SortableTableHeader } from '../../components/sortable-table';
 import dayjs from 'dayjs';
 import { formatBytes } from '../../utility/format-bytes';
+import { Task } from '../../components/task';
 
 export default function Storage(): any {
   const router = useRouter();
@@ -25,19 +26,16 @@ export default function Storage(): any {
     skip: !name
   });
   const toast = useToast();
-  const [ downloadingFiles, setDownloadingFiles ] = useState([] as string[]);
-  const download = useCallback(async (fileName: string) => {
+  const download = useCallback(async (fileName: string, track: (id: string) => void) => {
     const storage = name;
-    setDownloadingFiles(arr => ([ ...arr, fileName ]));
     const result = await downloadBackup({
       variables: {
         storage,
         fileName,
       },
     });
-    setDownloadingFiles(arr => arr.filter(item => item !== fileName));
-    if (result.data.downloadBackup) {
-      (document as any).location = `${process.env.NEXT_PUBLIC_API || 'http://localhost:1998/api'}${result.data.downloadBackup}`;
+    if (result.data?.downloadBackup) {
+      track(result.data!.downloadBackup);
     } else {
       toast({
         title: 'Failed to download backup file.',
@@ -45,6 +43,9 @@ export default function Storage(): any {
         status: 'error',
       });
     }
+  }, [ name ]);
+  const downloadFile = useCallback(async (fileName: string) => {
+      (document as any).location = `${process.env.NEXT_PUBLIC_API || 'http://localhost:1998/api'}${fileName}`;
   }, [ name ]);
   if (!name) {
     return <></>;
@@ -117,9 +118,21 @@ export default function Storage(): any {
                 align: 'right',
                 render: (backup) => (
                   <>
-                    <Button size="sm" colorScheme="green" variant="ghost" onClick={ () => download(backup.fileName) } isLoading={ downloadingFiles.includes(backup.fileName) }>
-                      <DownloadIcon />
-                    </Button>
+                    <Task onResult={ downloadFile }>
+                      { ({ track, progress, complete, completeFlair, error }) => {
+                        return <>
+                          <Tooltip label={ error || '' }>
+                            <Button size="sm" colorScheme={ error ? 'red' : 'green' } variant="ghost" onClick={ () => download(backup.fileName, track) } disabled={ !complete } style={{ opacity: 1 }}>
+                              { complete ?
+                                ( completeFlair ? <CheckIcon /> : <DownloadIcon />) :
+                                <CircularProgress isIndeterminate={ progress == null } value={ progress * 100 } color="green.500" size="12px" thickness="10px" />
+                              }
+                              { status }
+                            </Button>
+                          </Tooltip>
+                        </>
+                      } }
+                    </Task>
                     <ConfirmDelete name={ backup.fileName } onDelete={ async () => { await deleteBackup({ variables: { storage: name, fileName: backup.fileName } }); refetch() } }>
                       { (open) => (
                         <Button size="sm" colorScheme="red" variant="ghost" onClick={ open }>

@@ -2,6 +2,7 @@ import { ObjectType, Field, Float } from 'type-graphql';
 import { generate } from 'short-uuid';
 import { assign, clone } from 'lodash';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { GraphQLAny } from './graphql/scalars/any';
 
 // TODO: clear out this map somehow?
 const taskUpdateMap$: { [ id: string ]: BehaviorSubject<Task> } = {};
@@ -14,7 +15,7 @@ export function getSubject(id: string): Observable<Task> {
 
 @ObjectType()
 export class Task {
-  constructor(cb: (fns: { update: (data: Partial<Omit<Task, 'id' | 'done'>>) => void, complete: () => void, throwError: (err: Error) => void }) => Promise<void> | void) {
+  constructor(cb: (update: (data: Partial<Omit<Task, 'id' | 'done'>>) => void) => Promise<any> | any) {
     this.id = generate();
     this.status = '';
     this.progress = null;
@@ -22,11 +23,7 @@ export class Task {
     taskUpdateMap$[this.id] = new BehaviorSubject<Task>(clone(this));
     (async() => {
       try {
-        await cb({
-          update: this.update.bind(this),
-          complete: this.complete.bind(this),
-          throwError: this.throw.bind(this),
-        });
+        this.complete(await cb(this.update.bind(this)));
       } catch (err) {
         this.throw(err);
       }
@@ -42,21 +39,25 @@ export class Task {
   @Field(() => String, { nullable: true })
   error?: string;
 
+  @Field(() => GraphQLAny, { nullable: true })
+  result: any;
+
   @Field()
   status: string;
 
   @Field(() => Float, { nullable: true })
   progress: number | null;
 
-  update(data: Partial<Omit<Task, 'id' | 'done'>>) {
+  update(data: Partial<Omit<Task, 'id' | 'done' | 'result' | 'error'>>) {
     if (!this.done) {
       assign(this, data);
       taskUpdateMap$[this.id].next(clone(this));
     }
   }
 
-  complete() {
+  complete(result?: any) {
     if (!this.done) {
+      this.result = result;
       this.done = true;
       taskUpdateMap$[this.id].next(clone(this));
     }

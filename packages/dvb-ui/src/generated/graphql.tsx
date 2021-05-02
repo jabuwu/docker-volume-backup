@@ -12,9 +12,12 @@ export type Scalars = {
   Boolean: boolean;
   Int: number;
   Float: number;
+  /** Any type. */
+  Any: any;
   /** A JSON object. */
   JSON: any;
 };
+
 
 export type Container = {
   __typename?: 'Container';
@@ -266,6 +269,7 @@ export type Task = {
   id: Scalars['String'];
   done: Scalars['Boolean'];
   error?: Maybe<Scalars['String']>;
+  result: Scalars['Any'];
   status: Scalars['String'];
   progress?: Maybe<Scalars['Float']>;
 };
@@ -647,7 +651,7 @@ export type TaskUpdatedSubscription = (
   { __typename?: 'Subscription' }
   & { taskUpdated: (
     { __typename?: 'Task' }
-    & Pick<Task, 'id' | 'status' | 'done' | 'progress' | 'error'>
+    & Pick<Task, 'id' | 'status' | 'done' | 'progress' | 'error' | 'result'>
   ) }
 );
 
@@ -1581,6 +1585,7 @@ export const TaskUpdatedDocument = gql`
     done
     progress
     error
+    result
   }
 }
     `;

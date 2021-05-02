@@ -51,7 +51,7 @@ class DvmResolver {
     validateFileName(fileName);
     const storageInstance = getStorage(storage);
     if (storageInstance) {
-      return new Task(async ({ update, complete }) => {
+      return new Task(async (update) => {
         if (await storageInstance.exists(fileName!)) {
           throw new Error(`Backup file already exists: ${fileName}`);
         }
@@ -70,7 +70,6 @@ class DvmResolver {
           update({ status: 'Starting containers...', progress: null });
           await context.docker.startVolumeContainers(volume, stoppedContainers);
         }
-        complete();
       }).id;
     }
     throw new Error('Storage does not exist: ' + storage);
@@ -84,7 +83,7 @@ class DvmResolver {
     validateFileName(fileName);
     const storageInstance = getStorage(storage);
     if (storageInstance) {
-      return new Task(async ({ update, complete }) => {
+      return new Task(async (update) => {
         let stoppedContainers: string[] = [];
         if (stopContainers) {
           update({ status: 'Stopping containers...' });
@@ -102,7 +101,6 @@ class DvmResolver {
           update({ status: 'Starting containers...', progress: null });
           await context.docker.startVolumeContainers(volume, stoppedContainers);
         }
-        complete();
       }).id;
     }
     throw new Error('Storage does not exist: ' + storage);
@@ -172,15 +170,24 @@ class DvmResolver {
     @Arg('storage', () => String) storageName: string,
     @Arg('fileName', () => String) fileName: string,
   ): Promise<string | null> {
-    validateFileName(fileName);
-    const storage = getStorage(storageName);
-    if (storage) {
-      const { stream, fileName: downloadFileName } = await downloadWriteStream(fileName);
-      await storage.read(fileName, stream);
-      stream.end();
-      return `/download/${downloadFileName}`;
-    }
-    return null;
+    return new Task(async (update) => {
+      update({ status: 'Preparing...' });
+      validateFileName(fileName);
+      const storage = getStorage(storageName);
+      if (storage) {
+        update({ status: 'Getting file info...' });
+        const stat = await storage.stat(fileName);
+        update({ status: 'Downloading...' });
+        const { stream, fileName: downloadFileName } = await downloadWriteStream(fileName, stat.size, debounce((progress) => {
+          update({ status: 'Downloading...', progress });
+        }, 100, { maxWait: 100 }));
+        await storage.read(fileName, stream);
+        stream.end();
+        return `/download/${downloadFileName}`;
+      } else {
+        throw new Error(`Storage does not exist: ${storageName}`);
+      }
+    }).id;
   }
 
   ///
