@@ -176,6 +176,9 @@ class DvmResolver {
       const storage = getStorage(storageName);
       if (storage) {
         update({ status: 'Getting file info...' });
+        if (!await storage.exists(fileName)) {
+          throw new Error(`File not found: ${fileName}`);
+        }
         const stat = await storage.stat(fileName);
         update({ status: 'Downloading...' });
         const { stream, fileName: downloadFileName } = await downloadWriteStream(fileName, stat.size, debounce((progress) => {

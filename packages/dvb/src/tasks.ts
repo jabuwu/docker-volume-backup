@@ -1,6 +1,6 @@
 import { ObjectType, Field, Float } from 'type-graphql';
 import { generate } from 'short-uuid';
-import { assign, clone } from 'lodash';
+import { assign, clone, get } from 'lodash';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { GraphQLAny } from './graphql/scalars/any';
 
@@ -64,8 +64,9 @@ export class Task {
   }
 
   throw(err: Error) {
+    console.log('err', err);
     if (!this.done) {
-      this.error = err.message;
+      this.error = get(err, 'message') || get(err, 'code') || 'Unknown error occurred.';
       this.done = true;
       taskUpdateMap$[this.id].next(clone(this));
     }
