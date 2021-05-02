@@ -71,6 +71,13 @@ export type FtpServer = {
 };
 
 
+export type LocalFileSystem = {
+  __typename?: 'LocalFileSystem';
+  name: Scalars['String'];
+  path: Scalars['String'];
+  prefix: Scalars['String'];
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
   exportVolume: Scalars['String'];
@@ -80,6 +87,8 @@ export type Mutation = {
   deleteBackup: Scalars['Boolean'];
   deleteMultipleBackups: Scalars['String'];
   downloadBackup?: Maybe<Scalars['String']>;
+  addLocalFileSystem?: Maybe<Storage>;
+  updateLocalFileSystem?: Maybe<Storage>;
   addSchedule?: Maybe<Schedule>;
   updateSchedule?: Maybe<Schedule>;
   removeSchedule: Scalars['Boolean'];
@@ -132,6 +141,20 @@ export type MutationDeleteMultipleBackupsArgs = {
 export type MutationDownloadBackupArgs = {
   fileName: Scalars['String'];
   storage: Scalars['String'];
+};
+
+
+export type MutationAddLocalFileSystemArgs = {
+  prefix?: Maybe<Scalars['String']>;
+  path: Scalars['String'];
+  name: Scalars['String'];
+};
+
+
+export type MutationUpdateLocalFileSystemArgs = {
+  prefix?: Maybe<Scalars['String']>;
+  path?: Maybe<Scalars['String']>;
+  name: Scalars['String'];
 };
 
 
@@ -241,6 +264,7 @@ export type Storage = {
   __typename?: 'Storage';
   type: Scalars['String'];
   name: Scalars['String'];
+  localFileSystem?: Maybe<LocalFileSystem>;
   s3Bucket?: Maybe<S3Bucket>;
   ftpServer?: Maybe<FtpServer>;
   backups: Array<StorageBackup>;
@@ -309,7 +333,10 @@ export type ScheduleDataFragment = (
 export type StorageDataFragment = (
   { __typename?: 'Storage' }
   & Pick<Storage, 'name' | 'type'>
-  & { s3Bucket?: Maybe<(
+  & { localFileSystem?: Maybe<(
+    { __typename?: 'LocalFileSystem' }
+    & Pick<LocalFileSystem, 'name' | 'path' | 'prefix'>
+  )>, s3Bucket?: Maybe<(
     { __typename?: 'S3Bucket' }
     & Pick<S3Bucket, 'name' | 'bucket' | 'prefix'>
   )>, ftpServer?: Maybe<(
@@ -341,6 +368,21 @@ export type AddFtpServerMutationVariables = Exact<{
 export type AddFtpServerMutation = (
   { __typename?: 'Mutation' }
   & { addFtpServer?: Maybe<(
+    { __typename?: 'Storage' }
+    & StorageDataFragment
+  )> }
+);
+
+export type AddLocalFileSystemMutationVariables = Exact<{
+  name: Scalars['String'];
+  path: Scalars['String'];
+  prefix?: Maybe<Scalars['String']>;
+}>;
+
+
+export type AddLocalFileSystemMutation = (
+  { __typename?: 'Mutation' }
+  & { addLocalFileSystem?: Maybe<(
     { __typename?: 'Storage' }
     & StorageDataFragment
   )> }
@@ -489,6 +531,21 @@ export type UpdateFtpServerMutation = (
   )> }
 );
 
+export type UpdateLocalFileSystemMutationVariables = Exact<{
+  name: Scalars['String'];
+  path?: Maybe<Scalars['String']>;
+  prefix?: Maybe<Scalars['String']>;
+}>;
+
+
+export type UpdateLocalFileSystemMutation = (
+  { __typename?: 'Mutation' }
+  & { updateLocalFileSystem?: Maybe<(
+    { __typename?: 'Storage' }
+    & StorageDataFragment
+  )> }
+);
+
 export type UpdateS3BucketMutationVariables = Exact<{
   name: Scalars['String'];
   bucket?: Maybe<Scalars['String']>;
@@ -548,6 +605,23 @@ export type FtpServerQuery = (
     & { ftpServer?: Maybe<(
       { __typename?: 'FtpServer' }
       & Pick<FtpServer, 'name' | 'host' | 'port' | 'user' | 'secure' | 'prefix'>
+    )> }
+  )> }
+);
+
+export type LocalFileSystemQueryVariables = Exact<{
+  name: Scalars['String'];
+}>;
+
+
+export type LocalFileSystemQuery = (
+  { __typename?: 'Query' }
+  & { storage?: Maybe<(
+    { __typename?: 'Storage' }
+    & Pick<Storage, 'name' | 'type'>
+    & { localFileSystem?: Maybe<(
+      { __typename?: 'LocalFileSystem' }
+      & Pick<LocalFileSystem, 'name' | 'path' | 'prefix'>
     )> }
   )> }
 );
@@ -717,6 +791,11 @@ export const StorageDataFragmentDoc = gql`
     fragment storageData on Storage {
   name
   type
+  localFileSystem {
+    name
+    path
+    prefix
+  }
   s3Bucket {
     name
     bucket
@@ -791,6 +870,41 @@ export function useAddFtpServerMutation(baseOptions?: Apollo.MutationHookOptions
 export type AddFtpServerMutationHookResult = ReturnType<typeof useAddFtpServerMutation>;
 export type AddFtpServerMutationResult = Apollo.MutationResult<AddFtpServerMutation>;
 export type AddFtpServerMutationOptions = Apollo.BaseMutationOptions<AddFtpServerMutation, AddFtpServerMutationVariables>;
+export const AddLocalFileSystemDocument = gql`
+    mutation AddLocalFileSystem($name: String!, $path: String!, $prefix: String) {
+  addLocalFileSystem(name: $name, path: $path, prefix: $prefix) {
+    ...storageData
+  }
+}
+    ${StorageDataFragmentDoc}`;
+export type AddLocalFileSystemMutationFn = Apollo.MutationFunction<AddLocalFileSystemMutation, AddLocalFileSystemMutationVariables>;
+
+/**
+ * __useAddLocalFileSystemMutation__
+ *
+ * To run a mutation, you first call `useAddLocalFileSystemMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddLocalFileSystemMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addLocalFileSystemMutation, { data, loading, error }] = useAddLocalFileSystemMutation({
+ *   variables: {
+ *      name: // value for 'name'
+ *      path: // value for 'path'
+ *      prefix: // value for 'prefix'
+ *   },
+ * });
+ */
+export function useAddLocalFileSystemMutation(baseOptions?: Apollo.MutationHookOptions<AddLocalFileSystemMutation, AddLocalFileSystemMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddLocalFileSystemMutation, AddLocalFileSystemMutationVariables>(AddLocalFileSystemDocument, options);
+      }
+export type AddLocalFileSystemMutationHookResult = ReturnType<typeof useAddLocalFileSystemMutation>;
+export type AddLocalFileSystemMutationResult = Apollo.MutationResult<AddLocalFileSystemMutation>;
+export type AddLocalFileSystemMutationOptions = Apollo.BaseMutationOptions<AddLocalFileSystemMutation, AddLocalFileSystemMutationVariables>;
 export const AddS3BucketDocument = gql`
     mutation AddS3Bucket($name: String!, $bucket: String!, $region: String!, $accessKey: String!, $secretKey: String!, $prefix: String!) {
   addS3Bucket(
@@ -1192,6 +1306,41 @@ export function useUpdateFtpServerMutation(baseOptions?: Apollo.MutationHookOpti
 export type UpdateFtpServerMutationHookResult = ReturnType<typeof useUpdateFtpServerMutation>;
 export type UpdateFtpServerMutationResult = Apollo.MutationResult<UpdateFtpServerMutation>;
 export type UpdateFtpServerMutationOptions = Apollo.BaseMutationOptions<UpdateFtpServerMutation, UpdateFtpServerMutationVariables>;
+export const UpdateLocalFileSystemDocument = gql`
+    mutation UpdateLocalFileSystem($name: String!, $path: String, $prefix: String) {
+  updateLocalFileSystem(name: $name, path: $path, prefix: $prefix) {
+    ...storageData
+  }
+}
+    ${StorageDataFragmentDoc}`;
+export type UpdateLocalFileSystemMutationFn = Apollo.MutationFunction<UpdateLocalFileSystemMutation, UpdateLocalFileSystemMutationVariables>;
+
+/**
+ * __useUpdateLocalFileSystemMutation__
+ *
+ * To run a mutation, you first call `useUpdateLocalFileSystemMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateLocalFileSystemMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateLocalFileSystemMutation, { data, loading, error }] = useUpdateLocalFileSystemMutation({
+ *   variables: {
+ *      name: // value for 'name'
+ *      path: // value for 'path'
+ *      prefix: // value for 'prefix'
+ *   },
+ * });
+ */
+export function useUpdateLocalFileSystemMutation(baseOptions?: Apollo.MutationHookOptions<UpdateLocalFileSystemMutation, UpdateLocalFileSystemMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateLocalFileSystemMutation, UpdateLocalFileSystemMutationVariables>(UpdateLocalFileSystemDocument, options);
+      }
+export type UpdateLocalFileSystemMutationHookResult = ReturnType<typeof useUpdateLocalFileSystemMutation>;
+export type UpdateLocalFileSystemMutationResult = Apollo.MutationResult<UpdateLocalFileSystemMutation>;
+export type UpdateLocalFileSystemMutationOptions = Apollo.BaseMutationOptions<UpdateLocalFileSystemMutation, UpdateLocalFileSystemMutationVariables>;
 export const UpdateS3BucketDocument = gql`
     mutation UpdateS3Bucket($name: String!, $bucket: String, $region: String, $accessKey: String, $secretKey: String, $prefix: String) {
   updateS3Bucket(
@@ -1358,6 +1507,47 @@ export function useFtpServerLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<
 export type FtpServerQueryHookResult = ReturnType<typeof useFtpServerQuery>;
 export type FtpServerLazyQueryHookResult = ReturnType<typeof useFtpServerLazyQuery>;
 export type FtpServerQueryResult = Apollo.QueryResult<FtpServerQuery, FtpServerQueryVariables>;
+export const LocalFileSystemDocument = gql`
+    query LocalFileSystem($name: String!) {
+  storage(name: $name) {
+    name
+    type
+    localFileSystem {
+      name
+      path
+      prefix
+    }
+  }
+}
+    `;
+
+/**
+ * __useLocalFileSystemQuery__
+ *
+ * To run a query within a React component, call `useLocalFileSystemQuery` and pass it any options that fit your needs.
+ * When your component renders, `useLocalFileSystemQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useLocalFileSystemQuery({
+ *   variables: {
+ *      name: // value for 'name'
+ *   },
+ * });
+ */
+export function useLocalFileSystemQuery(baseOptions: Apollo.QueryHookOptions<LocalFileSystemQuery, LocalFileSystemQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<LocalFileSystemQuery, LocalFileSystemQueryVariables>(LocalFileSystemDocument, options);
+      }
+export function useLocalFileSystemLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<LocalFileSystemQuery, LocalFileSystemQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<LocalFileSystemQuery, LocalFileSystemQueryVariables>(LocalFileSystemDocument, options);
+        }
+export type LocalFileSystemQueryHookResult = ReturnType<typeof useLocalFileSystemQuery>;
+export type LocalFileSystemLazyQueryHookResult = ReturnType<typeof useLocalFileSystemLazyQuery>;
+export type LocalFileSystemQueryResult = Apollo.QueryResult<LocalFileSystemQuery, LocalFileSystemQueryVariables>;
 export const S3BucketDocument = gql`
     query S3Bucket($name: String!) {
   storage(name: $name) {

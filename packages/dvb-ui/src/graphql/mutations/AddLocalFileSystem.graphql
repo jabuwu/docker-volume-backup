@@ -1,0 +1,6 @@
+#import "../fragments/StorageData"
+mutation AddLocalFileSystem($name: String!, $path: String!, $prefix: String) {
+  addLocalFileSystem(name: $name, path: $path, prefix: $prefix) {
+    ...storageData
+  }
+}

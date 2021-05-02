@@ -1,5 +1,5 @@
 import { Readable, Writable } from 'stream';
-import { LocalStorage } from './local';
+import { localFileSystems, LocalStorage, LocalFileSystem } from './local';
 import { S3Bucket, s3Buckets, S3Storage } from './s3';
 import { ObjectType, Field } from 'type-graphql';
 import { assign, find } from 'lodash';
@@ -39,8 +39,9 @@ export interface StorageInterface {
 }
 
 export function getStorage(name: string): StorageInterface | null {
-  if (name === 'local') {
-    return new LocalStorage();
+  const localFileSystem = localFileSystems.findOne({ name });
+  if (localFileSystem) {
+    return new LocalStorage(localFileSystem);
   }
   const s3Bucket = s3Buckets.findOne({ name });
   if (s3Bucket) {
@@ -57,11 +58,14 @@ export function getStorage(name: string): StorageInterface | null {
 export class Storage {
   static all() {
     const storages: Storage[] = [];
-    storages.push(new Storage({
-      type: 'local',
-      name: 'local',
-      interface: new LocalStorage(),
-    }));
+    for (const localFileSystem of localFileSystems.all()) {
+      storages.push(new Storage({
+        type: 'local',
+        name: localFileSystem.name,
+        localFileSystem,
+        interface: new LocalStorage(localFileSystem),
+      }));
+    }
     for (const s3Bucket of s3Buckets.all()) {
       storages.push(new Storage({
         type: 's3Bucket',
@@ -95,6 +99,9 @@ export class Storage {
 
   @Field(() => String)
   name: string;
+
+  @Field(() => LocalFileSystem, { nullable: true })
+  localFileSystem?: LocalFileSystem;
 
   @Field(() => S3Bucket, { nullable: true })
   s3Bucket?: S3Bucket;

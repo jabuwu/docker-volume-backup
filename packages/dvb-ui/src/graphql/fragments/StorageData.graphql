@@ -1,6 +1,11 @@
 fragment storageData on Storage {
   name
   type
+  localFileSystem {
+    name
+    path
+    prefix
+  }
   s3Bucket {
     name
     bucket

@@ -25,20 +25,26 @@ import AddS3BucketModal from '../modals/add-s3-bucket';
 import EditS3BucketModal from '../modals/edit-s3-bucket';
 import AddFtpServerModal from '../modals/add-ftp-server';
 import EditFtpServerModal from '../modals/edit-ftp-server';
+import AddLocalFileSystemModal from '../modals/add-local-file-system';
+import EditLocalFileSystemModal from '../modals/edit-local-file-system';
 import { AddIcon, DeleteIcon, LockIcon, RepeatIcon, SettingsIcon, UnlockIcon } from '@chakra-ui/icons';
 import ConfirmDelete from '../modals/confirm-delete';
 
 export default function Storage(): any {
   const { data, loading, error, refetch } = useAllStorageQuery({ notifyOnNetworkStatusChange: true });
   let message: JSX.Element | null = null;
+  let localTable: ((openEdit: (name: string) => void) => JSX.Element) | null = null;
+  let localMessage: JSX.Element | null = null;
   let s3Table: ((openEdit: (name: string) => void) => JSX.Element) | null = null;
   let s3Message: JSX.Element | null = null;
   let ftpTable: ((openEdit: (name: string) => void) => JSX.Element) | null = null;
   let ftpMessage: JSX.Element | null = null;
   const [ removeStorage ] = useRemoveStorageMutation();
+  const localFileSystems = data?.allStorage.filter(storage => storage.type === 'local') || [];
   const s3Buckets = data?.allStorage.filter(storage => storage.type === 's3Bucket') || [];
   const ftpServers = data?.allStorage.filter(storage => storage.type === 'ftpServer') || [];
   if (loading) {
+    localTable = () => <LoadingTr colSpan={ 4 } />
     s3Table = () => <LoadingTr colSpan={ 4 } />
     ftpTable = () => <LoadingTr colSpan={ 5 } />
   } else if (error) {
@@ -51,6 +57,40 @@ export default function Storage(): any {
     s3Message = <Text mt={ 2 }>Nothing to see here.</Text>;
     ftpMessage = <Text mt={ 2 }>Nothing to see here.</Text>;
   } else {
+    if (localFileSystems.length === 0) {
+      localMessage = <Text mt={ 2 }>Nothing to see here.</Text>;
+    } else {
+      localTable = (openEdit) => (
+        <>
+          { localFileSystems.map(localFileSystem => (
+            <Tr key={ localFileSystem.name }>
+              <Td>
+                <NextLink href={ `/storage/${localFileSystem.name}` }>
+                  <Link fontWeight="bold">{ localFileSystem.name }</Link>
+                </NextLink>
+              </Td>
+              <Td>
+                <Text>{ localFileSystem.localFileSystem!.path }</Text>
+              </Td>
+              <Td>
+                <Text>{ localFileSystem.localFileSystem!.prefix ? localFileSystem.localFileSystem!.prefix : <Text as="i" color="lightgray">none</Text> }</Text>
+              </Td>
+              <Td textAlign="right">
+                <Button size="lg" p={ 0 } variant="ghost" colorScheme="blue" onClick={ () => openEdit(localFileSystem.name) } isLoading={ loading }><SettingsIcon /></Button>
+                <ConfirmDelete name={ localFileSystem.name } onDelete={ () => removeStorage({ variables: { name: localFileSystem.name }, update: (cache) => {
+                  cache.evict({ id: cache.identify(localFileSystem) });
+                } }) }>
+                  { (open) => (
+                    <Button colorScheme="red" variant="ghost" onClick={ open }>
+                      <DeleteIcon />
+                    </Button>
+                  ) }
+                </ConfirmDelete>
+              </Td>
+            </Tr>
+          )) }
+      </>);
+    }
     if (s3Buckets.length === 0) {
       s3Message = <Text mt={ 2 }>Nothing to see here.</Text>;
     } else {
@@ -67,7 +107,7 @@ export default function Storage(): any {
                 <Text>{ `s3://${s3Bucket.s3Bucket!.bucket}` }</Text>
               </Td>
               <Td>
-                <Text>{ s3Bucket.s3Bucket!.prefix}</Text>
+                <Text>{ s3Bucket.s3Bucket!.prefix ? s3Bucket.s3Bucket!.prefix : <Text as="i" color="lightgray">none</Text> }</Text>
               </Td>
               <Td textAlign="right">
                 <Button size="lg" p={ 0 } variant="ghost" colorScheme="blue" onClick={ () => openEdit(s3Bucket.name) } isLoading={ loading }><SettingsIcon /></Button>
@@ -136,23 +176,33 @@ export default function Storage(): any {
         </Box>
       </Flex>
       { message }
-      <Text mt={ 4 }fontSize="xl">Local</Text>
-      <Table variant="striped">
-        <Thead>
-          <Tr>
-            <Th>Name</Th>
-          </Tr>
-        </Thead>
-        <Tbody>
-          <Tr>
-            <Td>
-              <NextLink href={ `/storage/local` }>
-                <Link fontWeight="bold">local</Link>
-              </NextLink>
-            </Td>
-          </Tr>
-        </Tbody>
-      </Table>
+      <Flex mt={ 4 }>
+        <Text fontSize="xl">Local</Text>
+        <Box my="auto" ml={ 2 }>
+          <AddLocalFileSystemModal>
+            { (open) => (
+              <Button size="sm" variant="ghost" colorScheme="blue" onClick={ open } isLoading={ loading } disable={ error }><AddIcon /></Button>
+            ) }
+          </AddLocalFileSystemModal>
+        </Box>
+      </Flex>
+      { localMessage }
+      <EditLocalFileSystemModal>
+        { (openEdit) => localTable ? (<Table variant="striped">
+            <Thead>
+              <Tr>
+                <Th>Name</Th>
+                <Th>Path</Th>
+                <Th>Prefix</Th>
+                <Th></Th>
+              </Tr>
+            </Thead>
+            <Tbody>
+              { localTable(openEdit) }
+            </Tbody>
+          </Table>) : null
+        }
+      </EditLocalFileSystemModal>
       <Flex mt={ 8 }>
         <Text fontSize="xl">S3 Buckets</Text>
         <Box my="auto" ml={ 2 }>

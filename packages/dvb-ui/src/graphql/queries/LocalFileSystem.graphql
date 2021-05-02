@@ -1,0 +1,11 @@
+query LocalFileSystem($name: String!) {
+  storage(name: $name) {
+    name
+    type
+    localFileSystem {
+      name
+      path
+      prefix
+    }
+  }
+}

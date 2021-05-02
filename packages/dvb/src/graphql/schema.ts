@@ -12,6 +12,7 @@ import { assign, cloneDeep, debounce, pickBy } from 'lodash';
 import { downloadWriteStream } from '../download';
 import { Task, getSubject } from '../tasks';
 import { ftpServers } from '../storage/ftp';
+import { localFileSystems } from '../storage/local';
 
 function validateFileName(fileName: string) {
   if (path.isAbsolute(fileName)) {
@@ -152,6 +153,9 @@ class DvmResolver {
     if (ftpServers.del({ name })) {
       return true;
     }
+    if (localFileSystems.del({ name })) {
+      return true;
+    }
     return false;
   }
   @Mutation(() => Boolean) async deleteBackup(
@@ -209,6 +213,43 @@ class DvmResolver {
         throw new Error(`Storage does not exist: ${storageName}`);
       }
     }).id;
+  }
+
+  ////
+  // Local File Systems
+  ///
+  @Mutation(() => Storage, { nullable: true }) addLocalFileSystem(
+    @Arg('name', () => String) name: string,
+    @Arg('path', () => String) path: string,
+    @Arg('prefix', () => String, { nullable: true }) prefix: string | undefined,
+  ): Storage | null {
+    const storage = getStorage(name);
+    if (storage) {
+      // TODO: return an error
+      return null;
+    }
+    const bucketInfo = localFileSystems.create({
+      name,
+      path,
+      prefix: prefix ?? '',
+    });
+    return Storage.get(bucketInfo.name);
+  }
+  @Mutation(() => Storage, { nullable: true }) updateLocalFileSystem(
+    @Arg('name', () => String) name: string,
+    @Arg('path', () => String, { nullable: true }) path: string | undefined,
+    @Arg('prefix', () => String, { nullable: true }) prefix: string | undefined,
+  ): Storage | null {
+    const bucketInfo = cloneDeep(localFileSystems.findOne({ name }));
+    if (!bucketInfo) {
+      return null;
+    }
+    assign(bucketInfo, pickBy({
+      path,
+      prefix,
+    }, o => o !== undefined));
+    localFileSystems.update({ name }, bucketInfo);
+    return Storage.get(bucketInfo.name);
   }
 
   ///

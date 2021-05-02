@@ -1,17 +1,32 @@
 import { StorageInterface, StorageBackup, StorageBackupStat } from '.';
 import { access, createReadStream, createWriteStream, unlink } from 'fs-extra';
 import { Readable, Writable } from 'stream';
-import { constants, ensureDirSync, ensureDir, stat } from 'fs-extra';
-import { BACKUPS_DIR } from '../env';
+import { constants, ensureDir, stat } from 'fs-extra';
 import klaw from 'klaw';
 import path from 'path';
-
-const workingDir = path.isAbsolute(BACKUPS_DIR) ? BACKUPS_DIR : path.join(process.cwd(), BACKUPS_DIR);
-ensureDirSync(workingDir);
+import { DBStore } from '../db';
+import { ObjectType, Field } from 'type-graphql';
 
 export class LocalStorage implements StorageInterface {
+  constructor(private fileSystem: LocalFileSystem) {
+  }
+
+  private get fullPrefix() {
+    if (this.fileSystem.prefix === '') {
+      const prefix = this.fileSystem.path;
+      if (prefix.endsWith('/')) {
+        return prefix;
+      }
+      return `${prefix}/`;
+    }
+    return path.join(this.fileSystem.path, this.fileSystem.prefix);
+  }
+  private fullPath(fileName: string) {
+    return path.join(this.fileSystem.path, `${this.fileSystem.prefix}${fileName}`);
+  }
+
   async write(fileName: string, stream: Readable)  {
-    const out = path.join(workingDir, fileName);
+    const out = this.fullPath(fileName);
     await ensureDir(path.dirname(out));
     const writeStream = createWriteStream(out);
     await new Promise(resolve => writeStream.on('open', resolve));
@@ -24,7 +39,7 @@ export class LocalStorage implements StorageInterface {
   }
   read(fileName: string, stream: Writable) {
     return new Promise<void>(async (resolve, reject) => {
-      const inFile = path.join(workingDir, fileName);
+      const inFile = this.fullPath(fileName);
       const readStream = createReadStream(inFile);
       await new Promise(resolve => readStream.on('open', resolve));
       readStream.pipe(stream);
@@ -33,16 +48,18 @@ export class LocalStorage implements StorageInterface {
     });
   }
   async del(fileName: string) {
-    await unlink(path.join(workingDir, fileName));
+    await unlink(this.fullPath(fileName));
   }
   list(): Promise<StorageBackup[]> {
     return new Promise<StorageBackup[]>((resolve, reject) => {
       const arr: StorageBackup[] = [];
-      klaw(workingDir).on('data', item => {
+      klaw(this.fileSystem.path).on('data', item => {
         if (!item.stats.isDirectory()) {
-          arr.push(new StorageBackup(this, {
-            fileName: item.path.substr(workingDir.length + 1),
-          }));
+          if (item.path.startsWith(this.fullPrefix)) {
+            arr.push(new StorageBackup(this, {
+              fileName: item.path.substr(this.fullPrefix.length),
+            }));
+          }
         }
       }).on('error', (err) => {
         reject(err);
@@ -52,15 +69,29 @@ export class LocalStorage implements StorageInterface {
     });
   }
   async stat(fileName: string): Promise<StorageBackupStat> {
-    const info = await stat(path.join(workingDir, fileName));
+    const info = await stat(this.fullPath(fileName));
     return { size: info.size, modified: info.mtime.getTime() };
   }
   async exists(fileName: string): Promise<boolean> {
     try {
-      await access(fileName, constants.F_OK);
+      await access(this.fullPath(fileName), constants.F_OK);
       return true;
     } catch (err) {
       return false;
     }
   }
 }
+
+@ObjectType()
+export class LocalFileSystem {
+  @Field()
+  name: string;
+
+  @Field()
+  path: string;
+
+  @Field()
+  prefix: string;
+}
+
+export const localFileSystems = new DBStore<LocalFileSystem>('localFileSystems');

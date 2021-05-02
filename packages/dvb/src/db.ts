@@ -12,6 +12,7 @@ db.defaults({
   versions: {},
   s3Buckets: [],
   ftpServers: [],
+  localFileSystems: [],
   schedules: [],
   pinnedVolumes: [],
 }).write();
