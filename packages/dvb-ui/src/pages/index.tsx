@@ -13,7 +13,7 @@ export default function Index(): any {
   const [ pinVolume ] = usePinVolumeMutation();
   useVolumeUpdatedSubscription();
   let message: JSX.Element | null = null;
-  let table: ((openBackup: (volume: string) => void, openRestore: (volume: string) => void) => JSX.Element) | null = null;
+  let table: ((openBackup: (volumeName: string, volumeSafeName: string) => void, openRestore: (volumeName: string, volumeSafeName: string) => void) => JSX.Element) | null = null;
   if (loading) {
     table = () => (<LoadingTr colSpan={ 4 } />);
   } else if (error) {
@@ -50,7 +50,7 @@ export default function Index(): any {
           </Flex>
         </Td>
         <Td>
-          <Text>{ volume.driver }</Text>
+          <Text>{ volume.driver ? `${volume.type}:${volume.driver}` : volume.type }</Text>
         </Td>
         <Td>
           <Popover>
@@ -74,8 +74,8 @@ export default function Index(): any {
           </Popover>
         </Td>
         <Td textAlign="right">
-          <Button colorScheme="blue" onClick={ () => openBackup(volume.name) }>Backup</Button>
-          <Button colorScheme="orange" ml={ 2 } onClick={ () => openRestore(volume.name) }>Restore</Button>
+          <Button colorScheme="blue" onClick={ () => openBackup(volume.name, volume.safeName) }>Backup</Button>
+          <Button colorScheme="orange" ml={ 2 } onClick={ () => openRestore(volume.name, volume.safeName) }>Restore</Button>
         </Td>
       </Tr>
     ))}</>);
@@ -99,7 +99,7 @@ export default function Index(): any {
                   <Thead>
                     <Tr>
                       <Th>Name</Th>
-                      <Th>Driver</Th>
+                      <Th>Type</Th>
                       <Th>Containers</Th>
                       <Th></Th>
                     </Tr>

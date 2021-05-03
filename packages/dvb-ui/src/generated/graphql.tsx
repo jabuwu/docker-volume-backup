@@ -289,6 +289,8 @@ export type Subscription = {
   __typename?: 'Subscription';
   volumeCreated: Volume;
   volumeDestroyed: Scalars['String'];
+  volumeBound: Volume;
+  volumeUnbound: Scalars['String'];
   volumeUpdated: Volume;
   taskUpdated: Task;
 };
@@ -311,14 +313,17 @@ export type Task = {
 export type Volume = {
   __typename?: 'Volume';
   name: Scalars['String'];
-  driver: Scalars['String'];
-  mountpoint: Scalars['String'];
+  safeName: Scalars['String'];
+  driver?: Maybe<Scalars['String']>;
+  type: Scalars['String'];
+  mountpoint?: Maybe<Scalars['String']>;
   status?: Maybe<Scalars['JSON']>;
   labels?: Maybe<Scalars['JSON']>;
   scope: Scalars['String'];
   options?: Maybe<Scalars['JSON']>;
   usageData?: Maybe<VolumeUsageData>;
   pinned: Scalars['Boolean'];
+  source?: Maybe<Scalars['String']>;
   containers: Array<Container>;
 };
 
@@ -350,7 +355,7 @@ export type StorageDataFragment = (
 
 export type VolumeDataFragment = (
   { __typename?: 'Volume' }
-  & Pick<Volume, 'name' | 'driver' | 'pinned'>
+  & Pick<Volume, 'name' | 'safeName' | 'type' | 'driver' | 'pinned'>
   & { containers: Array<(
     { __typename?: 'Container' }
     & Pick<Container, 'id' | 'names' | 'state'>
@@ -752,6 +757,17 @@ export type TaskUpdatedSubscription = (
   ) }
 );
 
+export type VolumeBoundSubscriptionVariables = Exact<{ [key: string]: never; }>;
+
+
+export type VolumeBoundSubscription = (
+  { __typename?: 'Subscription' }
+  & { volumeBound: (
+    { __typename?: 'Volume' }
+    & VolumeDataFragment
+  ) }
+);
+
 export type VolumeCreatedSubscriptionVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -769,6 +785,14 @@ export type VolumeDestroyedSubscriptionVariables = Exact<{ [key: string]: never;
 export type VolumeDestroyedSubscription = (
   { __typename?: 'Subscription' }
   & Pick<Subscription, 'volumeDestroyed'>
+);
+
+export type VolumeUnboundSubscriptionVariables = Exact<{ [key: string]: never; }>;
+
+
+export type VolumeUnboundSubscription = (
+  { __typename?: 'Subscription' }
+  & Pick<Subscription, 'volumeUnbound'>
 );
 
 export type VolumeUpdatedSubscriptionVariables = Exact<{ [key: string]: never; }>;
@@ -820,6 +844,8 @@ export const StorageDataFragmentDoc = gql`
 export const VolumeDataFragmentDoc = gql`
     fragment volumeData on Volume {
   name
+  safeName
+  type
   driver
   pinned
   containers {
@@ -1862,6 +1888,35 @@ export function useTaskUpdatedSubscription(baseOptions: Apollo.SubscriptionHookO
       }
 export type TaskUpdatedSubscriptionHookResult = ReturnType<typeof useTaskUpdatedSubscription>;
 export type TaskUpdatedSubscriptionResult = Apollo.SubscriptionResult<TaskUpdatedSubscription>;
+export const VolumeBoundDocument = gql`
+    subscription VolumeBound {
+  volumeBound {
+    ...volumeData
+  }
+}
+    ${VolumeDataFragmentDoc}`;
+
+/**
+ * __useVolumeBoundSubscription__
+ *
+ * To run a query within a React component, call `useVolumeBoundSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useVolumeBoundSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useVolumeBoundSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useVolumeBoundSubscription(baseOptions?: Apollo.SubscriptionHookOptions<VolumeBoundSubscription, VolumeBoundSubscriptionVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<VolumeBoundSubscription, VolumeBoundSubscriptionVariables>(VolumeBoundDocument, options);
+      }
+export type VolumeBoundSubscriptionHookResult = ReturnType<typeof useVolumeBoundSubscription>;
+export type VolumeBoundSubscriptionResult = Apollo.SubscriptionResult<VolumeBoundSubscription>;
 export const VolumeCreatedDocument = gql`
     subscription VolumeCreated {
   volumeCreated {
@@ -1918,6 +1973,33 @@ export function useVolumeDestroyedSubscription(baseOptions?: Apollo.Subscription
       }
 export type VolumeDestroyedSubscriptionHookResult = ReturnType<typeof useVolumeDestroyedSubscription>;
 export type VolumeDestroyedSubscriptionResult = Apollo.SubscriptionResult<VolumeDestroyedSubscription>;
+export const VolumeUnboundDocument = gql`
+    subscription VolumeUnbound {
+  volumeUnbound
+}
+    `;
+
+/**
+ * __useVolumeUnboundSubscription__
+ *
+ * To run a query within a React component, call `useVolumeUnboundSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useVolumeUnboundSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useVolumeUnboundSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useVolumeUnboundSubscription(baseOptions?: Apollo.SubscriptionHookOptions<VolumeUnboundSubscription, VolumeUnboundSubscriptionVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<VolumeUnboundSubscription, VolumeUnboundSubscriptionVariables>(VolumeUnboundDocument, options);
+      }
+export type VolumeUnboundSubscriptionHookResult = ReturnType<typeof useVolumeUnboundSubscription>;
+export type VolumeUnboundSubscriptionResult = Apollo.SubscriptionResult<VolumeUnboundSubscription>;
 export const VolumeUpdatedDocument = gql`
     subscription VolumeUpdated {
   volumeUpdated {

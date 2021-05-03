@@ -1,5 +1,7 @@
 fragment volumeData on Volume {
   name
+  safeName
+  type
   driver
   pinned
   containers {

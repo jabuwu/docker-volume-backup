@@ -2,7 +2,7 @@ import { Text, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton,
 import React, { useState, useCallback } from 'react';
 import { useExportVolumeMutation, useStorageListQuery, useTaskUpdatedSubscription } from '../generated/graphql';
 
-export default function BackupVolumeModal({ children }: { children: (open: (volume: string) => void) => JSX.Element }) {
+export default function BackupVolumeModal({ children }: { children: (open: (volumeName: string, volumeSafeName: string) => void) => JSX.Element }) {
   const [ isOpen, setIsOpen ] = React.useState(false);
   const [ volume, setVolume ] = React.useState('');
   const [ working, setWorking ] = useState(false);
@@ -39,12 +39,12 @@ export default function BackupVolumeModal({ children }: { children: (open: (volu
     },
   });
 
-  const open = useCallback((volume: string) => {
+  const open = useCallback((volumeName: string, volumeSafeName: string) => {
     setIsOpen(true);
     setStopContainers(true);
     setStorage('');
-    setFileName(`${volume}--${Date.now()}.tgz`);
-    setVolume(volume);
+    setFileName(`${volumeSafeName}--${Date.now()}.tgz`);
+    setVolume(volumeName);
     setTaskId('');
     setStatus('');
     setWorking(false);

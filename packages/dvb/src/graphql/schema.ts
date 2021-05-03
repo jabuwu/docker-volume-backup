@@ -127,6 +127,16 @@ class DvmResolver {
   ): string {
     return volume;
   }
+  @Subscription(() => Volume, { subscribe: fromObservable(context.docker.volumeBound$) }) volumeBound(
+    @Root() volume: Volume
+  ): Volume {
+    return volume;
+  }
+  @Subscription(() => String, { subscribe: fromObservable(context.docker.volumeUnbound$) }) volumeUnbound(
+    @Root() volume: string
+  ): string {
+    return volume;
+  }
   @Subscription(() => Volume, { subscribe: fromObservable(context.docker.volumeContainerStatusUpdated$) }) async volumeUpdated(
     @Root() update: { volume: string }
   ): Promise<Volume> {

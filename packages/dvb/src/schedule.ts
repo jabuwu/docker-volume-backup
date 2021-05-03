@@ -3,6 +3,7 @@ import { DBStore } from './db';
 import { context } from './graphql/context';
 import { getStorage } from './storage';
 import { applyFormat } from './utility/apply-format';
+import { directoryToName } from './utility/directory-to-name';
 
 @ObjectType()
 export class Schedule {
@@ -43,7 +44,7 @@ setInterval(async () => {
       schedules.update({ id: schedule.id }, { lastUpdate: Date.now() });
       const now = Date.now();
       const fileName = applyFormat(schedule.fileNameFormat, {
-        volumeName: schedule.volume,
+        volumeName: directoryToName(schedule.volume),
         dateNow: String(now),
       }, now);
       const storageInstance = getStorage(schedule.storage);

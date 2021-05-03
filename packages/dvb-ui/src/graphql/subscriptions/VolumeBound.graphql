@@ -1,0 +1,6 @@
+#import "../fragments/VolumeData"
+subscription VolumeBound {
+  volumeBound {
+    ...volumeData
+  }
+}

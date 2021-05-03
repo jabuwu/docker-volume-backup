@@ -1,11 +1,11 @@
 import { Container } from './container';
-import { Volume, pinnedVolumes } from './volume';
+import { Volume } from './volume';
 import { camelCaseObj } from '../utility/camel-case-obj';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import Dockerode from 'dockerode';
 import { concatMap, map, filter } from 'rxjs/operators';
 import { PassThrough, Readable, Writable } from 'stream';
-import { find, findIndex, omit } from 'lodash';
+import { find, findIndex, omit, uniqBy } from 'lodash';
 import { createGzip } from 'zlib';
 import { generate } from 'short-uuid';
 
@@ -38,47 +38,89 @@ class RunResponse {
 
 export class Docker {
   private _volumes: Volume[] = [];
+  private _bindMap: { [ volume: string ]: string[] } = {};
 
-  public volumeCreate$: Observable<Volume>;
-  public volumeDestroy$: Observable<string>;
+  public volumeCreate$: Subject<Volume>;
+  public volumeDestroy$: Subject<string>;
+  public volumeBound$: Subject<Volume>;
+  public volumeUnbound$: Subject<string>;
   public volumeContainerStatusUpdated$: Observable<{ container: string, volume: string, status: string }>;
 
   constructor() {
-    this.getVolumes().then((volumes) => {
-      this._volumes = volumes;
-    }).catch((err) => {
-      console.error(err);
+    this.init();
+
+    this.volumeCreate$ = new Subject<Volume>();
+    event$.subscribe(async (event) => {
+      if (event.Type !== 'volume' || event.Action !== 'create') {
+        return;
+      }
+      const name = event.Actor.ID;
+      const index = findIndex(this._volumes, { name });
+      if (index === -1) {
+        const info = await dockerode.getVolume(event.Actor.ID).inspect();
+        const volume = Volume.createFromVolumeInfo(this, info);
+        this._volumes.push(volume);
+        this.volumeCreate$.next(volume);
+      }
     });
-    this.volumeCreate$ = event$.pipe(
-      filter((event: DockerEvent) => event.Type === 'volume' && event.Action === 'create'),
-      map(event => dockerode.getVolume(event.Actor.ID)),
-      concatMap(volume => volume.inspect()),
-      map(info => {
-        const volume: Volume = new Volume(this, camelCaseObj(info));
-        volume.pinned = pinnedVolumes.has(volume.name);
-        return volume;
-      }),
-      filter((volume) => {
-        const index = findIndex(this._volumes, { name: volume.name });
-        if (index === -1) {
-          this._volumes.push(volume);
-          return true;
+
+    this.volumeDestroy$ = new Subject<string>();
+    event$.subscribe(async (event) => {
+      if (event.Type !== 'volume' || event.Action !== 'destroy') {
+        return;
+      }
+      const name = event.Actor.ID;
+      const index = findIndex(this._volumes, { name });
+      if (index !== -1) {
+        this._volumes.splice(index, 1);
+        this.volumeDestroy$.next(name);
+      }
+    });
+
+    this.volumeBound$ = new Subject<Volume>();
+    event$.subscribe(async (event) => {
+      if (event.Type !== 'container' || event.Action !== 'create') {
+        return;
+      }
+      const containerInfo = await dockerode.getContainer(event.Actor.ID).inspect();
+      for (const mount of containerInfo.Mounts) {
+        if ((<any>mount).Type === 'bind') {
+          this._bindMap[mount.Source] = this._bindMap[mount.Source] || [];
+          this._bindMap[mount.Source].push(containerInfo.Id);
+          const index = findIndex(this._volumes, { name: mount.Source });
+          if (index === -1) {
+            const volume = Volume.createFromBind(this, camelCaseObj(mount));
+            this._volumes.push(volume);
+            this.volumeBound$.next(volume);
+          }
         }
-        return false;
-      })
-    );
-    this.volumeDestroy$ = event$.pipe(
-      filter((event: DockerEvent) => event.Type === 'volume' && event.Action === 'destroy'),
-      map(event => event.Actor.ID),
-      filter((name) => {
-        const index = findIndex(this._volumes, { name });
+      }
+    });
+
+    this.volumeUnbound$ = new Subject<string>();
+    event$.subscribe(async (event) => {
+      if (event.Type !== 'container' || event.Action !== 'destroy') {
+        return;
+      }
+      const containerId = event.Actor.ID;
+      for (const volume in this._bindMap) {
+        const index = this._bindMap[volume].indexOf(containerId);
         if (index !== -1) {
-          this._volumes.splice(index, 1);
-          return true;
+          this._bindMap[volume].splice(index, 1);
+          if (this._bindMap[volume].length === 0) {
+            const volumeIndex = findIndex(this._volumes, { name: volume });
+            if (volumeIndex !== -1) {
+              this._volumes.splice(volumeIndex, 1);
+              this.volumeUnbound$.next(volume);
+            }
+          }
         }
-        return false;
-      })
-    );
+      }
+    });
+
+    this.volumeBound$.subscribe(volume => console.log('volume bound', volume.name));
+    this.volumeUnbound$.subscribe(name => console.log('volume unbound', name));
+
     this.volumeContainerStatusUpdated$ = event$.pipe(
       filter((event: DockerEvent) => event.Type === 'container' && (event.Action === 'start' || event.Action === 'die')),
       map(event => ({
@@ -93,6 +135,26 @@ export class Docker {
         })).filter(mount => !!mount.volume);
       }),
     );
+  }
+
+  private async init() {
+    try {
+      this._volumes = await this.getVolumes();
+      for (const volume of this._volumes) {
+        this._bindMap[volume.name] = [];
+      }
+      const containers = await this.getContainers();
+      for (const container of containers) {
+        for (const mount of container.mounts) {
+          if (mount.type === 'bind') {
+            this._bindMap[mount.source] = this._bindMap[mount.source] || [];
+            this._bindMap[mount.source].push(container.id);
+          }
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   pullAlpine() {
@@ -250,6 +312,10 @@ export class Docker {
     const stopped: string[] = [];
     await this.eachVolumeContainer(volume, async (c) => {
       const container = dockerode.getContainer(c.id);
+      const info = await container.inspect();
+      if (info.HostConfig.AutoRemove) {
+        throw new Error(`Cannot stop container "${info.Name}" because it is set to autoremove and doing so will delete it.`);
+      }
       try {
         await container.stop();
         stopped.push(container.id);
@@ -289,8 +355,14 @@ export class Docker {
   }
 
   async getVolumes(): Promise<Volume[]> {
-    const arr: Volume[] = (await dockerode.listVolumes()).Volumes.map(volume => new Volume(this, camelCaseObj(volume)));
-    arr.forEach(volume => volume.pinned = pinnedVolumes.has(volume.name));
-    return arr;
+    const volumes: Volume[] = (await dockerode.listVolumes()).Volumes.map(volume => Volume.createFromVolumeInfo(this, volume));
+    for (const container of await this.getContainers()) {
+      for (const mount of container.mounts) {
+        if (mount.type === 'bind') {
+          volumes.push(Volume.createFromBind(this, mount));
+        }
+      }
+    }
+    return uniqBy(volumes, 'name');
   }
 }

@@ -5,7 +5,7 @@ import { useImportVolumeMutation, useStorageListQuery, useStorageBackupsLazyQuer
 import { formatBytes } from '../utility/format-bytes';
 import dayjs from 'dayjs';
 
-export default function RestoreVolumeModal({ children }: { children: (open: (volume: string) => void) => void }) {
+export default function RestoreVolumeModal({ children }: { children: (open: (volumeName: string, volumeSafeName: string) => void) => void }) {
   const [ isOpen, setIsOpen ] = React.useState(false);
   const [ working, setWorking ] = useState(false);
   const [ importVolume ] = useImportVolumeMutation();
@@ -44,12 +44,12 @@ export default function RestoreVolumeModal({ children }: { children: (open: (vol
     },
   });
 
-  const open = useCallback((volume: string) => {
+  const open = useCallback((volumeName: string, volumeSafeName: string) => {
     setIsOpen(true);
     setStopContainers(true);
     setStorage('');
-    setFilter(`${volume}--`);
-    setVolume(volume);
+    setFilter(`${volumeSafeName}--`);
+    setVolume(volumeName);
     setTaskId('');
     setStatus('');
     setWorking(false);
