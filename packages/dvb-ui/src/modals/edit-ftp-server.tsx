@@ -1,8 +1,7 @@
 import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Stack, InputGroup, InputLeftAddon, Input, ModalFooter, Button, Alert, AlertIcon, Checkbox, InputRightElement, NumberInput, NumberInputField } from '@chakra-ui/react';
 import React, { useState, useCallback, useEffect } from 'react';
 import { useFtpServerLazyQuery, useUpdateFtpServerMutation } from '../generated/graphql';
-
-const noPassManager = { autoComplete: 'new-password', "data-lpignore": 'true' };
+import { noAutofill } from '../utility/no-autofill';
 
 export default function EditS3BucketModal({ children }: { children: (open: (name: string) => void) => any }) {
   const [ isOpen, setIsOpen ] = useState(false)
@@ -77,15 +76,15 @@ export default function EditS3BucketModal({ children }: { children: (open: (name
             <Stack spacing={4}>
               <InputGroup size="sm">
                 <InputLeftAddon children="Host" />
-                <Input value={ host } onChange={ e => setHost(e.target.value) } { ...noPassManager } />
+                <Input value={ host } onChange={ e => setHost(e.target.value) } { ...noAutofill } />
               </InputGroup>
               <InputGroup size="sm">
                 <InputLeftAddon children="User" />
-                <Input value={ user } onChange={ e => setUser(e.target.value) } { ...noPassManager } />
+                <Input value={ user } onChange={ e => setUser(e.target.value) } { ...noAutofill } />
               </InputGroup>
               <InputGroup size="sm">
                 <InputLeftAddon children="Password" />
-                <Input placeholder="**************" value={ password } onChange={ e => setPassword(e.target.value) } type={ showPassword ? "text" : "password" } { ...noPassManager } />
+                <Input placeholder="**************" value={ password } onChange={ e => setPassword(e.target.value) } type={ showPassword ? "text" : "password" } { ...noAutofill } />
                 { password ?
                   <InputRightElement width="4.5rem">
                     <Button h="24px" size="sm" onClick={ () => setShowPassword(value => !value) }>
@@ -97,17 +96,17 @@ export default function EditS3BucketModal({ children }: { children: (open: (name
               <InputGroup size="sm">
                 <InputLeftAddon children="Port" />
                 <NumberInput value={ port } onChange={ num => setPort(Number(num)) } min={ 1 } max={ 65535 } w="100%">
-                  <NumberInputField { ...noPassManager } />
+                  <NumberInputField { ...noAutofill } />
                 </NumberInput>
                 <InputRightElement mr="34px">
-                  <Checkbox isChecked={ secure } onChange={ e => setSecure(e.target.checked) } colorScheme="green" defaultIsChecked ml="auto" { ...noPassManager }>
+                  <Checkbox isChecked={ secure } onChange={ e => setSecure(e.target.checked) } colorScheme="green" defaultIsChecked ml="auto" { ...noAutofill }>
                     Secure
                   </Checkbox>
                 </InputRightElement>
               </InputGroup>
               <InputGroup size="sm">
                 <InputLeftAddon children="Prefix" />
-                <Input value={ prefix } onChange={ e => setPrefix(e.target.value) } { ...noPassManager } />
+                <Input value={ prefix } onChange={ e => setPrefix(e.target.value) } { ...noAutofill } />
               </InputGroup>
             </Stack>
           </ModalBody>

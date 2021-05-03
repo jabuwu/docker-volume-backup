@@ -268,6 +268,7 @@ class DvmResolver {
     @Arg('storage', () => String) storage: string,
     @Arg('hours', () => Int) hours: number,
     @Arg('stopContainers', () => Boolean) stopContainers: boolean,
+    @Arg('fileNameFormat', () => String) fileNameFormat: string,
   ): Schedule | null {
     return schedules.create({
       id: generate(),
@@ -275,6 +276,7 @@ class DvmResolver {
       storage,
       hours,
       stopContainers,
+      fileNameFormat,
       lastUpdate: new Date().getTime(),
     });
   }
@@ -284,6 +286,7 @@ class DvmResolver {
     @Arg('storage', () => String, { nullable: true }) storage: string | undefined,
     @Arg('hours', () => Int, { nullable: true }) hours: number | undefined,
     @Arg('stopContainers', () => Boolean, { nullable: true }) stopContainers: boolean | undefined,
+    @Arg('fileNameFormat', () => String, { nullable: true }) fileNameFormat: string | undefined,
   ): Schedule | null {
     const schedule = cloneDeep(schedules.findOne({ id }));
     if (!schedule) {
@@ -294,6 +297,7 @@ class DvmResolver {
       storage,
       hours,
       stopContainers,
+      fileNameFormat,
     }, o => o !== undefined));
     schedules.update({ id }, schedule);
     return schedule;

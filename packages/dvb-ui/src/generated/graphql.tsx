@@ -159,6 +159,7 @@ export type MutationUpdateLocalFileSystemArgs = {
 
 
 export type MutationAddScheduleArgs = {
+  fileNameFormat: Scalars['String'];
   stopContainers: Scalars['Boolean'];
   hours: Scalars['Int'];
   storage: Scalars['String'];
@@ -167,6 +168,7 @@ export type MutationAddScheduleArgs = {
 
 
 export type MutationUpdateScheduleArgs = {
+  fileNameFormat?: Maybe<Scalars['String']>;
   stopContainers?: Maybe<Scalars['Boolean']>;
   hours?: Maybe<Scalars['Int']>;
   storage?: Maybe<Scalars['String']>;
@@ -258,6 +260,7 @@ export type Schedule = {
   hours: Scalars['Float'];
   lastUpdate: Scalars['Float'];
   stopContainers: Scalars['Boolean'];
+  fileNameFormat: Scalars['String'];
 };
 
 export type Storage = {
@@ -327,7 +330,7 @@ export type VolumeUsageData = {
 
 export type ScheduleDataFragment = (
   { __typename?: 'Schedule' }
-  & Pick<Schedule, 'id' | 'volume' | 'storage' | 'hours' | 'stopContainers' | 'lastUpdate'>
+  & Pick<Schedule, 'id' | 'volume' | 'storage' | 'hours' | 'stopContainers' | 'fileNameFormat' | 'lastUpdate'>
 );
 
 export type StorageDataFragment = (
@@ -411,6 +414,7 @@ export type AddScheduleMutationVariables = Exact<{
   storage: Scalars['String'];
   hours: Scalars['Int'];
   stopContainers: Scalars['Boolean'];
+  fileNameFormat: Scalars['String'];
 }>;
 
 
@@ -570,6 +574,7 @@ export type UpdateScheduleMutationVariables = Exact<{
   storage?: Maybe<Scalars['String']>;
   hours?: Maybe<Scalars['Int']>;
   stopContainers?: Maybe<Scalars['Boolean']>;
+  fileNameFormat?: Maybe<Scalars['String']>;
 }>;
 
 
@@ -784,6 +789,7 @@ export const ScheduleDataFragmentDoc = gql`
   storage
   hours
   stopContainers
+  fileNameFormat
   lastUpdate
 }
     `;
@@ -951,12 +957,13 @@ export type AddS3BucketMutationHookResult = ReturnType<typeof useAddS3BucketMuta
 export type AddS3BucketMutationResult = Apollo.MutationResult<AddS3BucketMutation>;
 export type AddS3BucketMutationOptions = Apollo.BaseMutationOptions<AddS3BucketMutation, AddS3BucketMutationVariables>;
 export const AddScheduleDocument = gql`
-    mutation AddSchedule($volume: String!, $storage: String!, $hours: Int!, $stopContainers: Boolean!) {
+    mutation AddSchedule($volume: String!, $storage: String!, $hours: Int!, $stopContainers: Boolean!, $fileNameFormat: String!) {
   addSchedule(
     volume: $volume
     storage: $storage
     hours: $hours
     stopContainers: $stopContainers
+    fileNameFormat: $fileNameFormat
   ) {
     ...scheduleData
   }
@@ -981,6 +988,7 @@ export type AddScheduleMutationFn = Apollo.MutationFunction<AddScheduleMutation,
  *      storage: // value for 'storage'
  *      hours: // value for 'hours'
  *      stopContainers: // value for 'stopContainers'
+ *      fileNameFormat: // value for 'fileNameFormat'
  *   },
  * });
  */
@@ -1387,13 +1395,14 @@ export type UpdateS3BucketMutationHookResult = ReturnType<typeof useUpdateS3Buck
 export type UpdateS3BucketMutationResult = Apollo.MutationResult<UpdateS3BucketMutation>;
 export type UpdateS3BucketMutationOptions = Apollo.BaseMutationOptions<UpdateS3BucketMutation, UpdateS3BucketMutationVariables>;
 export const UpdateScheduleDocument = gql`
-    mutation UpdateSchedule($id: String!, $volume: String, $storage: String, $hours: Int, $stopContainers: Boolean) {
+    mutation UpdateSchedule($id: String!, $volume: String, $storage: String, $hours: Int, $stopContainers: Boolean, $fileNameFormat: String) {
   updateSchedule(
     id: $id
     volume: $volume
     storage: $storage
     hours: $hours
     stopContainers: $stopContainers
+    fileNameFormat: $fileNameFormat
   ) {
     ...scheduleData
   }
@@ -1419,6 +1428,7 @@ export type UpdateScheduleMutationFn = Apollo.MutationFunction<UpdateScheduleMut
  *      storage: // value for 'storage'
  *      hours: // value for 'hours'
  *      stopContainers: // value for 'stopContainers'
+ *      fileNameFormat: // value for 'fileNameFormat'
  *   },
  * });
  */

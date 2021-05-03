@@ -4,5 +4,6 @@ fragment scheduleData on Schedule {
   storage
   hours
   stopContainers
+  fileNameFormat
   lastUpdate
 }

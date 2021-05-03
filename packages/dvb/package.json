@@ -16,6 +16,7 @@
     "basic-ftp": "^4.6.6",
     "class-validator": "^0.13.1",
     "cors": "^2.8.5",
+    "dayjs": "^1.10.4",
     "dockerode": "^3.2.1",
     "dotenv": "^8.2.0",
     "env-var": "^7.0.0",

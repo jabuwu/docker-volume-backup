@@ -1,6 +1,8 @@
 import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Stack, Alert, AlertIcon, Select, ModalFooter, Button, NumberDecrementStepper, NumberIncrementStepper, NumberInput, NumberInputField, NumberInputStepper, Box, Flex, Checkbox } from '@chakra-ui/react';
 import React, { useState, useCallback, useEffect } from 'react';
 import { useUpdateScheduleMutation, useVolumesQuery, useStorageListQuery, SchedulesQuery, SchedulesDocument, useScheduleLazyQuery } from '../generated/graphql';
+import BackupIntervalInput from '../components/backup-interval-input';
+import BackupNameInput from '../components/backup-name-input';
 
 export default function EditScheduleModal({ children }: { children: (open: (id: string) => void) => JSX.Element }) {
   const [ isOpen, setIsOpen ] = React.useState(false)
@@ -11,6 +13,7 @@ export default function EditScheduleModal({ children }: { children: (open: (id: 
   const [ id, setId ] = useState('');
   const [ storage, setStorage ] = useState('');
   const [ volume, setVolume ] = useState('');
+  const [ fileNameFormat, setFileNameFormat ] = useState('');
   const [ hours, setHours ] = useState(1);
   const [ stopContainers, setStopContainers ] = useState(true);
 
@@ -20,6 +23,7 @@ export default function EditScheduleModal({ children }: { children: (open: (id: 
     getSchedule({ variables: { id } });
       setStorage('');
       setVolume('');
+      setFileNameFormat('');
       setHours(1);
       setStopContainers(true);
   }, []);
@@ -28,6 +32,7 @@ export default function EditScheduleModal({ children }: { children: (open: (id: 
     if (data && data.schedule) {
       setStorage(data.schedule.storage);
       setVolume(data.schedule.volume);
+      setFileNameFormat(data.schedule.fileNameFormat);
       setHours(data.schedule.hours);
       setStopContainers(data.schedule.stopContainers);
     }
@@ -45,10 +50,11 @@ export default function EditScheduleModal({ children }: { children: (open: (id: 
         volume,
         hours,
         stopContainers,
+        fileNameFormat,
       },
     });
     close();
-  }, [ storage, volume, hours, stopContainers ]);
+  }, [ storage, volume, hours, stopContainers, fileNameFormat ]);
 
   return (
     <>
@@ -98,13 +104,12 @@ export default function EditScheduleModal({ children }: { children: (open: (id: 
                   )) }
                 </Select>
               </> : null }
-              <NumberInput min={ 1 } value={ hours } onChange={ value => setHours(Number(value)) } disabled={ !!loading || !!error }>
-                <NumberInputField />
-                <NumberInputStepper>
-                  <NumberIncrementStepper />
-                  <NumberDecrementStepper />
-                </NumberInputStepper>
-              </NumberInput>
+              { volume && storage ?
+                <>
+                  <BackupNameInput value={ fileNameFormat } onChange={ value => setFileNameFormat(value) } dictionary={ { volumeName: volume } } />
+                  <BackupIntervalInput value={ hours } onChange={ value => setHours(value) } />
+                </>
+              : null }
             </Stack>
           </ModalBody>
           <ModalFooter>

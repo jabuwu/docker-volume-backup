@@ -1,0 +1,1 @@
+export const noAutofill = { autoComplete: 'new-password', "data-lpignore": 'true' };

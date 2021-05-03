@@ -2,6 +2,7 @@ import { ObjectType, Field } from 'type-graphql';
 import { DBStore } from './db';
 import { context } from './graphql/context';
 import { getStorage } from './storage';
+import { applyFormat } from './utility/apply-format';
 
 @ObjectType()
 export class Schedule {
@@ -22,11 +23,17 @@ export class Schedule {
 
   @Field()
   stopContainers: boolean;
+
+  @Field()
+  fileNameFormat: string;
 }
 
 export const schedules = new DBStore<Schedule>('schedules');
 schedules.migrate(1, item => {
   item.stopContainers = false;
+});
+schedules.migrate(2, item => {
+  item.fileNameFormat = '${volumeName}--${dateNow}.tgz';
 });
 
 setInterval(async () => {
@@ -34,7 +41,11 @@ setInterval(async () => {
   for (const schedule of list) {
     if (Date.now() > schedule.lastUpdate + schedule.hours * 60 * 60 * 1000) {
       schedules.update({ id: schedule.id }, { lastUpdate: Date.now() });
-      const fileName = `${schedule.volume}--${Date.now()}.tgz`;
+      const now = Date.now();
+      const fileName = applyFormat(schedule.fileNameFormat, {
+        volumeName: schedule.volume,
+        dateNow: String(now),
+      }, now);
       const storageInstance = getStorage(schedule.storage);
       if (storageInstance) {
         try {

@@ -1,6 +1,6 @@
 #import "../fragments/ScheduleData"
-mutation AddSchedule($volume: String!, $storage: String!, $hours: Int!, $stopContainers: Boolean!) {
-  addSchedule(volume: $volume, storage: $storage, hours: $hours, stopContainers: $stopContainers) {
+mutation AddSchedule($volume: String!, $storage: String!, $hours: Int!, $stopContainers: Boolean!, $fileNameFormat: String!) {
+  addSchedule(volume: $volume, storage: $storage, hours: $hours, stopContainers: $stopContainers, fileNameFormat: $fileNameFormat) {
     ...scheduleData
   }
 }

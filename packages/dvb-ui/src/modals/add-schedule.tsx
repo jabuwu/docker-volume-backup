@@ -1,6 +1,10 @@
 import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Stack, Alert, AlertIcon, Select, ModalFooter, Button, NumberDecrementStepper, NumberIncrementStepper, NumberInput, NumberInputField, NumberInputStepper, Box, Checkbox, Flex } from '@chakra-ui/react';
 import React, { useState, useRef, useCallback } from 'react';
 import { useAddScheduleMutation, useVolumesQuery, useStorageListQuery, SchedulesQuery, SchedulesDocument } from '../generated/graphql';
+import BackupIntervalInput from '../components/backup-interval-input';
+import BackupNameInput from '../components/backup-name-input';
+
+const defaultFileNameFormat = '${volumeName}--${dateNow}.tgz';
 
 export default function AddScheduleModal({ children }: { children: (open: () => void) => JSX.Element }) {
   const [ isOpen, setIsOpen ] = React.useState(false)
@@ -9,11 +13,16 @@ export default function AddScheduleModal({ children }: { children: (open: () => 
   const { data: storageData, loading: storageLoading, error: storageError } = useStorageListQuery({ fetchPolicy: 'network-only' });
   const [ storage, setStorage ] = useState('');
   const [ volume, setVolume ] = useState('');
-  const hours = useRef<any>();
+  const [ fileNameFormat, setFileNameFormat ] = useState(defaultFileNameFormat);
+  const [ hours, setHours ] = useState(24);
   const [ stopContainers, setStopContainers ] = useState(true);
 
   const open = useCallback(() => {
     setIsOpen(true);
+    setStorage('');
+    setVolume('');
+    setFileNameFormat(defaultFileNameFormat);
+    setHours(24);
   }, []);
 
   const close = useCallback(() => {
@@ -25,8 +34,9 @@ export default function AddScheduleModal({ children }: { children: (open: () => 
       variables: {
         storage,
         volume,
-        hours: Number(hours.current!.value),
+        hours,
         stopContainers,
+        fileNameFormat,
       },
       update: (cache, { data }) => {
         if (data.addSchedule) {
@@ -39,7 +49,7 @@ export default function AddScheduleModal({ children }: { children: (open: () => 
       }
     });
     close();
-  }, [ storage, volume, hours, stopContainers ]);
+  }, [ storage, volume, hours, stopContainers, fileNameFormat ]);
 
   return (
     <>
@@ -83,13 +93,12 @@ export default function AddScheduleModal({ children }: { children: (open: () => 
                   )) }
                 </Select>
               </> : null }
-              <NumberInput defaultValue={ 1 } min={ 1 }>
-                <NumberInputField ref={ hours } />
-                <NumberInputStepper>
-                  <NumberIncrementStepper />
-                  <NumberDecrementStepper />
-                </NumberInputStepper>
-              </NumberInput>
+              { volume && storage ?
+                <>
+                  <BackupNameInput value={ fileNameFormat } onChange={ value => setFileNameFormat(value) } dictionary={ { volumeName: volume } } />
+                  <BackupIntervalInput value={ hours } onChange={ value => setHours(value) } />
+                </>
+              : null }
             </Stack>
           </ModalBody>
           <ModalFooter>
