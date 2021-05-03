@@ -95,8 +95,20 @@ export class Docker {
     );
   }
 
-  async pullAlpine() {
-    await dockerode.pull('alpine');
+  pullAlpine() {
+    return new Promise<void>((resolve, reject) => {
+      dockerode.pull('alpine', (err: any, stream: any) => {
+        if (err) {
+          return reject(err);
+        }
+        dockerode.modem.followProgress(stream, (err: any) => {
+          if (err) {
+            return reject(err);
+          }
+          resolve();
+        }, () => {});
+      });
+    });
   }
 
   runInVolume(name: string, command: string[]): Promise<string>;
