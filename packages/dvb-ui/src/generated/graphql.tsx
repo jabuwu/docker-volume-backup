@@ -19,6 +19,50 @@ export type Scalars = {
 };
 
 
+export type BackupFrequency = {
+  __typename?: 'BackupFrequency';
+  interval?: Maybe<BackupFrequencyInterval>;
+  weekday?: Maybe<BackupFrequencyWeekday>;
+};
+
+export type BackupFrequencyInput = {
+  interval?: Maybe<BackupFrequencyIntervalInput>;
+  weekday?: Maybe<BackupFrequencyWeekdayInput>;
+};
+
+export type BackupFrequencyInterval = {
+  __typename?: 'BackupFrequencyInterval';
+  interval: Scalars['Int'];
+  unit: Scalars['String'];
+};
+
+export type BackupFrequencyIntervalInput = {
+  interval: Scalars['Int'];
+  unit: Scalars['String'];
+};
+
+export type BackupFrequencyWeekday = {
+  __typename?: 'BackupFrequencyWeekday';
+  enabled: Array<Scalars['Boolean']>;
+  at: BackupFrequencyWeekdayAt;
+};
+
+export type BackupFrequencyWeekdayAt = {
+  __typename?: 'BackupFrequencyWeekdayAt';
+  hour: Scalars['Int'];
+  minute: Scalars['Int'];
+};
+
+export type BackupFrequencyWeekdayAtInput = {
+  hour: Scalars['Int'];
+  minute: Scalars['Int'];
+};
+
+export type BackupFrequencyWeekdayInput = {
+  enabled: Array<Scalars['Boolean']>;
+  at: BackupFrequencyWeekdayAtInput;
+};
+
 export type Container = {
   __typename?: 'Container';
   id: Scalars['String'];
@@ -159,18 +203,18 @@ export type MutationUpdateLocalFileSystemArgs = {
 
 
 export type MutationAddScheduleArgs = {
+  frequencies: Array<BackupFrequencyInput>;
   fileNameFormat: Scalars['String'];
   stopContainers: Scalars['Boolean'];
-  hours: Scalars['Int'];
   storage: Scalars['String'];
   volume: Scalars['String'];
 };
 
 
 export type MutationUpdateScheduleArgs = {
+  frequencies?: Maybe<Array<BackupFrequencyInput>>;
   fileNameFormat?: Maybe<Scalars['String']>;
   stopContainers?: Maybe<Scalars['Boolean']>;
-  hours?: Maybe<Scalars['Int']>;
   storage?: Maybe<Scalars['String']>;
   volume?: Maybe<Scalars['String']>;
   id: Scalars['String'];
@@ -257,10 +301,12 @@ export type Schedule = {
   id: Scalars['String'];
   volume: Scalars['String'];
   storage: Scalars['String'];
-  hours: Scalars['Float'];
-  lastUpdate: Scalars['Float'];
+  createdTime: Scalars['Float'];
+  lastBackupTime?: Maybe<Scalars['Float']>;
+  nextBackupTime?: Maybe<Scalars['Float']>;
   stopContainers: Scalars['Boolean'];
   fileNameFormat: Scalars['String'];
+  frequencies: Array<BackupFrequency>;
 };
 
 export type Storage = {
@@ -333,9 +379,28 @@ export type VolumeUsageData = {
   refCount: Scalars['Float'];
 };
 
+export type BackupFrequencyDataFragment = (
+  { __typename?: 'BackupFrequency' }
+  & { interval?: Maybe<(
+    { __typename?: 'BackupFrequencyInterval' }
+    & Pick<BackupFrequencyInterval, 'interval' | 'unit'>
+  )>, weekday?: Maybe<(
+    { __typename?: 'BackupFrequencyWeekday' }
+    & Pick<BackupFrequencyWeekday, 'enabled'>
+    & { at: (
+      { __typename?: 'BackupFrequencyWeekdayAt' }
+      & Pick<BackupFrequencyWeekdayAt, 'hour' | 'minute'>
+    ) }
+  )> }
+);
+
 export type ScheduleDataFragment = (
   { __typename?: 'Schedule' }
-  & Pick<Schedule, 'id' | 'volume' | 'storage' | 'hours' | 'stopContainers' | 'fileNameFormat' | 'lastUpdate'>
+  & Pick<Schedule, 'id' | 'volume' | 'storage' | 'stopContainers' | 'fileNameFormat' | 'createdTime' | 'lastBackupTime' | 'nextBackupTime'>
+  & { frequencies: Array<(
+    { __typename?: 'BackupFrequency' }
+    & BackupFrequencyDataFragment
+  )> }
 );
 
 export type StorageDataFragment = (
@@ -417,9 +482,9 @@ export type AddS3BucketMutation = (
 export type AddScheduleMutationVariables = Exact<{
   volume: Scalars['String'];
   storage: Scalars['String'];
-  hours: Scalars['Int'];
   stopContainers: Scalars['Boolean'];
   fileNameFormat: Scalars['String'];
+  frequencies: Array<BackupFrequencyInput> | BackupFrequencyInput;
 }>;
 
 
@@ -577,9 +642,9 @@ export type UpdateScheduleMutationVariables = Exact<{
   id: Scalars['String'];
   volume?: Maybe<Scalars['String']>;
   storage?: Maybe<Scalars['String']>;
-  hours?: Maybe<Scalars['Int']>;
   stopContainers?: Maybe<Scalars['Boolean']>;
   fileNameFormat?: Maybe<Scalars['String']>;
+  frequencies?: Maybe<Array<BackupFrequencyInput> | BackupFrequencyInput>;
 }>;
 
 
@@ -806,17 +871,36 @@ export type VolumeUpdatedSubscription = (
   ) }
 );
 
+export const BackupFrequencyDataFragmentDoc = gql`
+    fragment backupFrequencyData on BackupFrequency {
+  interval {
+    interval
+    unit
+  }
+  weekday {
+    enabled
+    at {
+      hour
+      minute
+    }
+  }
+}
+    `;
 export const ScheduleDataFragmentDoc = gql`
     fragment scheduleData on Schedule {
   id
   volume
   storage
-  hours
   stopContainers
   fileNameFormat
-  lastUpdate
+  createdTime
+  lastBackupTime
+  nextBackupTime
+  frequencies {
+    ...backupFrequencyData
+  }
 }
-    `;
+    ${BackupFrequencyDataFragmentDoc}`;
 export const StorageDataFragmentDoc = gql`
     fragment storageData on Storage {
   name
@@ -983,13 +1067,13 @@ export type AddS3BucketMutationHookResult = ReturnType<typeof useAddS3BucketMuta
 export type AddS3BucketMutationResult = Apollo.MutationResult<AddS3BucketMutation>;
 export type AddS3BucketMutationOptions = Apollo.BaseMutationOptions<AddS3BucketMutation, AddS3BucketMutationVariables>;
 export const AddScheduleDocument = gql`
-    mutation AddSchedule($volume: String!, $storage: String!, $hours: Int!, $stopContainers: Boolean!, $fileNameFormat: String!) {
+    mutation AddSchedule($volume: String!, $storage: String!, $stopContainers: Boolean!, $fileNameFormat: String!, $frequencies: [BackupFrequencyInput!]!) {
   addSchedule(
     volume: $volume
     storage: $storage
-    hours: $hours
     stopContainers: $stopContainers
     fileNameFormat: $fileNameFormat
+    frequencies: $frequencies
   ) {
     ...scheduleData
   }
@@ -1012,9 +1096,9 @@ export type AddScheduleMutationFn = Apollo.MutationFunction<AddScheduleMutation,
  *   variables: {
  *      volume: // value for 'volume'
  *      storage: // value for 'storage'
- *      hours: // value for 'hours'
  *      stopContainers: // value for 'stopContainers'
  *      fileNameFormat: // value for 'fileNameFormat'
+ *      frequencies: // value for 'frequencies'
  *   },
  * });
  */
@@ -1421,14 +1505,14 @@ export type UpdateS3BucketMutationHookResult = ReturnType<typeof useUpdateS3Buck
 export type UpdateS3BucketMutationResult = Apollo.MutationResult<UpdateS3BucketMutation>;
 export type UpdateS3BucketMutationOptions = Apollo.BaseMutationOptions<UpdateS3BucketMutation, UpdateS3BucketMutationVariables>;
 export const UpdateScheduleDocument = gql`
-    mutation UpdateSchedule($id: String!, $volume: String, $storage: String, $hours: Int, $stopContainers: Boolean, $fileNameFormat: String) {
+    mutation UpdateSchedule($id: String!, $volume: String, $storage: String, $stopContainers: Boolean, $fileNameFormat: String, $frequencies: [BackupFrequencyInput!]) {
   updateSchedule(
     id: $id
     volume: $volume
     storage: $storage
-    hours: $hours
     stopContainers: $stopContainers
     fileNameFormat: $fileNameFormat
+    frequencies: $frequencies
   ) {
     ...scheduleData
   }
@@ -1452,9 +1536,9 @@ export type UpdateScheduleMutationFn = Apollo.MutationFunction<UpdateScheduleMut
  *      id: // value for 'id'
  *      volume: // value for 'volume'
  *      storage: // value for 'storage'
- *      hours: // value for 'hours'
  *      stopContainers: // value for 'stopContainers'
  *      fileNameFormat: // value for 'fileNameFormat'
+ *      frequencies: // value for 'frequencies'
  *   },
  * });
  */

@@ -1,0 +1,13 @@
+fragment backupFrequencyData on BackupFrequency {
+  interval {
+    interval
+    unit
+  }
+  weekday {
+    enabled
+    at {
+      hour
+      minute
+    }
+  }
+}

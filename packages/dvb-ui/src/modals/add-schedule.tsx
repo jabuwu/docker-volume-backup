@@ -1,11 +1,19 @@
 import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Stack, Alert, AlertIcon, Select, ModalFooter, Button, NumberDecrementStepper, NumberIncrementStepper, NumberInput, NumberInputField, NumberInputStepper, Box, Checkbox, Flex } from '@chakra-ui/react';
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { useAddScheduleMutation, useVolumesQuery, useStorageListQuery, SchedulesQuery, SchedulesDocument } from '../generated/graphql';
-import BackupIntervalInput from '../components/backup-interval-input';
+import { useAddScheduleMutation, useVolumesQuery, useStorageListQuery, SchedulesQuery, SchedulesDocument, BackupFrequency } from '../generated/graphql';
+import BackupFrequencyInput from '../components/backup-frequency-input';
 import BackupNameInput from '../components/backup-name-input';
 import { findIndex } from 'lodash';
 
 const defaultFileNameFormat = '${volumeName}--${dateNow}.tgz';
+const defaultFrequencies: BackupFrequency[] = [
+  {
+    interval: {
+      unit: 'hours',
+      interval: 24,
+    },
+  }
+];
 
 export default function AddScheduleModal({ children }: { children: (open: () => void) => JSX.Element }) {
   const [ isOpen, setIsOpen ] = React.useState(false)
@@ -16,8 +24,8 @@ export default function AddScheduleModal({ children }: { children: (open: () => 
   const [ volumeName, setVolumeName ] = useState('');
   const [ volumeSafeName, setVolumeSafeName ] = useState('');
   const [ fileNameFormat, setFileNameFormat ] = useState(defaultFileNameFormat);
-  const [ hours, setHours ] = useState(24);
   const [ stopContainers, setStopContainers ] = useState(true);
+  const [ frequencies, setFrequencies ] = useState(defaultFrequencies);
 
   const open = useCallback(() => {
     setIsOpen(true);
@@ -25,7 +33,8 @@ export default function AddScheduleModal({ children }: { children: (open: () => 
     setVolumeName('');
     setVolumeSafeName('');
     setFileNameFormat(defaultFileNameFormat);
-    setHours(24);
+    setStopContainers(true);
+    setFrequencies(defaultFrequencies);
   }, []);
 
   const close = useCallback(() => {
@@ -50,9 +59,9 @@ export default function AddScheduleModal({ children }: { children: (open: () => 
       variables: {
         storage,
         volume: volumeName,
-        hours,
         stopContainers,
         fileNameFormat,
+        frequencies,
       },
       update: (cache, { data }) => {
         if (data.addSchedule) {
@@ -65,7 +74,7 @@ export default function AddScheduleModal({ children }: { children: (open: () => 
       }
     });
     close();
-  }, [ storage, volumeName, hours, stopContainers, fileNameFormat ]);
+  }, [ storage, volumeName, stopContainers, fileNameFormat, frequencies ]);
 
   return (
     <>
@@ -112,22 +121,24 @@ export default function AddScheduleModal({ children }: { children: (open: () => 
               { volumeName && storage ?
                 <>
                   <BackupNameInput value={ fileNameFormat } onChange={ value => setFileNameFormat(value) } dictionary={ { volumeName: volumeSafeName } } />
-                  <BackupIntervalInput value={ hours } onChange={ value => setHours(value) } />
+                  <BackupFrequencyInput value={ frequencies } onChange={ value => setFrequencies(value) } />
                 </>
               : null }
             </Stack>
           </ModalBody>
           <ModalFooter>
-            <Flex w="100%">
-              <Box>
-                <Checkbox isChecked={ stopContainers } onChange={ e => setStopContainers(e.target.checked) }>Stop Containers During Backup</Checkbox>
-              </Box>
-              <Box ml="auto">
-                <Button colorScheme="green" onClick={ add } disabled={ !volumeName || !storage }>
-                  Add
-                </Button>
-              </Box>
-            </Flex>
+            { !!volumeName && !!storage ?
+              <Flex w="100%">
+                <Box>
+                  <Checkbox isChecked={ stopContainers } onChange={ e => setStopContainers(e.target.checked) }>Stop Containers During Backup</Checkbox>
+                </Box>
+                <Box ml="auto">
+                  <Button colorScheme="green" onClick={ add }>
+                    Add
+                  </Button>
+                </Box>
+              </Flex>
+            : null}
           </ModalFooter>
         </ModalContent>
       </Modal>

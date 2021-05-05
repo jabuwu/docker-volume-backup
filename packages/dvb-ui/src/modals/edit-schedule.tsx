@@ -1,8 +1,9 @@
 import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Stack, Alert, AlertIcon, Select, ModalFooter, Button, NumberDecrementStepper, NumberIncrementStepper, NumberInput, NumberInputField, NumberInputStepper, Box, Flex, Checkbox } from '@chakra-ui/react';
 import React, { useState, useCallback, useEffect } from 'react';
-import { useUpdateScheduleMutation, useVolumesQuery, useStorageListQuery, SchedulesQuery, SchedulesDocument, useScheduleLazyQuery } from '../generated/graphql';
-import BackupIntervalInput from '../components/backup-interval-input';
+import { useUpdateScheduleMutation, useVolumesQuery, useStorageListQuery, SchedulesQuery, SchedulesDocument, useScheduleLazyQuery, BackupFrequency } from '../generated/graphql';
+import BackupFrequencyInput from '../components/backup-frequency-input';
 import BackupNameInput from '../components/backup-name-input';
+import { findIndex } from 'lodash';
 
 export default function EditScheduleModal({ children }: { children: (open: (id: string) => void) => JSX.Element }) {
   const [ isOpen, setIsOpen ] = React.useState(false)
@@ -12,31 +13,46 @@ export default function EditScheduleModal({ children }: { children: (open: (id: 
   const { data: storageData, loading: storageLoading, error: storageError } = useStorageListQuery({ fetchPolicy: 'network-only' });
   const [ id, setId ] = useState('');
   const [ storage, setStorage ] = useState('');
-  const [ volume, setVolume ] = useState('');
+  const [ volumeName, setVolumeName ] = useState('');
+  const [ volumeSafeName, setVolumeSafeName ] = useState('');
   const [ fileNameFormat, setFileNameFormat ] = useState('');
-  const [ hours, setHours ] = useState(1);
   const [ stopContainers, setStopContainers ] = useState(true);
+  const [ frequencies, setFrequencies ] = useState([] as BackupFrequency[])
 
   const open = useCallback((id: string) => {
     setIsOpen(true);
     setId(id);
     getSchedule({ variables: { id } });
-      setStorage('');
-      setVolume('');
-      setFileNameFormat('');
-      setHours(1);
-      setStopContainers(true);
+    setStorage('');
+    setVolumeName('');
+    setVolumeSafeName('');
+    setFileNameFormat('');
+    setStopContainers(true);
+    setFrequencies([]);
   }, []);
 
   useEffect(() => {
     if (data && data.schedule) {
       setStorage(data.schedule.storage);
-      setVolume(data.schedule.volume);
+      setVolumeName(data.schedule.volume);
       setFileNameFormat(data.schedule.fileNameFormat);
-      setHours(data.schedule.hours);
       setStopContainers(data.schedule.stopContainers);
+      setFrequencies(data.schedule.frequencies);
     }
   }, [ isOpen, data ]);
+
+  useEffect(() => {
+    if (volumeData?.volumes) {
+      const index = findIndex(volumeData?.volumes, { name: volumeName });
+      if (index !== -1) {
+        setVolumeSafeName(volumeData?.volumes[index].safeName);
+      } else {
+        setVolumeSafeName(volumeName);
+      }
+    } else {
+      setVolumeSafeName(volumeName);
+    }
+  }, [ volumeName ]);
 
   const close = useCallback(() => {
     setIsOpen(false);
@@ -47,14 +63,14 @@ export default function EditScheduleModal({ children }: { children: (open: (id: 
       variables: {
         id,
         storage,
-        volume,
-        hours,
+        volume: volumeName,
         stopContainers,
         fileNameFormat,
+        frequencies,
       },
     });
     close();
-  }, [ storage, volume, hours, stopContainers, fileNameFormat ]);
+  }, [ storage, volumeName, stopContainers, fileNameFormat, frequencies ]);
 
   return (
     <>
@@ -98,16 +114,16 @@ export default function EditScheduleModal({ children }: { children: (open: (id: 
                 <Select placeholder="Loading Volumes..." disabled={ true }></Select>
               </> : null }
               { !!volumeData ? <>
-                <Select placeholder="Select Volume" value={ volume } onChange={ e => setVolume(e.target.value) } disabled={ !!loading || !!error }>
+                <Select placeholder="Select Volume" value={ volumeName } onChange={ e => setVolumeName(e.target.value) } disabled={ !!loading || !!error }>
                   { volumeData.volumes.map(volume => (
                     <option key={ volume.name } value={ volume.name }>{ volume.name }</option>
                   )) }
                 </Select>
               </> : null }
-              { volume && storage ?
+              { volumeName && storage ?
                 <>
-                  <BackupNameInput value={ fileNameFormat } onChange={ value => setFileNameFormat(value) } dictionary={ { volumeName: volume } } />
-                  <BackupIntervalInput value={ hours } onChange={ value => setHours(value) } />
+                  <BackupNameInput value={ fileNameFormat } onChange={ value => setFileNameFormat(value) } dictionary={ { volumeName: volumeSafeName } } />
+                  <BackupFrequencyInput value={ frequencies } onChange={ value => setFrequencies(value) } />
                 </>
               : null }
             </Stack>
@@ -118,7 +134,7 @@ export default function EditScheduleModal({ children }: { children: (open: (id: 
                 <Checkbox isChecked={ stopContainers } onChange={ e => setStopContainers(e.target.checked) }>Stop Containers During Backup</Checkbox>
               </Box>
               <Box ml="auto">
-                <Button colorScheme="blue" onClick={ update } disabled={ !volume || !storage || !!error }>
+                <Button colorScheme="blue" onClick={ update } disabled={ !volumeName || !storage || !!error }>
                   Update
                 </Button>
               </Box>

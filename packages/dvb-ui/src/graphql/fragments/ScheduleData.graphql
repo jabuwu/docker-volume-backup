@@ -1,9 +1,14 @@
+#import "./BackupFrequencyData"
 fragment scheduleData on Schedule {
   id
   volume
   storage
-  hours
   stopContainers
   fileNameFormat
-  lastUpdate
+  createdTime
+  lastBackupTime
+  nextBackupTime
+  frequencies {
+    ...backupFrequencyData
+  }
 }

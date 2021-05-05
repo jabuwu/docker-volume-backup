@@ -11,7 +11,11 @@ import Head from 'next/head';
 import HeaderImage from '../components/header-image';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-dayjs.extend(relativeTime)
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+dayjs.extend(relativeTime);
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 export default function App({ Component, pageProps }) {
   const router = useRouter();

@@ -5,7 +5,7 @@ import { context } from './context';
 import { fromObservable } from './from-observable';
 import { Storage, getStorage } from '../storage';
 import { s3Buckets } from '../storage/s3';
-import { Schedule, schedules } from '../schedule';
+import { BackupFrequency, Schedule, schedules } from '../schedule';
 import { generate } from 'short-uuid';
 import path from 'path';
 import { assign, cloneDeep, debounce, pickBy } from 'lodash';
@@ -266,51 +266,56 @@ class DvmResolver {
   // Schedules
   ///
   @Query(() => [Schedule]) async schedules() {
-    return schedules.all();
+    return schedules.all().map(item => assign(new Schedule(), item));
   }
   @Query(() => Schedule, { nullable: true }) async schedule(
     @Arg('id', () => String) id: string
   ) {
-    return schedules.findOne({ id });
+    return assign(new Schedule(), schedules.findOne({ id }));
   }
   @Mutation(() => Schedule, { nullable: true }) addSchedule(
     @Arg('volume', () => String) volume: string,
     @Arg('storage', () => String) storage: string,
-    @Arg('hours', () => Int) hours: number,
     @Arg('stopContainers', () => Boolean) stopContainers: boolean,
     @Arg('fileNameFormat', () => String) fileNameFormat: string,
+    @Arg('frequencies', () => [BackupFrequency]) frequencies: BackupFrequency[],
   ): Schedule | null {
-    return schedules.create({
+    BackupFrequency.validateMany(frequencies);
+    return assign(new Schedule(), schedules.create({
       id: generate(),
       volume,
       storage,
-      hours,
       stopContainers,
       fileNameFormat,
-      lastUpdate: new Date().getTime(),
-    });
+      frequencies,
+      createdTime: new Date().getTime(),
+      lastBackupTime: undefined,
+    }));
   }
   @Mutation(() => Schedule, { nullable: true }) updateSchedule(
     @Arg('id', () => String) id: string,
     @Arg('volume', () => String, { nullable: true }) volume: string | undefined,
     @Arg('storage', () => String, { nullable: true }) storage: string | undefined,
-    @Arg('hours', () => Int, { nullable: true }) hours: number | undefined,
     @Arg('stopContainers', () => Boolean, { nullable: true }) stopContainers: boolean | undefined,
     @Arg('fileNameFormat', () => String, { nullable: true }) fileNameFormat: string | undefined,
+    @Arg('frequencies', () => [BackupFrequency], { nullable: true }) frequencies: BackupFrequency[] | undefined,
   ): Schedule | null {
     const schedule = cloneDeep(schedules.findOne({ id }));
     if (!schedule) {
       return null;
     }
+    if (frequencies) {
+      BackupFrequency.validateMany(frequencies);
+    }
     assign(schedule, pickBy({
       volume,
       storage,
-      hours,
       stopContainers,
       fileNameFormat,
+      frequencies,
     }, o => o !== undefined));
     schedules.update({ id }, schedule);
-    return schedule;
+    return assign(new Schedule(), schedule);
   }
   @Mutation(() => Boolean) removeSchedule(
     @Arg('id', () => String) id: string

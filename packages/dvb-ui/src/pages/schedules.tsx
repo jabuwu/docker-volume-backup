@@ -17,7 +17,7 @@ export default function Schedules(): any {
   let table: ((openEdit: (id: string) => void) => JSX.Element) | null = null;
   const [ removeSchedule ] = useRemoveScheduleMutation();
   if (loading) {
-    table = () => <LoadingTr colSpan={ 6 } />
+    table = () => <LoadingTr colSpan={ 5 } />
   } else if (error) {
     message = (
       <Alert status="error" mt={ 2 }>
@@ -39,12 +39,16 @@ export default function Schedules(): any {
           <Text>{ schedule.storage }</Text>
         </Td>
         <Td>
-          <Text>{ schedule.hours }</Text>
+          <Tooltip label={ schedule.lastBackupTime ? dayjs(schedule.lastBackupTime).format('YYYY-MM-DD hh:mm:ssa') : '' }>
+            <Text>
+              { schedule.lastBackupTime ? dayjs(schedule.lastBackupTime).fromNow() : 'never' }
+            </Text>
+          </Tooltip>
         </Td>
         <Td>
-          <Tooltip label={ dayjs(schedule.lastUpdate).format('YYYY-MM-DD hh:mm:ssa') }>
+          <Tooltip label={ schedule.nextBackupTime ? dayjs(schedule.nextBackupTime).format('YYYY-MM-DD hh:mm:ssa') : '' }>
             <Text>
-              { dayjs(schedule.lastUpdate).fromNow() }
+              { schedule.nextBackupTime ? dayjs(schedule.nextBackupTime).fromNow() : 'never' }
             </Text>
           </Tooltip>
         </Td>
@@ -90,8 +94,8 @@ export default function Schedules(): any {
               <Tr>
                 <Th>Volume</Th>
                 <Th>Storage</Th>
-                <Th>Hours</Th>
-                <Th>Last Update</Th>
+                <Th>Last Backup</Th>
+                <Th>Next Backup</Th>
                 <Th>Containers</Th>
                 <Th></Th>
               </Tr>
