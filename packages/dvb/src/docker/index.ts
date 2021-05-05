@@ -250,13 +250,21 @@ export class Docker {
     });
   }
 
+  async ensureVolumeIsDirectory(name: string) {
+    try {
+      await this.runInVolume(name, [ 'sh', '-c', 'test -d volume' ]);
+    } catch (err) {
+      throw new Error(`Volume "${name}" is not a directory.`);
+    }
+  }
+
   async statVolume(name: string) {
-    const approximateSize = Number((await this.runInVolume(name, [ 'du', '-k', 'volume' ])).replace(/\s/g, ' ').split(' ')[0]) * 1024;
-    const isDirectory = (await this.runInVolume(name, [ 'sh', '-c', 'test -d usr && echo directory' ])).startsWith('directory');
-    return { approximateSize, isDirectory };
+    const approximateSize = Math.max(Number((await this.runInVolume(name, [ 'du', '-k', 'volume' ])).replace(/\s/g, ' ').split(' ')[0]) * 1024, 1);
+    return { approximateSize };
   }
 
   async exportVolume(name: string, exportFn: (stream: Readable) => Promise<any>, progressCb?: (progress: number) => void) {
+    await this.ensureVolumeIsDirectory(name);
     const { approximateSize } = await this.statVolume(name);
     await this.runInVolume(name, [ 'tar', '-cf', '-', 'volume' ], 'out', (pipe) => {
       const sizeStream = new PassThrough();
@@ -266,7 +274,7 @@ export class Docker {
       let bytes = 0;
       sizeStream.on('data', (data) => {
         bytes += data.length;
-        progressCb?.(bytes / approximateSize);
+        progressCb?.(Math.min(bytes / approximateSize, 1));
         gzip.write(data);
       });
       return {
@@ -280,6 +288,7 @@ export class Docker {
   }
 
   async importVolume(name: string, size: number, importFn: (stream: Writable) => Promise<any>, progressCb?: (progress: number) => void) {
+    await this.ensureVolumeIsDirectory(name);
     await this.runInVolume(name, [ 'find', 'volume', '-mindepth', '1', '-delete' ]);
     await this.runInVolume(name, [ 'tar', '-xzf', '-' ], 'in', (stdin) => {
       const intermediate = new PassThrough();
@@ -287,7 +296,11 @@ export class Docker {
       let bytes = 0;
       intermediate.on('data', (data) => {
         bytes += data.length;
-        progressCb?.(bytes / size);
+        if (size === 0) {
+          progressCb?.(1);
+        } else {
+          progressCb?.(Math.min(bytes / size, 1));
+        }
         stdin.write(data);
       });
       intermediate.on('end', () => stdin.end());
