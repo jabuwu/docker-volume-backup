@@ -2,11 +2,12 @@ import { useVolumesQuery, usePinVolumeMutation, useVolumeUpdatedSubscription } f
 import Wrapper from '../components/wrapper';
 import Title from '../components/title';
 import React from 'react';
-import { Alert, AlertIcon, Button, Box, Spinner, Table, Tbody, Td, Th, Thead, Tr, Flex, Text, Tooltip, Popover, PopoverArrow, PopoverBody, PopoverCloseButton, PopoverContent, PopoverHeader, PopoverTrigger, Tag } from '@chakra-ui/react';
+import { Alert, AlertIcon, Button, Box, Spinner, Table, Tbody, Td, Th, Thead, Tr, Flex, Text, Tooltip, Popover, PopoverArrow, PopoverBody, PopoverCloseButton, PopoverContent, PopoverHeader, PopoverTrigger, Tag, Link } from '@chakra-ui/react';
 import { RepeatIcon, StarIcon } from '@chakra-ui/icons';
 import LoadingTr  from '../components/loading-tr';
 import BackupVolumeModal from '../modals/backup-volume';
 import RestoreVolumeModal from '../modals/restore-volume';
+import NextLink from 'next/link';
 
 export default function Index(): any {
   const { data, loading, error, refetch } = useVolumesQuery({ notifyOnNetworkStatusChange: true });
@@ -32,16 +33,18 @@ export default function Index(): any {
       <Tr key={ volume.name }>
         <Td>
           <Flex>
-            <Button size="sm" variant="ghost" colorScheme={ volume.pinned ? 'yellow' : 'blue' } onClick={ () => pinVolume({ variables: { volume: volume.name, pinned: !volume.pinned }, update: (cache) => {
-              cache.modify({
-                id: cache.identify(volume),
-                fields: {
-                  pinned: (value) => !value,
-                },
-              });
-            } }) }>
-              <StarIcon />
-            </Button>
+            <Tooltip label={ volume.pinned ? 'Unpin Volume' : 'Pin volume' }>
+              <Button size="sm" variant="ghost" colorScheme={ volume.pinned ? 'yellow' : 'blue' } onClick={ () => pinVolume({ variables: { volume: volume.name, pinned: !volume.pinned }, update: (cache) => {
+                cache.modify({
+                  id: cache.identify(volume),
+                  fields: {
+                    pinned: (value) => !value,
+                  },
+                });
+              } }) }>
+                <StarIcon />
+              </Button>
+            </Tooltip>
             <Box ml={ 2 } my="auto" fontWeight="bold">{
               volume.name.length > 30 ?
               <Tooltip label={ volume.name }><Text>{ `${volume.name.substr(0, 30)}...` }</Text></Tooltip> :
@@ -89,6 +92,7 @@ export default function Index(): any {
           <Button size="lg" p={ 0 } variant="ghost" colorScheme="green" onClick={ () => refetch() } isLoading={ loading }><RepeatIcon /></Button>
         </Box>
       </Flex>
+      <Text>Below is a list of all volumes found. Volumes can be backed up or restored <Text as="b">manually</Text> here. To configure automatic updates, add a <NextLink href="/schedules"><Link>schedule</Link></NextLink>. Clicking the <StarIcon /> will pin a volume to the top.</Text>
       { message }
       <BackupVolumeModal>
         { (openBackup) => (

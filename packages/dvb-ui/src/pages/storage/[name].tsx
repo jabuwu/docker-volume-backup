@@ -12,6 +12,15 @@ import { formatBytes } from '../../utility/format-bytes';
 import { Task } from '../../components/task';
 import { uniq } from 'lodash';
 
+function prettyStorageType(type: string) {
+  switch (type) {
+    case 'local': return 'a Local File System';
+    case 's3Bucket': return 'an S3 Bucket';
+    case 'ftpServer': return 'an FTP Server';
+    default: return `a ${type}`;
+  }
+}
+
 export default function Storage(): any {
   const router = useRouter();
   const name = router.query.name as string;
@@ -118,7 +127,7 @@ export default function Storage(): any {
     }
     { !error && !loading && data.storage ? 
       <>
-        <Text>{ data.storage!.type }</Text>
+        <Text>This storage is { prettyStorageType(data.storage!.type) }.</Text>
       </>
       : null
     }

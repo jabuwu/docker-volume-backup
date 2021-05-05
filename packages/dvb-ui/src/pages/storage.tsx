@@ -175,6 +175,7 @@ export default function Storage(): any {
           <Button size="lg" p={ 0 } variant="ghost" colorScheme="green" onClick={ () => refetch() } isLoading={ loading }><RepeatIcon /></Button>
         </Box>
       </Flex>
+      <Text>Configure backup storage here. This defines where backups will be stored. Each backup is saved as a compressed tarball (.tgz) and streamed to one of the following storage areas during a manual backup or automatically by configuring a <NextLink href="/schedules"><Link>schedule</Link></NextLink>.</Text>
       { message }
       <Flex mt={ 4 }>
         <Text fontSize="xl">Local</Text>

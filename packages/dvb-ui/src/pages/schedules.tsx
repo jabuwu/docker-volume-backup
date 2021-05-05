@@ -86,6 +86,7 @@ export default function Schedules(): any {
           <Button size="lg" p={ 0 } variant="ghost" colorScheme="green" onClick={ () => refetch() } isLoading={ loading }><RepeatIcon /></Button>
         </Box>
       </Flex>
+      <Text>Automatically backup volumes on a regularly by defining schedules below. Click the <AddIcon /> icon and select a storage and volume to begin.</Text>
       { message }
       <EditScheduleModal>
         { (openEdit) => (
