@@ -118,9 +118,6 @@ export class Docker {
       }
     });
 
-    this.volumeBound$.subscribe(volume => console.log('volume bound', volume.name));
-    this.volumeUnbound$.subscribe(name => console.log('volume unbound', name));
-
     this.volumeContainerStatusUpdated$ = event$.pipe(
       filter((event: DockerEvent) => event.Type === 'container' && (event.Action === 'start' || event.Action === 'die')),
       map(event => ({
@@ -255,7 +252,8 @@ export class Docker {
 
   async statVolume(name: string) {
     const approximateSize = Number((await this.runInVolume(name, [ 'du', '-k', 'volume' ])).replace(/\s/g, ' ').split(' ')[0]) * 1024;
-    return { approximateSize };
+    const isDirectory = (await this.runInVolume(name, [ 'sh', '-c', 'test -d usr && echo directory' ])).startsWith('directory');
+    return { approximateSize, isDirectory };
   }
 
   async exportVolume(name: string, exportFn: (stream: Readable) => Promise<any>, progressCb?: (progress: number) => void) {

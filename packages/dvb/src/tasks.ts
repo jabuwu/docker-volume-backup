@@ -64,8 +64,8 @@ export class Task {
   }
 
   throw(err: Error) {
-    console.log('err', err);
     if (!this.done) {
+      console.error(err);
       this.error = get(err, 'message') || get(err, 'code') || 'Unknown error occurred.';
       this.done = true;
       taskUpdateMap$[this.id].next(clone(this));

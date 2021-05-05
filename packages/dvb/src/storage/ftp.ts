@@ -18,7 +18,6 @@ export class FtpStorage implements StorageInterface {
     const client = await this.client();
     try {
       const fullPath = `${this.server.prefix}${fileName}`;
-      console.log(fullPath);
       await client.ensureDir(path.dirname(fullPath));
       await client.uploadFrom(stream, path.basename(fullPath));
     } finally {

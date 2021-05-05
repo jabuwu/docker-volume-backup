@@ -28,13 +28,20 @@ export class LocalStorage implements StorageInterface {
   async write(fileName: string, stream: Readable)  {
     const out = this.fullPath(fileName);
     await ensureDir(path.dirname(out));
-    const writeStream = createWriteStream(out);
-    await new Promise(resolve => writeStream.on('open', resolve));
-    stream.pipe(writeStream);
-    await new Promise(resolve => {
-      stream.on('end', () => {
-        writeStream.end(resolve);
-      });
+    await new Promise(async (resolve, reject) => {
+      try {
+        const writeStream = createWriteStream(out);
+        await new Promise((resolve, reject) => {
+          writeStream.on('open', resolve);
+          writeStream.on('error', reject);
+        });
+        stream.pipe(writeStream);
+        stream.on('end', () => {
+          writeStream.end(resolve);
+        });
+      } catch (err) {
+        reject(err);
+      }
     });
   }
   read(fileName: string, stream: Writable) {
