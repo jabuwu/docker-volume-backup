@@ -87,7 +87,7 @@ export default function RestoreVolumeModal({ children }: { children: (open: (vol
     if (data?.importVolume) {
       setTaskId(data?.importVolume);
     }
-  }, [ volume, fileName, storage ]);
+  }, [ volume, fileName, storage, stopContainers ]);
 
   return (
     <>

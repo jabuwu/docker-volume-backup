@@ -71,7 +71,7 @@ export default function BackupVolumeModal({ children }: { children: (open: (volu
     if (data?.exportVolume) {
       setTaskId(data?.exportVolume);
     }
-  }, [ volume, storage, fileName ]);
+  }, [ volume, storage, fileName, stopContainers ]);
 
   return (
     <>
