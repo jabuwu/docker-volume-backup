@@ -270,11 +270,17 @@ export type MutationUpdateFtpServerArgs = {
 export type Query = {
   __typename?: 'Query';
   containers: Array<Container>;
+  volume?: Maybe<Volume>;
   volumes: Array<Volume>;
   allStorage: Array<Storage>;
   storage?: Maybe<Storage>;
   schedules: Array<Schedule>;
   schedule?: Maybe<Schedule>;
+};
+
+
+export type QueryVolumeArgs = {
+  name: Scalars['String'];
 };
 
 
@@ -371,6 +377,13 @@ export type Volume = {
   pinned: Scalars['Boolean'];
   source?: Maybe<Scalars['String']>;
   containers: Array<Container>;
+  info: VolumeInfo;
+};
+
+export type VolumeInfo = {
+  __typename?: 'VolumeInfo';
+  isDirectory: Scalars['Boolean'];
+  approximateSize: Scalars['Float'];
 };
 
 export type VolumeUsageData = {
@@ -795,6 +808,23 @@ export type StorageListQuery = (
   & { allStorage: Array<(
     { __typename?: 'Storage' }
     & Pick<Storage, 'type' | 'name'>
+  )> }
+);
+
+export type VolumeInfoQueryVariables = Exact<{
+  name: Scalars['String'];
+}>;
+
+
+export type VolumeInfoQuery = (
+  { __typename?: 'Query' }
+  & { volume?: Maybe<(
+    { __typename?: 'Volume' }
+    & Pick<Volume, 'name'>
+    & { info: (
+      { __typename?: 'VolumeInfo' }
+      & Pick<VolumeInfo, 'isDirectory' | 'approximateSize'>
+    ) }
   )> }
 );
 
@@ -1903,6 +1933,45 @@ export function useStorageListLazyQuery(baseOptions?: Apollo.LazyQueryHookOption
 export type StorageListQueryHookResult = ReturnType<typeof useStorageListQuery>;
 export type StorageListLazyQueryHookResult = ReturnType<typeof useStorageListLazyQuery>;
 export type StorageListQueryResult = Apollo.QueryResult<StorageListQuery, StorageListQueryVariables>;
+export const VolumeInfoDocument = gql`
+    query VolumeInfo($name: String!) {
+  volume(name: $name) {
+    name
+    info {
+      isDirectory
+      approximateSize
+    }
+  }
+}
+    `;
+
+/**
+ * __useVolumeInfoQuery__
+ *
+ * To run a query within a React component, call `useVolumeInfoQuery` and pass it any options that fit your needs.
+ * When your component renders, `useVolumeInfoQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useVolumeInfoQuery({
+ *   variables: {
+ *      name: // value for 'name'
+ *   },
+ * });
+ */
+export function useVolumeInfoQuery(baseOptions: Apollo.QueryHookOptions<VolumeInfoQuery, VolumeInfoQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<VolumeInfoQuery, VolumeInfoQueryVariables>(VolumeInfoDocument, options);
+      }
+export function useVolumeInfoLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<VolumeInfoQuery, VolumeInfoQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<VolumeInfoQuery, VolumeInfoQueryVariables>(VolumeInfoDocument, options);
+        }
+export type VolumeInfoQueryHookResult = ReturnType<typeof useVolumeInfoQuery>;
+export type VolumeInfoLazyQueryHookResult = ReturnType<typeof useVolumeInfoLazyQuery>;
+export type VolumeInfoQueryResult = Apollo.QueryResult<VolumeInfoQuery, VolumeInfoQueryVariables>;
 export const VolumesDocument = gql`
     query Volumes {
   volumes {

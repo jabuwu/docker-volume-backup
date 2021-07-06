@@ -39,6 +39,9 @@ class DvmResolver {
   ////
   // Volumes
   ///
+  @Query(() => Volume, { nullable: true }) async volume(@Arg('name') name: string) {
+    return await context.docker.getVolume(name);
+  }
   @Query(() => [Volume]) async volumes() {
     return await context.docker.getVolumes();
   }

@@ -15,6 +15,12 @@ export class VolumeUsageData {
 }
 
 @ObjectType()
+export class VolumeInfo {
+  @Field() isDirectory: boolean;
+  @Field() approximateSize: number;
+}
+
+@ObjectType()
 export class Volume {
   static createFromVolumeInfo(docker: Docker, data: VolumeInspectInfo) {
     return new Volume(docker, {
@@ -79,6 +85,21 @@ export class Volume {
       }
       return false;
     });
+  }
+  @Field(() => VolumeInfo)
+  async info(): Promise<VolumeInfo> {
+    try {
+      await this.docker.ensureVolumeIsDirectory(this.name);
+    } catch (err) {
+      return {
+        isDirectory: false,
+        approximateSize: 0,
+      };
+    }
+    return {
+      isDirectory: true,
+      ...(await this.docker.statVolume(this.name))
+    };
   }
 }
 

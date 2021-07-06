@@ -2,19 +2,20 @@ import { useVolumesQuery, usePinVolumeMutation, useVolumeUpdatedSubscription } f
 import Wrapper from '../components/wrapper';
 import Title from '../components/title';
 import React from 'react';
-import { Alert, AlertIcon, Button, Box, Spinner, Table, Tbody, Td, Th, Thead, Tr, Flex, Text, Tooltip, Popover, PopoverArrow, PopoverBody, PopoverCloseButton, PopoverContent, PopoverHeader, PopoverTrigger, Tag, Link } from '@chakra-ui/react';
-import { RepeatIcon, StarIcon } from '@chakra-ui/icons';
+import { Alert, AlertIcon, Button, Box, Table, Tbody, Td, Th, Thead, Tr, Flex, Text, Tooltip, Popover, PopoverArrow, PopoverBody, PopoverCloseButton, PopoverContent, PopoverHeader, PopoverTrigger, Tag, Link } from '@chakra-ui/react';
+import { InfoIcon, RepeatIcon, StarIcon } from '@chakra-ui/icons';
 import LoadingTr  from '../components/loading-tr';
 import BackupVolumeModal from '../modals/backup-volume';
 import RestoreVolumeModal from '../modals/restore-volume';
 import NextLink from 'next/link';
+import InfoVolumeModal from '../modals/info-volume';
 
 export default function Index(): any {
   const { data, loading, error, refetch } = useVolumesQuery({ notifyOnNetworkStatusChange: true });
   const [ pinVolume ] = usePinVolumeMutation();
   useVolumeUpdatedSubscription();
   let message: JSX.Element | null = null;
-  let table: ((openBackup: (volumeName: string, volumeSafeName: string) => void, openRestore: (volumeName: string, volumeSafeName: string) => void) => JSX.Element) | null = null;
+  let table: ((openBackup: (volumeName: string, volumeSafeName: string) => void, openRestore: (volumeName: string, volumeSafeName: string) => void, openInfo: (volumeName: string) => void) => JSX.Element) | null = null;
   if (loading) {
     table = () => (<LoadingTr colSpan={ 4 } />);
   } else if (error) {
@@ -29,7 +30,7 @@ export default function Index(): any {
       <Alert mt={ 2 }>No volumes found.</Alert>
     );
   } else {
-    table = (openBackup, openRestore) => (<>{ data.volumes.map(volume => (
+    table = (openBackup, openRestore, openInfo) => (<>{ data.volumes.map(volume => (
       <Tr key={ volume.name }>
         <Td>
           <Flex>
@@ -79,6 +80,7 @@ export default function Index(): any {
         <Td textAlign="right">
           <Button colorScheme="blue" onClick={ () => openBackup(volume.name, volume.safeName) }>Backup</Button>
           <Button colorScheme="orange" ml={ 2 } onClick={ () => openRestore(volume.name, volume.safeName) }>Restore</Button>
+          <Button colorScheme="gray" ml={ 2 } onClick={ () => openInfo(volume.name) }><InfoIcon /></Button>
         </Td>
       </Tr>
     ))}</>);
@@ -98,21 +100,25 @@ export default function Index(): any {
         { (openBackup) => (
           <RestoreVolumeModal>
             { (openRestore) => (
-              <>
-                { table ? (<Table variant="striped">
-                  <Thead>
-                    <Tr>
-                      <Th>Name</Th>
-                      <Th>Type</Th>
-                      <Th>Containers</Th>
-                      <Th></Th>
-                    </Tr>
-                  </Thead>
-                  <Tbody>
-                    { table(openBackup, openRestore) }
-                  </Tbody>
-                </Table>) : null }
-              </>
+              <InfoVolumeModal>
+                { (openInfo) => (
+                  <>
+                    { table ? (<Table variant="striped">
+                      <Thead>
+                        <Tr>
+                          <Th>Name</Th>
+                          <Th>Type</Th>
+                          <Th>Containers</Th>
+                          <Th></Th>
+                        </Tr>
+                      </Thead>
+                      <Tbody>
+                        { table(openBackup, openRestore, openInfo) }
+                      </Tbody>
+                    </Table>) : null }
+                  </>
+                ) }
+              </InfoVolumeModal>
             ) }
           </RestoreVolumeModal>
         ) }

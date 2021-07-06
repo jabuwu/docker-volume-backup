@@ -1,0 +1,9 @@
+query VolumeInfo($name: String!) {
+  volume(name: $name) {
+    name
+    info {
+      isDirectory
+      approximateSize
+    }
+  }
+}
