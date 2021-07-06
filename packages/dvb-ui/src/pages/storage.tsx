@@ -54,11 +54,12 @@ export default function Storage(): any {
         Failed to fetch storage information. { error.message }
       </Alert>
     );
-    s3Message = <Text mt={ 2 }>Nothing to see here.</Text>;
-    ftpMessage = <Text mt={ 2 }>Nothing to see here.</Text>;
+    localMessage = <Alert mt={ 2 }>Nothing to see here.</Alert>;
+    s3Message = <Alert mt={ 2 }>Nothing to see here.</Alert>;
+    ftpMessage = <Alert mt={ 2 }>Nothing to see here.</Alert>;
   } else {
     if (localFileSystems.length === 0) {
-      localMessage = <Text mt={ 2 }>Nothing to see here.</Text>;
+      localMessage = <Alert mt={ 2 }>Nothing to see here.</Alert>;
     } else {
       localTable = (openEdit) => (
         <>
@@ -92,7 +93,7 @@ export default function Storage(): any {
       </>);
     }
     if (s3Buckets.length === 0) {
-      s3Message = <Text mt={ 2 }>Nothing to see here.</Text>;
+      s3Message = <Alert mt={ 2 }>Nothing to see here.</Alert>;
     } else {
       s3Table = (openEdit) => (
         <>
@@ -126,7 +127,7 @@ export default function Storage(): any {
       </>);
     }
     if (ftpServers.length === 0) {
-      ftpMessage = <Text mt={ 2 }>Nothing to see here.</Text>;
+      ftpMessage = <Alert mt={ 2 }>Nothing to see here.</Alert>;
     } else {
       ftpTable = (openEdit) => (
         <>

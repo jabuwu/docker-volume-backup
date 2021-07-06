@@ -27,7 +27,7 @@ export default function Schedules(): any {
     );
   } else if (data.schedules.length === 0) {
     message = (
-      <Text mt={ 2 }>No schedules found.</Text>
+      <Alert mt={ 2 }>No schedules found.</Alert>
     );
   } else {
     table = (openEdit) => <>{ data.schedules.map(schedule => (

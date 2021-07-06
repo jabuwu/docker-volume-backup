@@ -26,7 +26,7 @@ export default function Index(): any {
     );
   } else if (data.volumes.length === 0) {
     message = (
-      <Text mt={ 2 }>No volumes found.</Text>
+      <Alert mt={ 2 }>No volumes found.</Alert>
     );
   } else {
     table = (openBackup, openRestore) => (<>{ data.volumes.map(volume => (
