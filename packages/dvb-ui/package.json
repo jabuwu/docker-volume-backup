@@ -19,14 +19,14 @@
     "dayjs": "^1.10.4",
     "framer-motion": "^4.1.6",
     "graphql": "^15.5.0",
-    "next": "10.1.3",
+    "next": "^11.0.1",
     "next-apollo": "^5.0.4",
     "react": "17.0.2",
     "react-dom": "17.0.2",
-    "subscriptions-transport-ws": "^0.9.18"
+    "subscriptions-transport-ws": "^0.10.0"
   },
   "devDependencies": {
-    "@graphql-codegen/cli": "^1.21.4",
+    "@graphql-codegen/cli": "^1.21.6",
     "@graphql-codegen/typescript": "^1.22.0",
     "@graphql-codegen/typescript-operations": "^1.17.16",
     "@graphql-codegen/typescript-react-apollo": "^2.2.4",
