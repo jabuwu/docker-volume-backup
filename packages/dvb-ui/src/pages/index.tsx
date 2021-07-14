@@ -123,7 +123,7 @@ export default function Index(): any {
           </RestoreVolumeModal>
         ) }
       </BackupVolumeModal>
-      <Box mt={ 8 }></Box>
+      <Box mt={ 8 } background="transparent"></Box>
     </Wrapper>
   )
 }
