@@ -69,7 +69,7 @@ class DvmResolver {
           await storageInstance.write(fileName!, stream);
         }, debounce((progress) => {
           update({ status: 'Backing up...', progress });
-        }, 100, { maxWait: 100 }));
+        }, 1000, { maxWait: 1000 }));
         if (stopContainers && stoppedContainers.length > 0) {
           update({ status: 'Starting containers...', progress: null });
           await context.docker.startVolumeContainers(volume, stoppedContainers);
@@ -100,7 +100,7 @@ class DvmResolver {
           await storageInstance.read(fileName!, stream);
         }, debounce((progress) => {
           update({ status: 'Restoring...', progress });
-        }, 100, { maxWait: 100 }));
+        }, 1000, { maxWait: 1000 }));
         if (stopContainers && stoppedContainers.length > 0) {
           update({ status: 'Starting containers...', progress: null });
           await context.docker.startVolumeContainers(volume, stoppedContainers);
@@ -218,7 +218,7 @@ class DvmResolver {
         update({ status: 'Downloading...' });
         const { stream, fileName: downloadFileName } = await downloadWriteStream(fileName, stat.size, debounce((progress) => {
           update({ status: 'Downloading...', progress });
-        }, 100, { maxWait: 100 }));
+        }, 1000, { maxWait: 1000 }));
         await storage.read(fileName, stream);
         stream.end();
         return `/download/${downloadFileName}`;
