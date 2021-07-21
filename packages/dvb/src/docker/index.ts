@@ -259,7 +259,7 @@ export class Docker {
   }
 
   async statVolume(name: string) {
-    const approximateSize = Math.max(Number((await this.runInVolume(name, [ 'du', '-k', 'volume' ])).replace(/\s/g, ' ').split(' ')[0]) * 1024, 1);
+    const approximateSize = Math.max(Number((await this.runInVolume(name, [ 'du', '-ks', 'volume' ])).replace(/\s/g, ' ').split(' ')[0]) * 1024, 1);
     return { approximateSize };
   }
 
